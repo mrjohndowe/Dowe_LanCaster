@@ -1,4 +1,4 @@
-name: Build Dowe LanCaster
+name: Build Dowe Lan Caster
 
 on:
   workflow_dispatch:
