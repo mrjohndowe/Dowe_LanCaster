@@ -10,6 +10,7 @@ on:
       version:
         description: "Release version (for example, v1.2.3)"
         required: true
+        default: "v0.7.0"
         type: string
 
 permissions:
@@ -90,10 +91,24 @@ jobs:
             npm ci
             npm run build --if-present
           elif find . -maxdepth 4 \( -name '*.sln' -o -name '*.csproj' -o -name '*.fsproj' \) -print -quit | grep -q .; then
-            dotnet restore
-            dotnet publish --configuration Release --no-restore \
+            PROJECT="src/DoweLanCaster.Windows/DoweLanCaster.Windows.csproj"
+            dotnet restore "$PROJECT" \
+              --runtime win-x64 \
+              -p:EnableWindowsTargeting=true
+            dotnet publish "$PROJECT" \
+              --configuration Release \
+              --runtime win-x64 \
+              --self-contained true \
+              --no-restore \
               -p:Version="$RELEASE_VERSION" \
+              -p:EnableWindowsTargeting=true \
+              -p:PublishSingleFile=false \
+              -p:DebugType=None \
+              -p:DebugSymbols=false \
               --output "$GITHUB_WORKSPACE/release-build"
+            if [[ -f dist/DoweLanCaster-Roku.zip ]]; then
+              cp dist/DoweLanCaster-Roku.zip release-build/
+            fi
           elif [[ -f pom.xml ]]; then
             mvn --batch-mode -Drevision="$RELEASE_VERSION" package
           elif [[ -f gradlew ]]; then
