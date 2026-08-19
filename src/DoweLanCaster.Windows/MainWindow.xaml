@@ -7,15 +7,30 @@
 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 
 <StackPanel Grid.Row="0">
-<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="14">
-<Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+<Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
+<Grid>
+<Grid.ColumnDefinitions>
+<ColumnDefinition Width="Auto"/>
+<ColumnDefinition Width="12"/>
+<ColumnDefinition Width="*"/>
+<ColumnDefinition Width="12"/>
+<ColumnDefinition Width="Auto"/>
+<ColumnDefinition Width="18"/>
+<ColumnDefinition Width="Auto"/>
+</Grid.ColumnDefinitions>
 <TextBlock Text="Roku:" VerticalAlignment="Center" FontWeight="SemiBold"/>
 <ComboBox x:Name="DeviceComboBox" Grid.Column="2" MinWidth="420" Height="32" SelectionChanged="DeviceComboBox_SelectionChanged"/>
 <Button x:Name="ScanButton" Grid.Column="4" Content="Scan for Roku Devices" Padding="18,6" Click="ScanButton_Click"/>
+<CheckBox x:Name="DarkModeCheckBox"
+          Grid.Column="6"
+          Content="Dark Mode"
+          VerticalAlignment="Center"
+          Checked="DarkModeCheckBox_Changed"
+          Unchecked="DarkModeCheckBox_Changed"/>
 </Grid>
 </Border>
 
-<Border BorderBrush="#888" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,8,0,0">
+<Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,8,0,0">
 <Grid>
 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
 <TextBlock Text="Manual IP:" VerticalAlignment="Center" FontWeight="SemiBold"/>
@@ -32,7 +47,7 @@
 <ScrollViewer VerticalScrollBarVisibility="Auto">
 <StackPanel Margin="16">
 
-<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+<Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
 <StackPanel>
 <TextBlock Text="Stream a Video Link" FontSize="24" FontWeight="Bold" Margin="0,0,0,8"/>
 <TextBlock Text="Paste a public, non-DRM webpage or direct media URL. Dowe LanCaster extracts the media, converts it to Roku-friendly HLS, and streams it over your LAN."
@@ -70,7 +85,7 @@
 </StackPanel>
 </Border>
 
-<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+<Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
 <Grid>
 <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
 <Grid.RowDefinitions>
@@ -92,7 +107,7 @@
 </Grid>
 </Border>
 
-<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18">
+<Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18">
 <StackPanel>
 <TextBlock Text="Compatibility" FontSize="20" FontWeight="Bold" Margin="0,0,0,8"/>
 <TextBlock Text="Works with direct media links and many sites supported by yt-dlp. DRM-protected video, paywalled streams, or sites that block extraction are not bypassed."
@@ -108,7 +123,7 @@
 <ScrollViewer VerticalScrollBarVisibility="Auto">
 <StackPanel Margin="16">
 
-<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+<Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
 <Grid>
 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
 <StackPanel>
@@ -125,7 +140,7 @@
 </Grid>
 </Border>
 
-<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+<Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
 <Grid>
 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
 <StackPanel>
@@ -150,7 +165,7 @@
 </Grid>
 </Border>
 
-<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18">
+<Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18">
 <StackPanel>
 <TextBlock Text="Live Stream" FontSize="22" FontWeight="Bold" Margin="0,0,0,12"/>
 <TextBox x:Name="LiveStreamUrlTextBox" Height="34" IsReadOnly="True" Margin="0,0,0,12" VerticalContentAlignment="Center"/>
@@ -177,7 +192,7 @@
 <RowDefinition Height="Auto"/>
 </Grid.RowDefinitions>
 
-<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="16">
+<Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16">
 <Grid>
 <Grid.ColumnDefinitions>
 <ColumnDefinition Width="Auto"/>
@@ -210,7 +225,7 @@
 <ColumnDefinition Width="280"/>
 </Grid.ColumnDefinitions>
 
-<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="12">
+<Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
 <Grid>
 <Grid.RowDefinitions>
 <RowDefinition Height="Auto"/>
@@ -238,7 +253,7 @@
 </Border>
 
 <Border Grid.Column="2"
-        BorderBrush="#666"
+        BorderBrush="{DynamicResource BorderBrush}"
         BorderThickness="1"
         CornerRadius="8"
         Padding="14">
@@ -325,7 +340,7 @@
 </Grid>
 
 <Border Grid.Row="4"
-        BorderBrush="#666"
+        BorderBrush="{DynamicResource BorderBrush}"
         BorderThickness="1"
         CornerRadius="8"
         Padding="14">
@@ -391,7 +406,7 @@
 
 <TabItem Header="File Cast">
 <StackPanel Margin="16">
-<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+<Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
 <StackPanel>
 <TextBlock Text="Cast from PC" FontSize="24" FontWeight="Bold" Margin="0,0,0,12"/>
 <DockPanel>
@@ -400,7 +415,7 @@
 </DockPanel>
 </StackPanel>
 </Border>
-<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18">
+<Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18">
 <StackPanel>
 <TextBlock Text="Stream" FontSize="24" FontWeight="Bold" Margin="0,0,0,12"/>
 <TextBox x:Name="StreamUrlTextBox" IsReadOnly="True" Height="34" Margin="0,0,0,12" VerticalContentAlignment="Center"/>
@@ -416,46 +431,308 @@
 
 <TabItem Header="Remote">
 <Grid Margin="16">
-<Grid.ColumnDefinitions><ColumnDefinition Width="430"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18">
+<Grid.ColumnDefinitions>
+<ColumnDefinition Width="430"/>
+<ColumnDefinition Width="18"/>
+<ColumnDefinition Width="*"/>
+</Grid.ColumnDefinitions>
+
+<Grid.Resources>
+<Style x:Key="RemoteRoundButtonStyle" TargetType="Button">
+    <Setter Property="Foreground" Value="White"/>
+    <Setter Property="Background" Value="#2A2E35"/>
+    <Setter Property="BorderBrush" Value="#454B55"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="Button">
+                <Border x:Name="RemoteButtonBorder"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="24"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                </Border>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="RemoteButtonBorder"
+                                Property="Background"
+                                Value="#3A414B"/>
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter TargetName="RemoteButtonBorder"
+                                Property="Background"
+                                Value="#149EC2"/>
+                    </Trigger>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter TargetName="RemoteButtonBorder"
+                                Property="Opacity"
+                                Value="0.45"/>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Setter.Value>
+    </Setter>
+</Style>
+
+<Style x:Key="RemoteAccentButtonStyle"
+       TargetType="Button"
+       BasedOn="{StaticResource RemoteRoundButtonStyle}">
+    <Setter Property="Background" Value="#15AFCF"/>
+    <Setter Property="BorderBrush" Value="#3FE1FF"/>
+    <Setter Property="Foreground" Value="#06151B"/>
+</Style>
+</Grid.Resources>
+
+<Border Width="390"
+        HorizontalAlignment="Center"
+        Background="#15181D"
+        BorderBrush="#3B414A"
+        BorderThickness="2"
+        CornerRadius="52"
+        Padding="24"
+        SnapsToDevicePixels="True">
+<Border.Effect>
+    <DropShadowEffect BlurRadius="24"
+                      ShadowDepth="5"
+                      Opacity="0.35"/>
+</Border.Effect>
+
+<ScrollViewer VerticalScrollBarVisibility="Auto">
 <StackPanel>
-<TextBlock Text="Remote" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
-<UniformGrid Columns="3" Margin="0,0,0,10">
-<Button Content="Back" Margin="4" Height="42" Tag="Back" Click="RemoteButton_Click"/>
-<Button Content="Home" Margin="4" Height="42" Tag="Home" Click="RemoteButton_Click"/>
-<Button Content="Replay" Margin="4" Height="42" Tag="InstantReplay" Click="RemoteButton_Click"/>
+<TextBlock Text="DOWE LANCASTER"
+           Foreground="#4EDCFF"
+           FontWeight="Bold"
+           FontSize="17"
+           HorizontalAlignment="Center"
+           Margin="0,0,0,3"/>
+<TextBlock Text="ROKU REMOTE"
+           Foreground="#AAB3BE"
+           FontSize="11"
+           HorizontalAlignment="Center"
+           Margin="0,0,0,22"/>
+
+<UniformGrid Columns="3" Margin="0,0,0,14">
+<Button Content="↩ Back"
+        Style="{StaticResource RemoteRoundButtonStyle}"
+        Margin="4"
+        Height="44"
+        Tag="Back"
+        Click="RemoteButton_Click"/>
+<Button Content="⌂ Home"
+        Style="{StaticResource RemoteAccentButtonStyle}"
+        Margin="4"
+        Height="44"
+        Tag="Home"
+        Click="RemoteButton_Click"/>
+<Button Content="↶ Replay"
+        Style="{StaticResource RemoteRoundButtonStyle}"
+        Margin="4"
+        Height="44"
+        Tag="InstantReplay"
+        Click="RemoteButton_Click"/>
 </UniformGrid>
-<Grid Margin="40,5">
-<Grid.RowDefinitions><RowDefinition Height="55"/><RowDefinition Height="55"/><RowDefinition Height="55"/></Grid.RowDefinitions>
-<Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="90"/><ColumnDefinition Width="70"/></Grid.ColumnDefinitions>
-<Button Grid.Row="0" Grid.Column="1" Content="▲" FontSize="22" Tag="Up" Click="RemoteButton_Click"/>
-<Button Grid.Row="1" Grid.Column="0" Content="◀" FontSize="22" Tag="Left" Click="RemoteButton_Click"/>
-<Button Grid.Row="1" Grid.Column="1" Content="OK" FontWeight="Bold" Tag="Select" Click="RemoteButton_Click"/>
-<Button Grid.Row="1" Grid.Column="2" Content="▶" FontSize="22" Tag="Right" Click="RemoteButton_Click"/>
-<Button Grid.Row="2" Grid.Column="1" Content="▼" FontSize="22" Tag="Down" Click="RemoteButton_Click"/>
+
+<Border Background="#20242A"
+        BorderBrush="#343A43"
+        BorderThickness="1"
+        CornerRadius="86"
+        Width="250"
+        Height="250"
+        HorizontalAlignment="Center"
+        Padding="14"
+        Margin="0,4,0,14">
+<Grid>
+<Grid.RowDefinitions>
+<RowDefinition Height="*"/>
+<RowDefinition Height="*"/>
+<RowDefinition Height="*"/>
+</Grid.RowDefinitions>
+<Grid.ColumnDefinitions>
+<ColumnDefinition Width="*"/>
+<ColumnDefinition Width="*"/>
+<ColumnDefinition Width="*"/>
+</Grid.ColumnDefinitions>
+
+<Button Grid.Row="0"
+        Grid.Column="1"
+        Content="▲"
+        FontSize="24"
+        Style="{StaticResource RemoteRoundButtonStyle}"
+        Margin="5"
+        Tag="Up"
+        Click="RemoteButton_Click"/>
+
+<Button Grid.Row="1"
+        Grid.Column="0"
+        Content="◀"
+        FontSize="24"
+        Style="{StaticResource RemoteRoundButtonStyle}"
+        Margin="5"
+        Tag="Left"
+        Click="RemoteButton_Click"/>
+
+<Button Grid.Row="1"
+        Grid.Column="1"
+        Content="OK"
+        FontSize="18"
+        Style="{StaticResource RemoteAccentButtonStyle}"
+        Margin="2"
+        Tag="Select"
+        Click="RemoteButton_Click"/>
+
+<Button Grid.Row="1"
+        Grid.Column="2"
+        Content="▶"
+        FontSize="24"
+        Style="{StaticResource RemoteRoundButtonStyle}"
+        Margin="5"
+        Tag="Right"
+        Click="RemoteButton_Click"/>
+
+<Button Grid.Row="2"
+        Grid.Column="1"
+        Content="▼"
+        FontSize="24"
+        Style="{StaticResource RemoteRoundButtonStyle}"
+        Margin="5"
+        Tag="Down"
+        Click="RemoteButton_Click"/>
 </Grid>
-<UniformGrid Columns="3" Margin="0,12,0,10">
-<Button Content="⏪" Margin="4" Height="46" Tag="Rev" Click="RemoteButton_Click"/>
-<Button Content="⏯" Margin="4" Height="46" Tag="Play" Click="RemoteButton_Click"/>
-<Button Content="⏩" Margin="4" Height="46" Tag="Fwd" Click="RemoteButton_Click"/>
-</UniformGrid>
-<UniformGrid Columns="3">
-<Button Content="Vol -" Margin="4" Height="42" Tag="VolumeDown" Click="RemoteButton_Click"/>
-<Button Content="Mute" Margin="4" Height="42" Tag="VolumeMute" Click="RemoteButton_Click"/>
-<Button Content="Vol +" Margin="4" Height="42" Tag="VolumeUp" Click="RemoteButton_Click"/>
-</UniformGrid>
-<TextBlock Text="Keyboard text" FontWeight="SemiBold" Margin="0,16,0,6"/>
-<DockPanel><TextBox x:Name="RokuTextInput" Height="32" Margin="0,0,8,0"/><Button Content="Send" Width="80" Click="SendTextButton_Click"/></DockPanel>
-</StackPanel>
 </Border>
 
-<Border Grid.Column="2" BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18">
+<UniformGrid Columns="3" Margin="0,0,0,10">
+<Button Content="⏪"
+        ToolTip="Rewind"
+        FontSize="20"
+        Style="{StaticResource RemoteRoundButtonStyle}"
+        Margin="4"
+        Height="48"
+        Tag="Rev"
+        Click="RemoteButton_Click"/>
+<Button Content="⏯"
+        ToolTip="Play / Pause"
+        FontSize="21"
+        Style="{StaticResource RemoteAccentButtonStyle}"
+        Margin="4"
+        Height="48"
+        Tag="Play"
+        Click="RemoteButton_Click"/>
+<Button Content="⏩"
+        ToolTip="Fast Forward"
+        FontSize="20"
+        Style="{StaticResource RemoteRoundButtonStyle}"
+        Margin="4"
+        Height="48"
+        Tag="Fwd"
+        Click="RemoteButton_Click"/>
+</UniformGrid>
+
+<UniformGrid Columns="3" Margin="0,0,0,10">
+<Button Content="Vol −"
+        Style="{StaticResource RemoteRoundButtonStyle}"
+        Margin="4"
+        Height="44"
+        Tag="VolumeDown"
+        Click="RemoteButton_Click"/>
+<Button Content="Mute"
+        Style="{StaticResource RemoteRoundButtonStyle}"
+        Margin="4"
+        Height="44"
+        Tag="VolumeMute"
+        Click="RemoteButton_Click"/>
+<Button Content="Vol +"
+        Style="{StaticResource RemoteRoundButtonStyle}"
+        Margin="4"
+        Height="44"
+        Tag="VolumeUp"
+        Click="RemoteButton_Click"/>
+</UniformGrid>
+
+<Button x:Name="VoiceControlButton"
+        Content="🎤  Start Voice Control"
+        Style="{StaticResource RemoteAccentButtonStyle}"
+        Height="48"
+        Margin="4,2,4,4"
+        Click="VoiceControlButton_Click"/>
+
+<TextBlock x:Name="VoiceStatusText"
+           Text="Voice control is off"
+           Foreground="#AAB3BE"
+           FontSize="11"
+           HorizontalAlignment="Center"
+           Margin="0,2,0,16"/>
+
+<TextBlock Text="Keyboard Text"
+           Foreground="White"
+           FontWeight="SemiBold"
+           FontSize="15"
+           Margin="4,0,0,7"/>
+
+<Grid Margin="4,0,4,8">
+<TextBox x:Name="RokuTextInput"
+         Height="62"
+         Padding="14,10"
+         FontSize="16"
+         VerticalContentAlignment="Center"
+         TextChanged="RokuTextInput_TextChanged"/>
+<TextBlock x:Name="RokuTextPlaceholder"
+           Text="Type or dictate text to your Roku..."
+           Foreground="#7E8996"
+           FontSize="15"
+           IsHitTestVisible="False"
+           VerticalAlignment="Center"
+           Margin="15,0,10,0"/>
+</Grid>
+
+<Button Content="Send Text to Roku"
+        Style="{StaticResource RemoteAccentButtonStyle}"
+        Height="46"
+        Margin="4,0,4,6"
+        Click="SendTextButton_Click"/>
+</StackPanel>
+</ScrollViewer>
+</Border>
+
+<Border Grid.Column="2"
+        BorderBrush="{DynamicResource BorderBrush}"
+        Background="{DynamicResource SurfaceBrush}"
+        BorderThickness="1"
+        CornerRadius="12"
+        Padding="18">
 <Grid>
-<Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-<TextBlock Text="Installed Roku Apps" FontSize="24" FontWeight="Bold"/>
-<Button Grid.Row="1" Content="Refresh Apps" HorizontalAlignment="Left" Padding="14,6" Margin="0,12" Click="RefreshAppsButton_Click"/>
-<ListBox x:Name="AppsListBox" Grid.Row="2" DisplayMemberPath="Name" MouseDoubleClick="AppsListBox_MouseDoubleClick"/>
-<Button Grid.Row="3" Content="Launch Selected App" Height="42" Margin="0,12,0,0" Click="LaunchSelectedAppButton_Click"/>
+<Grid.RowDefinitions>
+<RowDefinition Height="Auto"/>
+<RowDefinition Height="Auto"/>
+<RowDefinition Height="*"/>
+<RowDefinition Height="Auto"/>
+</Grid.RowDefinitions>
+
+<TextBlock Text="Installed Roku Apps"
+           FontSize="24"
+           FontWeight="Bold"/>
+
+<Button Grid.Row="1"
+        Content="Refresh Apps"
+        HorizontalAlignment="Left"
+        Padding="14,6"
+        Margin="0,12"
+        Click="RefreshAppsButton_Click"/>
+
+<ListBox x:Name="AppsListBox"
+         Grid.Row="2"
+         DisplayMemberPath="Name"
+         MouseDoubleClick="AppsListBox_MouseDoubleClick"/>
+
+<Button Grid.Row="3"
+        Content="Launch Selected App"
+        Height="42"
+        Margin="0,12,0,0"
+        Click="LaunchSelectedAppButton_Click"/>
 </Grid>
 </Border>
 </Grid>

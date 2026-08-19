@@ -1,4 +1,5 @@
 using System.IO;
+using System.Speech.Recognition;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -41,6 +42,33 @@ public partial class MainWindow : Window
     private int _folderIndex = -1;
     private bool _folderSawPlaying;
     private bool _folderAdvanceInProgress;
+    private SpeechRecognitionEngine? _voiceRecognizer;
+    private bool _voiceListening;
+
+    private static readonly IReadOnlyDictionary<string, string> VoiceCommandMap =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["home"] = "Home",
+            ["back"] = "Back",
+            ["up"] = "Up",
+            ["down"] = "Down",
+            ["left"] = "Left",
+            ["right"] = "Right",
+            ["ok"] = "Select",
+            ["okay"] = "Select",
+            ["select"] = "Select",
+            ["play"] = "Play",
+            ["pause"] = "Play",
+            ["play pause"] = "Play",
+            ["rewind"] = "Rev",
+            ["fast forward"] = "Fwd",
+            ["forward"] = "Fwd",
+            ["replay"] = "InstantReplay",
+            ["volume up"] = "VolumeUp",
+            ["volume down"] = "VolumeDown",
+            ["mute"] = "VolumeMute",
+            ["power"] = "Power"
+        };
 
     public MainWindow()
     {
@@ -461,6 +489,12 @@ public partial class MainWindow : Window
         FolderAutoPlayCheckBox.IsChecked =
             _settings.FolderAutoPlayNext;
 
+        DarkModeCheckBox.IsChecked =
+            _settings.UseDarkMode;
+
+        ThemeService.ApplyTheme(
+            _settings.UseDarkMode);
+
         SelectComboItemByContent(
             FolderRepeatComboBox,
             _settings.FolderRepeatMode);
@@ -601,6 +635,9 @@ public partial class MainWindow : Window
 
         _settings.FolderAutoPlayNext =
             FolderAutoPlayCheckBox.IsChecked == true;
+
+        _settings.UseDarkMode =
+            DarkModeCheckBox.IsChecked == true;
 
         _settingsService.Save(_settings);
     }
@@ -1738,6 +1775,219 @@ public partial class MainWindow : Window
         }
     }
 
+    private void RokuTextInput_TextChanged(
+        object sender,
+        TextChangedEventArgs e)
+    {
+        RokuTextPlaceholder.Visibility =
+            string.IsNullOrWhiteSpace(RokuTextInput.Text)
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+    }
+
+    private void DarkModeCheckBox_Changed(
+        object sender,
+        RoutedEventArgs e)
+    {
+        var dark =
+            DarkModeCheckBox.IsChecked == true;
+
+        ThemeService.ApplyTheme(dark);
+
+        _settings.UseDarkMode =
+            dark;
+
+        _settingsService.Save(_settings);
+
+        UpdateDiagnostics(
+            message:
+                dark
+                    ? "Dark mode enabled."
+                    : "Light mode enabled.");
+    }
+
+    private void VoiceControlButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (_voiceListening)
+        {
+            StopVoiceControl();
+            return;
+        }
+
+        if (_rokuClient is null)
+        {
+            VoiceStatusText.Text =
+                "Select a Roku device first.";
+            return;
+        }
+
+        try
+        {
+            if (_voiceRecognizer is null)
+            {
+                if (SpeechRecognitionEngine
+                    .InstalledRecognizers()
+                    .Count == 0)
+                {
+                    VoiceStatusText.Text =
+                        "No Windows speech recognizer is installed.";
+                    return;
+                }
+
+                _voiceRecognizer =
+                    new SpeechRecognitionEngine();
+
+                var choices =
+                    new Choices();
+
+                choices.Add(
+                    VoiceCommandMap.Keys.ToArray());
+
+                var grammarBuilder =
+                    new GrammarBuilder();
+
+                grammarBuilder.Append(choices);
+
+                _voiceRecognizer.LoadGrammar(
+                    new Grammar(grammarBuilder));
+
+                _voiceRecognizer.SetInputToDefaultAudioDevice();
+
+                _voiceRecognizer.SpeechRecognized +=
+                    VoiceRecognizer_SpeechRecognized;
+
+                _voiceRecognizer.RecognizeCompleted +=
+                    VoiceRecognizer_RecognizeCompleted;
+            }
+
+            _voiceRecognizer.RecognizeAsync(
+                RecognizeMode.Multiple);
+
+            _voiceListening = true;
+
+            VoiceControlButton.Content =
+                "🎤  Stop Voice Control";
+
+            VoiceStatusText.Text =
+                "Listening: say Home, Back, OK, Play, Volume Up, and more.";
+
+            UpdateDiagnostics(
+                message: "Voice control started.");
+        }
+        catch (Exception ex)
+        {
+            VoiceStatusText.Text =
+                $"Voice control failed: {ex.Message}";
+
+            UpdateDiagnostics(
+                message: ex.Message);
+        }
+    }
+
+    private async void VoiceRecognizer_SpeechRecognized(
+        object? sender,
+        SpeechRecognizedEventArgs e)
+    {
+        if (e.Result.Confidence < 0.55)
+        {
+            await Dispatcher.InvokeAsync(
+                () =>
+                    VoiceStatusText.Text =
+                        $"Heard \"{e.Result.Text}\" but confidence was too low.");
+
+            return;
+        }
+
+        if (!VoiceCommandMap.TryGetValue(
+                e.Result.Text,
+                out var key))
+        {
+            return;
+        }
+
+        var roku =
+            _rokuClient;
+
+        if (roku is null)
+            return;
+
+        try
+        {
+            await Dispatcher.InvokeAsync(
+                () =>
+                    VoiceStatusText.Text =
+                        $"Heard: {e.Result.Text}");
+
+            await roku.SendKeyAsync(key);
+
+            await Dispatcher.InvokeAsync(
+                () =>
+                {
+                    StatusText.Text =
+                        $"Voice command sent: {e.Result.Text}";
+
+                    UpdateDiagnostics(
+                        message:
+                            $"Voice remote command: {e.Result.Text}.");
+                });
+        }
+        catch (Exception ex)
+        {
+            await Dispatcher.InvokeAsync(
+                () =>
+                    VoiceStatusText.Text =
+                        $"Voice command failed: {ex.Message}");
+        }
+    }
+
+    private void VoiceRecognizer_RecognizeCompleted(
+        object? sender,
+        RecognizeCompletedEventArgs e)
+    {
+        Dispatcher.Invoke(
+            () =>
+            {
+                _voiceListening = false;
+
+                VoiceControlButton.Content =
+                    "🎤  Start Voice Control";
+
+                VoiceStatusText.Text =
+                    e.Error is null
+                        ? "Voice control is off"
+                        : $"Voice recognition stopped: {e.Error.Message}";
+            });
+    }
+
+    private void StopVoiceControl()
+    {
+        if (_voiceRecognizer is not null)
+        {
+            try
+            {
+                _voiceRecognizer.RecognizeAsyncCancel();
+            }
+            catch
+            {
+            }
+        }
+
+        _voiceListening = false;
+
+        if (VoiceControlButton is not null)
+            VoiceControlButton.Content =
+                "🎤  Start Voice Control";
+
+        if (VoiceStatusText is not null)
+            VoiceStatusText.Text =
+                "Voice control is off";
+
+        UpdateDiagnostics(
+            message: "Voice control stopped.");
+    }
+
     private async void RefreshAppsButton_Click(object sender, RoutedEventArgs e) =>
         await LoadAppsAsync();
 
@@ -1782,6 +2032,20 @@ public partial class MainWindow : Window
     protected override async void OnClosed(EventArgs e)
     {
         SaveCurrentSettings();
+
+        StopVoiceControl();
+
+        if (_voiceRecognizer is not null)
+        {
+            _voiceRecognizer.SpeechRecognized -=
+                VoiceRecognizer_SpeechRecognized;
+
+            _voiceRecognizer.RecognizeCompleted -=
+                VoiceRecognizer_RecognizeCompleted;
+
+            _voiceRecognizer.Dispose();
+            _voiceRecognizer = null;
+        }
 
         _folderPollTimer.Stop();
         await _folderServer.DisposeAsync();

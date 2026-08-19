@@ -1,53 +1,64 @@
-# Dowe LanCaster v0.7.0
+# Dowe LanCaster v0.8.0
 
 Dowe LanCaster is a Windows-to-Roku LAN casting, playlist, live-streaming,
 link-streaming, and remote-control application.
 
-## New in v0.7.0
+## New in v0.8.0
 
-### Folder Cast
-Stream a complete folder of videos as a Roku playlist.
+### Redesigned Roku Remote
+The Remote tab now looks and behaves more like a physical Roku remote.
 
-- Folder picker
-- Recursive subfolder scanning
-- MP4/MKV/AVI/WebM/MOV/MPEG/TS/WMV/FLV support
-- FFmpeg H.264/AAC transcoding for mixed-format folders
-- Previous / Play / Next / Stop
-- Auto-play next
-- Shuffle
-- Repeat Off / One / All
-- Move items up/down
-- Sort A-Z / Z-A
-- Double-click to start from any item
-- Failed-item skipping
-- Current item / playlist position
-- Saved folder preferences
+- rounded remote body
+- directional pad
+- dedicated OK button
+- Back / Home / Replay
+- Rewind / Play-Pause / Fast Forward
+- volume controls
+- larger keyboard text input
+- keyboard placeholder text
+- installed Roku app launcher
 
-### Dedicated intro video
-Startup now plays:
+### Voice Control
+A microphone button enables Windows speech recognition for Roku commands.
 
-`src\DoweLanCaster.Windows\Resources\intro.mp4`
+Examples:
 
-The original PNG remains as a fallback:
+`Home`
+`Back`
+`Up`
+`Down`
+`Left`
+`Right`
+`OK`
+`Play`
+`Pause`
+`Fast Forward`
+`Rewind`
+`Volume Up`
+`Volume Down`
+`Mute`
 
-`src\DoweLanCaster.Windows\Resources\intro.png`
+Voice recognition uses the default Windows microphone.
 
-Replace `intro.mp4` with another H.264 MP4 using the same filename to change the startup video without changing code.
+### Dark Mode
+The entire Windows application now supports optional light and dark themes.
+
+The selected theme is saved between launches.
 
 ## Existing features
 
+- Folder Cast
 - Link Cast
-- Direct media URL bypass
+- direct media URL detection
 - yt-dlp webpage extraction
-- Live desktop / monitor / window cast
-- Native Windows system-audio loopback
-- Local File Cast
-- Roku remote
-- SSDP + LAN Roku discovery
+- Live Cast
+- Windows system-audio loopback
+- File Cast
+- Roku SSDP + LAN discovery
 - Add Roku by IP
-- Saved preferences
 - Diagnostics
-- Centered/scaled Roku receiver
+- saved preferences
+- dedicated startup `intro.mp4`
 
 ## Ports
 
@@ -59,7 +70,7 @@ Replace `intro.mp4` with another H.264 MP4 using the same filename to change the
 
 ## Build
 
-Stop any running app before rebuilding:
+Close Dowe LanCaster before rebuilding:
 
 ```powershell
 Get-Process DoweLanCaster -ErrorAction SilentlyContinue | Stop-Process -Force
@@ -68,18 +79,12 @@ dotnet clean
 dotnet build
 ```
 
-## Roku
-
-Ready-to-sideload receiver:
-
-`dist\DoweLanCaster-Roku.zip`
+The Windows build restores both NAudio and System.Speech from NuGet.
 
 ## Git checkpoint
 
 The release package includes:
 
-`DoweLanCaster-v0.7.0.bundle`
-
-This Git bundle contains the v0.7.0 checkpoint commit and tag.
+`DoweLanCaster-v0.8.0.bundle`
 
 See `docs\GIT-CHECKPOINT.txt`.

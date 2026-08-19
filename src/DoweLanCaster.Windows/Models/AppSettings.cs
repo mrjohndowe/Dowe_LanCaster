@@ -12,4 +12,5 @@ public sealed class AppSettings
     public bool FolderIncludeSubfolders { get; set; } = true;
     public string FolderRepeatMode { get; set; } = "Off";
     public bool FolderAutoPlayNext { get; set; } = true;
+    public bool UseDarkMode { get; set; }
 }

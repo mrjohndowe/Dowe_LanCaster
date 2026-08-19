@@ -1,3 +1,3 @@
-Dowe LanCaster v0.7.0
-Commit: 86a4519cc9656736733652a98fa028d5804ce7b1
-Tag: v0.7.0
+Dowe LanCaster v0.8.0
+Commit: 0cc1a81de98f78774a5da175bc7cc88edbf43b10
+Tag: v0.8.0

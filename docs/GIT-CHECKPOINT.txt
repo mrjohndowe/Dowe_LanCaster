@@ -1,15 +1,22 @@
-Dowe LanCaster v0.7.0 Git Checkpoint
+Dowe LanCaster v0.8.0 Git Checkpoint
 
 Commit:
-86a4519cc9656736733652a98fa028d5804ce7b1
+0cc1a81de98f78774a5da175bc7cc88edbf43b10
 
 Commit message:
-Dowe LanCaster v0.7.0 Folder Cast and intro video checkpoint
+Dowe LanCaster v0.8.0 remote voice and dark mode checkpoint
 
 Tag:
-v0.7.0
+v0.8.0
 
-Includes Folder Cast plus the dedicated Resources\intro.mp4 startup video.
+Major changes:
+- physical-remote-style Remote page
+- larger Roku keyboard text field
+- keyboard placeholder
+- Windows speech voice controls
+- optional application-wide dark mode
+- persisted theme setting
+- all previous v0.7.0 features retained
 
 Portable Git bundle:
-DoweLanCaster-v0.7.0.bundle
+DoweLanCaster-v0.8.0.bundle
