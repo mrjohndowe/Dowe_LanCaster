@@ -1,0 +1,31 @@
+# Visual Studio / .NET
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+
+# Build output / packages
+dist/
+publish/
+*.zip
+
+# Local app settings
+appsettings.local.json
+*.local.json
+
+# Logs
+logs/
+*.log
+
+# OS junk
+Thumbs.db
+.DS_Store

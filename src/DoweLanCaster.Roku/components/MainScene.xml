@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="streamUrl" type="string" onChange="onStreamUrlChanged"/>
+        <field id="mediaType" type="string"/>
+    </interface>
+
+    <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+
+    <children>
+        <Rectangle
+            id="background"
+            width="1280"
+            height="720"
+            translation="[0,0]"
+            color="0x000000FF" />
+
+        <Video
+            id="videoPlayer"
+            width="1280"
+            height="720"
+            translation="[0,0]"
+            visible="false" />
+
+        <Label
+            id="statusLabel"
+            width="800"
+            height="120"
+            translation="[240,300]"
+            horizAlign="center"
+            vertAlign="center"
+            text="Dowe LanCaster ready" />
+    </children>
+</component>

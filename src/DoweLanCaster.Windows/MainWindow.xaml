@@ -1,0 +1,258 @@
+<Window x:Class="DoweLanCaster.MainWindow"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="Dowe LanCaster" Height="860" Width="1220" MinHeight="760" MinWidth="1040"
+ WindowStartupLocation="CenterScreen">
+<Grid Margin="18">
+<Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+
+<StackPanel Grid.Row="0">
+<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="14">
+<Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+<TextBlock Text="Roku:" VerticalAlignment="Center" FontWeight="SemiBold"/>
+<ComboBox x:Name="DeviceComboBox" Grid.Column="2" MinWidth="420" Height="32" SelectionChanged="DeviceComboBox_SelectionChanged"/>
+<Button x:Name="ScanButton" Grid.Column="4" Content="Scan for Roku Devices" Padding="18,6" Click="ScanButton_Click"/>
+</Grid>
+</Border>
+
+<Border BorderBrush="#888" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,8,0,0">
+<Grid>
+<Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+<TextBlock Text="Manual IP:" VerticalAlignment="Center" FontWeight="SemiBold"/>
+<TextBox x:Name="ManualRokuIpTextBox" Grid.Column="2" Height="30" VerticalContentAlignment="Center" ToolTip="Example: 10.0.0.105"/>
+<Button Grid.Column="4" Content="Add Roku by IP" Width="130" Click="AddRokuByIpButton_Click"/>
+</Grid>
+</Border>
+</StackPanel>
+
+<TabControl Grid.Row="2">
+
+
+<TabItem Header="Link Cast">
+<ScrollViewer VerticalScrollBarVisibility="Auto">
+<StackPanel Margin="16">
+
+<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+<StackPanel>
+<TextBlock Text="Stream a Video Link" FontSize="24" FontWeight="Bold" Margin="0,0,0,8"/>
+<TextBlock Text="Paste a public, non-DRM webpage or direct media URL. Dowe LanCaster extracts the media, converts it to Roku-friendly HLS, and streams it over your LAN."
+           TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,14"/>
+<TextBlock Text="Video URL" FontWeight="SemiBold"/>
+<TextBox x:Name="LinkUrlTextBox" Height="36" Margin="0,6,0,12"
+         VerticalContentAlignment="Center"/>
+<StackPanel Orientation="Horizontal">
+<Button x:Name="AnalyzeLinkButton" Content="Analyze Link" Width="140" Height="40"
+        Margin="0,0,10,0" Click="AnalyzeLinkButton_Click"/>
+<Button x:Name="StreamLinkButton" Content="Stream to Roku" Width="150" Height="40"
+        Margin="0,0,10,0" IsEnabled="False" Click="StreamLinkButton_Click"/>
+<Button x:Name="StopLinkButton" Content="Stop Link Stream" Width="150" Height="40"
+        IsEnabled="False" Click="StopLinkButton_Click"/>
+</StackPanel>
+
+<Grid Margin="0,14,0,0">
+<Grid.ColumnDefinitions>
+<ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/>
+</Grid.ColumnDefinitions>
+<StackPanel>
+<TextBlock Text="Encoder" FontWeight="SemiBold"/>
+<ComboBox x:Name="LinkEncoderComboBox" Height="34" Margin="0,6,0,0"/>
+</StackPanel>
+<StackPanel Grid.Column="2">
+<TextBlock Text="Quality" FontWeight="SemiBold"/>
+<ComboBox x:Name="LinkBitrateComboBox" Height="34" Margin="0,6,0,0" SelectedIndex="1">
+<ComboBoxItem Content="4000 kbps"/>
+<ComboBoxItem Content="8000 kbps"/>
+<ComboBoxItem Content="12000 kbps"/>
+<ComboBoxItem Content="18000 kbps"/>
+</ComboBox>
+</StackPanel>
+</Grid>
+</StackPanel>
+</Border>
+
+<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+<Grid>
+<Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+<Grid.RowDefinitions>
+<RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+<RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+</Grid.RowDefinitions>
+<TextBlock Grid.Row="0" Text="Title" FontWeight="SemiBold" Margin="0,4"/>
+<TextBlock Grid.Row="0" Grid.Column="1" x:Name="LinkTitleText" Text="-" TextWrapping="Wrap" Margin="0,4"/>
+<TextBlock Grid.Row="1" Text="Protocol" FontWeight="SemiBold" Margin="0,4"/>
+<TextBlock Grid.Row="1" Grid.Column="1" x:Name="LinkProtocolText" Text="-" Margin="0,4"/>
+<TextBlock Grid.Row="2" Text="Source type" FontWeight="SemiBold" Margin="0,4"/>
+<TextBlock Grid.Row="2" Grid.Column="1" x:Name="LinkTypeText" Text="-" Margin="0,4"/>
+<TextBlock Grid.Row="3" Text="Roku stream" FontWeight="SemiBold" Margin="0,4"/>
+<TextBox Grid.Row="3" Grid.Column="1" x:Name="LinkStreamUrlTextBox"
+         IsReadOnly="True" Height="32" VerticalContentAlignment="Center" Margin="0,4"/>
+<TextBlock Grid.Row="4" Text="Status" FontWeight="SemiBold" Margin="0,4"/>
+<TextBlock Grid.Row="4" Grid.Column="1" x:Name="LinkStatusText"
+           Text="Ready. Paste a URL and click Analyze Link." TextWrapping="Wrap" Margin="0,4"/>
+</Grid>
+</Border>
+
+<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18">
+<StackPanel>
+<TextBlock Text="Compatibility" FontSize="20" FontWeight="Bold" Margin="0,0,0,8"/>
+<TextBlock Text="Works with direct media links and many sites supported by yt-dlp. DRM-protected video, paywalled streams, or sites that block extraction are not bypassed."
+           TextWrapping="Wrap" Opacity="0.78"/>
+</StackPanel>
+</Border>
+
+</StackPanel>
+</ScrollViewer>
+</TabItem>
+
+<TabItem Header="Live Cast">
+<ScrollViewer VerticalScrollBarVisibility="Auto">
+<StackPanel Margin="16">
+
+<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+<Grid>
+<Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+<StackPanel>
+<TextBlock Text="Capture Source" FontSize="22" FontWeight="Bold" Margin="0,0,0,12"/>
+<ComboBox x:Name="CaptureSourceComboBox" Height="34" Margin="0,0,0,10"/>
+<Button Content="Refresh Screens / Windows" HorizontalAlignment="Left" Padding="14,6" Click="RefreshCaptureSourcesButton_Click"/>
+</StackPanel>
+<StackPanel Grid.Column="2">
+<TextBlock Text="PC Audio" FontSize="22" FontWeight="Bold" Margin="0,0,0,12"/>
+<CheckBox x:Name="IncludeAudioCheckBox" Content="Stream PC Audio" Margin="0,0,0,10"/>
+<ComboBox x:Name="AudioDeviceComboBox" Height="34" Margin="0,0,0,10"/>
+<Button Content="Refresh Audio Devices" HorizontalAlignment="Left" Padding="14,6" Click="RefreshAudioDevicesButton_Click"/>
+</StackPanel>
+</Grid>
+</Border>
+
+<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+<Grid>
+<Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+<StackPanel>
+<TextBlock Text="Encoding" FontSize="22" FontWeight="Bold" Margin="0,0,0,12"/>
+<TextBlock Text="Encoder"/>
+<ComboBox x:Name="EncoderComboBox" Height="34" Margin="0,5,0,10"/>
+<TextBlock Text="Frame rate"/>
+<ComboBox x:Name="FpsComboBox" Height="34" Margin="0,5,0,0" SelectedIndex="0">
+<ComboBoxItem Content="30"/><ComboBoxItem Content="60"/>
+</ComboBox>
+</StackPanel>
+<StackPanel Grid.Column="2">
+<TextBlock Text="Quality" FontSize="22" FontWeight="Bold" Margin="0,0,0,12"/>
+<TextBlock Text="Video bitrate"/>
+<ComboBox x:Name="BitrateComboBox" Height="34" Margin="0,5,0,0" SelectedIndex="1">
+<ComboBoxItem Content="4000 kbps"/><ComboBoxItem Content="8000 kbps"/>
+<ComboBoxItem Content="12000 kbps"/><ComboBoxItem Content="18000 kbps"/>
+</ComboBox>
+<TextBlock Text="Live mode uses a short rolling HLS playlist with 2-second segments."
+           Margin="0,12,0,0" Opacity="0.75" TextWrapping="Wrap"/>
+</StackPanel>
+</Grid>
+</Border>
+
+<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18">
+<StackPanel>
+<TextBlock Text="Live Stream" FontSize="22" FontWeight="Bold" Margin="0,0,0,12"/>
+<TextBox x:Name="LiveStreamUrlTextBox" Height="34" IsReadOnly="True" Margin="0,0,0,12" VerticalContentAlignment="Center"/>
+<StackPanel Orientation="Horizontal">
+<Button x:Name="StartLiveButton" Content="Start Live Cast" Width="150" Height="44" Margin="0,0,10,0" Click="StartLiveButton_Click"/>
+<Button x:Name="StopLiveButton" Content="Stop Live Cast" Width="150" Height="44" IsEnabled="False" Click="StopLiveButton_Click"/>
+</StackPanel>
+<TextBlock x:Name="LiveStatusText" Text="Select a source and Roku device." Margin="0,12,0,0" TextWrapping="Wrap"/>
+</StackPanel>
+</Border>
+
+</StackPanel>
+</ScrollViewer>
+</TabItem>
+
+<TabItem Header="File Cast">
+<StackPanel Margin="16">
+<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+<StackPanel>
+<TextBlock Text="Cast from PC" FontSize="24" FontWeight="Bold" Margin="0,0,0,12"/>
+<DockPanel>
+<Button Content="Choose Video File..." Width="160" DockPanel.Dock="Right" Click="ChooseFileButton_Click"/>
+<TextBox x:Name="SelectedFileTextBox" Height="34" IsReadOnly="True" Margin="0,0,12,0" VerticalContentAlignment="Center"/>
+</DockPanel>
+</StackPanel>
+</Border>
+<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18">
+<StackPanel>
+<TextBlock Text="Stream" FontSize="24" FontWeight="Bold" Margin="0,0,0,12"/>
+<TextBox x:Name="StreamUrlTextBox" IsReadOnly="True" Height="34" Margin="0,0,0,12" VerticalContentAlignment="Center"/>
+<StackPanel Orientation="Horizontal">
+<Button x:Name="CastButton" Content="Cast to Roku" Width="150" Height="44" Margin="0,0,10,0" Click="CastButton_Click"/>
+<Button x:Name="StopCastingButton" Content="Stop Casting" Width="150" Height="44" IsEnabled="False" Click="StopCastingButton_Click"/>
+</StackPanel>
+<TextBlock x:Name="CastStatusText" Text="Choose a file and Roku device." Margin="0,12,0,0"/>
+</StackPanel>
+</Border>
+</StackPanel>
+</TabItem>
+
+<TabItem Header="Remote">
+<Grid Margin="16">
+<Grid.ColumnDefinitions><ColumnDefinition Width="430"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18">
+<StackPanel>
+<TextBlock Text="Remote" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+<UniformGrid Columns="3" Margin="0,0,0,10">
+<Button Content="Back" Margin="4" Height="42" Tag="Back" Click="RemoteButton_Click"/>
+<Button Content="Home" Margin="4" Height="42" Tag="Home" Click="RemoteButton_Click"/>
+<Button Content="Replay" Margin="4" Height="42" Tag="InstantReplay" Click="RemoteButton_Click"/>
+</UniformGrid>
+<Grid Margin="40,5">
+<Grid.RowDefinitions><RowDefinition Height="55"/><RowDefinition Height="55"/><RowDefinition Height="55"/></Grid.RowDefinitions>
+<Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="90"/><ColumnDefinition Width="70"/></Grid.ColumnDefinitions>
+<Button Grid.Row="0" Grid.Column="1" Content="▲" FontSize="22" Tag="Up" Click="RemoteButton_Click"/>
+<Button Grid.Row="1" Grid.Column="0" Content="◀" FontSize="22" Tag="Left" Click="RemoteButton_Click"/>
+<Button Grid.Row="1" Grid.Column="1" Content="OK" FontWeight="Bold" Tag="Select" Click="RemoteButton_Click"/>
+<Button Grid.Row="1" Grid.Column="2" Content="▶" FontSize="22" Tag="Right" Click="RemoteButton_Click"/>
+<Button Grid.Row="2" Grid.Column="1" Content="▼" FontSize="22" Tag="Down" Click="RemoteButton_Click"/>
+</Grid>
+<UniformGrid Columns="3" Margin="0,12,0,10">
+<Button Content="⏪" Margin="4" Height="46" Tag="Rev" Click="RemoteButton_Click"/>
+<Button Content="⏯" Margin="4" Height="46" Tag="Play" Click="RemoteButton_Click"/>
+<Button Content="⏩" Margin="4" Height="46" Tag="Fwd" Click="RemoteButton_Click"/>
+</UniformGrid>
+<UniformGrid Columns="3">
+<Button Content="Vol -" Margin="4" Height="42" Tag="VolumeDown" Click="RemoteButton_Click"/>
+<Button Content="Mute" Margin="4" Height="42" Tag="VolumeMute" Click="RemoteButton_Click"/>
+<Button Content="Vol +" Margin="4" Height="42" Tag="VolumeUp" Click="RemoteButton_Click"/>
+</UniformGrid>
+<TextBlock Text="Keyboard text" FontWeight="SemiBold" Margin="0,16,0,6"/>
+<DockPanel><TextBox x:Name="RokuTextInput" Height="32" Margin="0,0,8,0"/><Button Content="Send" Width="80" Click="SendTextButton_Click"/></DockPanel>
+</StackPanel>
+</Border>
+
+<Border Grid.Column="2" BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18">
+<Grid>
+<Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+<TextBlock Text="Installed Roku Apps" FontSize="24" FontWeight="Bold"/>
+<Button Grid.Row="1" Content="Refresh Apps" HorizontalAlignment="Left" Padding="14,6" Margin="0,12" Click="RefreshAppsButton_Click"/>
+<ListBox x:Name="AppsListBox" Grid.Row="2" DisplayMemberPath="Name" MouseDoubleClick="AppsListBox_MouseDoubleClick"/>
+<Button Grid.Row="3" Content="Launch Selected App" Height="42" Margin="0,12,0,0" Click="LaunchSelectedAppButton_Click"/>
+</Grid>
+</Border>
+</Grid>
+</TabItem>
+
+
+<TabItem Header="Diagnostics">
+<Grid Margin="16">
+<Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+<TextBlock Text="Dowe LanCaster Diagnostics" FontSize="24" FontWeight="Bold" Margin="0,0,0,12"/>
+<TextBox x:Name="DiagnosticsTextBox" Grid.Row="1" IsReadOnly="True"
+         AcceptsReturn="True" TextWrapping="Wrap"
+         VerticalScrollBarVisibility="Auto"
+         FontFamily="Consolas"
+         Text="Diagnostics will appear here."/>
+</Grid>
+</TabItem>
+
+</TabControl>
+
+<StatusBar Grid.Row="3" Margin="0,12,0,0"><StatusBarItem><TextBlock x:Name="StatusText" Text="Ready. Scan for Roku devices."/></StatusBarItem></StatusBar>
+</Grid>
+</Window>

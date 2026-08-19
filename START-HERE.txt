@@ -1,0 +1,33 @@
+DOWE LANCASTER v0.5.0
+
+1. Run SETUP-DEPENDENCIES.cmd
+   - installs FFmpeg
+   - installs yt-dlp
+
+2. Run BUILD-RELEASE.cmd
+   - builds the Windows x64 release
+   - creates dist\DoweLanCaster-Windows-x64.zip
+
+3. Sideload:
+   dist\DoweLanCaster-Roku.zip
+   onto your Roku developer channel.
+
+4. Run DoweLanCaster.exe.
+
+LINK CAST
+- Paste a public/non-DRM video page or direct media URL.
+- Click Analyze Link.
+- Pick encoder and quality.
+- Click Stream to Roku.
+
+LIVE CAST
+- Desktop, monitor, or application window.
+
+FILE CAST
+- Local media files.
+
+REMOTE
+- Control the Roku and launch installed apps.
+
+Dowe LanCaster does not bypass DRM, paywalls, protected playback,
+or site access controls.

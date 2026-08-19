@@ -1,0 +1,24 @@
+Dowe LanCaster v0.6.0 Git Checkpoint
+
+Checkpoint commit message:
+Dowe LanCaster v0.6.0 checkpoint
+
+Tag:
+v0.6.0
+
+Included:
+- native Windows WASAPI system-audio loopback capture
+- DirectShow audio input fallback
+- direct media URL bypass before yt-dlp
+- robust Roku discovery
+- manual Roku IP fallback
+- persistent preferences
+- diagnostics tab
+- centered/scaled Roku receiver
+- previous Link Cast, Live Cast, File Cast, and Remote features
+
+For an existing local clone, after copying the v0.6.0 source over it:
+
+git add .
+git commit -m "Dowe LanCaster v0.6.0 checkpoint"
+git tag -a v0.6.0 -m "Dowe LanCaster v0.6.0 checkpoint"

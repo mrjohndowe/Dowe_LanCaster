@@ -1,0 +1,40 @@
+name: Build Dowe LanCaster
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup dependencies
+        shell: powershell
+        run: .\scripts\Setup-Dependencies.ps1
+
+      - name: Build release
+        shell: powershell
+        run: .\scripts\Build-Release.ps1
+
+      - name: Upload Windows release
+        uses: actions/upload-artifact@v4
+        with:
+          name: DoweLanCaster-Windows-x64
+          path: dist\DoweLanCaster-Windows-x64.zip
+
+      - name: Upload Roku receiver
+        uses: actions/upload-artifact@v4
+        with:
+          name: DoweLanCaster-Roku
+          path: dist\DoweLanCaster-Roku.zip
