@@ -3,12 +3,11 @@ name: Build and publish release
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+-*"
+      - "v*.*.*"
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version (for example, v1.2.3)"
+        description: "Release version (for example, v0.7.0)"
         required: true
         default: "v0.7.0"
         type: string
@@ -22,7 +21,9 @@ concurrency:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    name: Build ZIP and Windows installer
+    runs-on: windows-latest
+
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -31,123 +32,120 @@ jobs:
 
       - name: Determine and validate version
         id: version
-        shell: bash
+        shell: pwsh
         env:
           EVENT_NAME: ${{ github.event_name }}
           TAG_NAME: ${{ github.ref_name }}
           MANUAL_VERSION: ${{ inputs.version }}
         run: |
-          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
-            VERSION="$MANUAL_VERSION"
-          else
-            VERSION="$TAG_NAME"
-          fi
-          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
-            echo "Invalid version '$VERSION'; use a version such as v1.2.3."
-            exit 1
-          fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "number=${VERSION#v}" >> "$GITHUB_OUTPUT"
+          $version = if ($env:EVENT_NAME -eq 'workflow_dispatch') {
+            $env:MANUAL_VERSION
+          } else {
+            $env:TAG_NAME
+          }
+          if ($version -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+$') {
+            throw "Invalid version '$version'. Use a version such as v0.7.0."
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "number=$($version.Substring(1))" >> $env:GITHUB_OUTPUT
 
       - name: Ensure manual release does not already exist
         if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          if gh release view "$VERSION" >/dev/null 2>&1; then
-            echo "Release '$VERSION' already exists."
-            exit 1
-          fi
+          gh release view $env:VERSION 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            throw "Release '$env:VERSION' already exists."
+          }
+          $global:LASTEXITCODE = 0
 
-      - name: Set up Node.js
-        if: hashFiles('package.json') != ''
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Set up .NET
-        if: hashFiles('**/*.csproj', '**/*.fsproj', '**/*.sln') != ''
+      - name: Set up .NET 8
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
-      - name: Set up Java
-        if: hashFiles('pom.xml', 'build.gradle', 'build.gradle.kts') != ''
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
-          cache: ${{ hashFiles('pom.xml') != '' && 'maven' || 'gradle' }}
-
-      - name: Build project
-        shell: bash
+      - name: Publish self-contained Windows application
+        shell: pwsh
         env:
           RELEASE_VERSION: ${{ steps.version.outputs.number }}
         run: |
-          set -euo pipefail
-          if [[ -f package.json ]]; then
-            npm ci
-            npm run build --if-present
-          elif find . -maxdepth 4 \( -name '*.sln' -o -name '*.csproj' -o -name '*.fsproj' \) -print -quit | grep -q .; then
-            PROJECT="src/DoweLanCaster.Windows/DoweLanCaster.Windows.csproj"
-            dotnet restore "$PROJECT" \
-              --runtime win-x64 \
-              -p:EnableWindowsTargeting=true
-            dotnet publish "$PROJECT" \
-              --configuration Release \
-              --runtime win-x64 \
-              --self-contained true \
-              --no-restore \
-              -p:Version="$RELEASE_VERSION" \
-              -p:EnableWindowsTargeting=true \
-              -p:PublishSingleFile=false \
-              -p:DebugType=None \
-              -p:DebugSymbols=false \
-              --output "$GITHUB_WORKSPACE/release-build"
-            if [[ -f dist/DoweLanCaster-Roku.zip ]]; then
-              cp dist/DoweLanCaster-Roku.zip release-build/
-            fi
-          elif [[ -f pom.xml ]]; then
-            mvn --batch-mode -Drevision="$RELEASE_VERSION" package
-          elif [[ -f gradlew ]]; then
-            chmod +x ./gradlew
-            ./gradlew build
-          elif [[ -f build.gradle || -f build.gradle.kts ]]; then
-            gradle build
-          else
-            echo "No supported build manifest found; packaging the source tree."
-          fi
+          $project = 'src/DoweLanCaster.Windows/DoweLanCaster.Windows.csproj'
+          $publishDir = Join-Path $env:GITHUB_WORKSPACE 'release-build'
+          dotnet restore $project --runtime win-x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet publish $project `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained true `
+            --no-restore `
+            -p:Version=$env:RELEASE_VERSION `
+            -p:PublishSingleFile=false `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            --output $publishDir
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item 'START-HERE.txt' $publishDir -Force
+          Set-Content (Join-Path $publishDir 'VERSION') $env:RELEASE_VERSION
+          $rokuPackage = 'dist/DoweLanCaster-Roku.zip'
+          if (Test-Path $rokuPackage) {
+            Copy-Item $rokuPackage $publishDir -Force
+          }
 
-      - name: Package release file
+      - name: Create portable ZIP
         id: package
-        shell: bash
+        shell: pwsh
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          set -euo pipefail
-          STAGE="$RUNNER_TEMP/Dowe-LanCaster-$VERSION"
-          mkdir -p "$STAGE"
-          if [[ -d release-build ]]; then
-            cp -R release-build/. "$STAGE/"
-          elif [[ -d dist ]]; then
-            cp -R dist/. "$STAGE/"
-          elif [[ -d build/libs ]]; then
-            cp -R build/libs/. "$STAGE/"
-          elif compgen -G "target/*.jar" >/dev/null; then
-            cp target/*.jar "$STAGE/"
-          elif [[ -d build ]]; then
-            cp -R build/. "$STAGE/"
-          else
-            git archive --format=tar HEAD | tar -x -C "$STAGE"
-          fi
-          printf '%s\n' "$VERSION" > "$STAGE/VERSION"
-          ASSET="$GITHUB_WORKSPACE/Dowe-LanCaster-$VERSION.zip"
-          (cd "$RUNNER_TEMP" && zip -qr "$ASSET" "Dowe-LanCaster-$VERSION")
-          echo "asset=$ASSET" >> "$GITHUB_OUTPUT"
+          $assetsDir = Join-Path $env:GITHUB_WORKSPACE 'release-assets'
+          New-Item -ItemType Directory -Force -Path $assetsDir | Out-Null
+          $zip = Join-Path $assetsDir "Dowe-LanCaster-$env:VERSION-Windows-x64.zip"
+          Compress-Archive -Path 'release-build/*' -DestinationPath $zip -CompressionLevel Optimal
+          "zip=$zip" >> $env:GITHUB_OUTPUT
 
-      - name: Create release and generate release notes
+      - name: Locate or install Inno Setup
+        id: inno
+        shell: pwsh
+        run: |
+          $compiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'
+          if (-not (Test-Path $compiler)) {
+            choco install innosetup --no-progress -y
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          if (-not (Test-Path $compiler)) {
+            throw 'Inno Setup compiler was not found after installation.'
+          }
+          "compiler=$compiler" >> $env:GITHUB_OUTPUT
+
+      - name: Build Windows installer EXE
+        id: installer
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.number }}
+          ISCC: ${{ steps.inno.outputs.compiler }}
+        run: |
+          & $env:ISCC "/DMyAppVersion=$env:VERSION" 'installer/DoweLanCaster.iss'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $installer = Join-Path $env:GITHUB_WORKSPACE "release-assets/Dowe-LanCaster-v$env:VERSION-Setup.exe"
+          if (-not (Test-Path $installer)) {
+            throw "Installer was not created at $installer"
+          }
+          "exe=$installer" >> $env:GITHUB_OUTPUT
+
+      - name: Preserve build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dowe-LanCaster-${{ steps.version.outputs.version }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            ${{ steps.package.outputs.zip }}
+            ${{ steps.installer.outputs.exe }}
+
+      - name: Create release with ZIP, installer, and generated notes
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.version }}
@@ -155,4 +153,6 @@ jobs:
           target_commitish: ${{ github.sha }}
           generate_release_notes: true
           fail_on_unmatched_files: true
-          files: ${{ steps.package.outputs.asset }}
+          files: |
+            ${{ steps.package.outputs.zip }}
+            ${{ steps.installer.outputs.exe }}
