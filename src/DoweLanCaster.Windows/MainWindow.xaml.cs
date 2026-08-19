@@ -443,7 +443,7 @@ public partial class MainWindow : Window
     }
 
     private static void SelectComboItemByContent(
-        ComboBox combo,
+        System.Windows.Controls.ComboBox combo,
         string desired)
     {
         foreach (var item in combo.Items)
