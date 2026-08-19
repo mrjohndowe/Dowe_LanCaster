@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using DoweLanCaster.Models;
 using DoweLanCaster.Services;
 using Microsoft.Win32;
@@ -22,6 +23,13 @@ public partial class MainWindow : Window
     private readonly AudioBackendService _audioBackendService = new();
     private readonly SettingsService _settingsService = new();
     private readonly DiagnosticState _diagnostics = new();
+    private readonly FolderPlaylistService _folderPlaylistService = new();
+    private readonly LocalFileHlsTranscoder _folderTranscoder = new();
+    private readonly LiveStreamingServer _folderServer = new();
+    private readonly DispatcherTimer _folderPollTimer = new()
+    {
+        Interval = TimeSpan.FromSeconds(2)
+    };
 
     private RokuClient? _rokuClient;
     private string? _selectedFile;
@@ -29,12 +37,18 @@ public partial class MainWindow : Window
     private string? _ytDlpPath;
     private ExtractedMedia? _extractedMedia;
     private AppSettings _settings = new();
+    private List<FolderMediaItem> _folderItems = new();
+    private int _folderIndex = -1;
+    private bool _folderSawPlaying;
+    private bool _folderAdvanceInProgress;
 
     public MainWindow()
     {
         InitializeComponent();
 
         _settings = _settingsService.Load();
+
+        _folderPollTimer.Tick += FolderPollTimer_Tick;
 
         Loaded += async (_, _) =>
         {
@@ -43,6 +57,13 @@ public partial class MainWindow : Window
             await InitializeFFmpegAsync();
             InitializeYtDlp();
             await RefreshAudioSourcesAsync();
+
+            if (!string.IsNullOrWhiteSpace(_settings.LastFolderPath) &&
+                Directory.Exists(_settings.LastFolderPath))
+            {
+                ScanFolder(_settings.LastFolderPath);
+            }
+
             UpdateDiagnostics(
                 hls: "Stopped",
                 message: "Dowe LanCaster ready.");
@@ -105,6 +126,7 @@ public partial class MainWindow : Window
 
             EncoderComboBox.ItemsSource = encoders;
             LinkEncoderComboBox.ItemsSource = encoders;
+            FolderEncoderComboBox.ItemsSource = encoders;
 
             var preferred =
                 encoders.FirstOrDefault(x =>
@@ -116,6 +138,7 @@ public partial class MainWindow : Window
 
             EncoderComboBox.SelectedItem = preferred;
             LinkEncoderComboBox.SelectedItem = preferred;
+            FolderEncoderComboBox.SelectedItem = preferred;
 
             LiveStatusText.Text =
                 $"FFmpeg ready: {_ffmpegPath}";
@@ -429,6 +452,19 @@ public partial class MainWindow : Window
         IncludeAudioCheckBox.IsChecked =
             _settings.IncludeSystemAudio;
 
+        FolderPathTextBox.Text =
+            _settings.LastFolderPath ?? "";
+
+        FolderIncludeSubfoldersCheckBox.IsChecked =
+            _settings.FolderIncludeSubfolders;
+
+        FolderAutoPlayCheckBox.IsChecked =
+            _settings.FolderAutoPlayNext;
+
+        SelectComboItemByContent(
+            FolderRepeatComboBox,
+            _settings.FolderRepeatMode);
+
         SelectComboItemByContent(
             FpsComboBox,
             _settings.PreferredFps.ToString());
@@ -549,6 +585,22 @@ public partial class MainWindow : Window
                     bitrate;
             }
         }
+
+        _settings.LastFolderPath =
+            string.IsNullOrWhiteSpace(FolderPathTextBox.Text)
+                ? null
+                : FolderPathTextBox.Text.Trim();
+
+        _settings.FolderIncludeSubfolders =
+            FolderIncludeSubfoldersCheckBox.IsChecked == true;
+
+        _settings.FolderRepeatMode =
+            ((ComboBoxItem?)FolderRepeatComboBox.SelectedItem)
+            ?.Content?.ToString()
+            ?? "Off";
+
+        _settings.FolderAutoPlayNext =
+            FolderAutoPlayCheckBox.IsChecked == true;
 
         _settingsService.Save(_settings);
     }
@@ -912,6 +964,669 @@ public partial class MainWindow : Window
         await LoadAppsAsync();
     }
 
+    private void ChooseFolderButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        using var dialog =
+            new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = "Choose a folder of videos to stream",
+                UseDescriptionForTitle = true,
+                ShowNewFolderButton = false,
+                SelectedPath =
+                    Directory.Exists(FolderPathTextBox.Text)
+                        ? FolderPathTextBox.Text
+                        : ""
+            };
+
+        if (dialog.ShowDialog() !=
+            System.Windows.Forms.DialogResult.OK)
+        {
+            return;
+        }
+
+        FolderPathTextBox.Text =
+            dialog.SelectedPath;
+
+        _settings.LastFolderPath =
+            dialog.SelectedPath;
+
+        _settingsService.Save(_settings);
+
+        ScanFolder(dialog.SelectedPath);
+    }
+
+    private void ScanFolder(string folder)
+    {
+        try
+        {
+            _folderItems =
+                _folderPlaylistService.Scan(
+                    folder,
+                    FolderIncludeSubfoldersCheckBox.IsChecked == true)
+                .ToList();
+
+            FolderPlaylistListBox.ItemsSource =
+                _folderItems;
+
+            FolderCountText.Text =
+                $"{_folderItems.Count} video" +
+                (_folderItems.Count == 1 ? "" : "s");
+
+            FolderProgressText.Text =
+                $"0 of {_folderItems.Count}";
+
+            FolderPlayButton.IsEnabled =
+                _folderItems.Count > 0;
+
+            FolderPreviousButton.IsEnabled =
+                _folderItems.Count > 1;
+
+            FolderNextButton.IsEnabled =
+                _folderItems.Count > 1;
+
+            FolderNowPlayingText.Text =
+                _folderItems.Count == 0
+                    ? "No supported videos found"
+                    : "Ready";
+
+            _folderIndex = -1;
+
+            UpdateDiagnostics(
+                message:
+                    $"Folder scan found {_folderItems.Count} video(s).");
+        }
+        catch (Exception ex)
+        {
+            FolderNowPlayingText.Text =
+                $"Folder scan failed: {ex.Message}";
+
+            UpdateDiagnostics(
+                message: ex.Message);
+        }
+    }
+
+    private void RescanFolderButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (!string.IsNullOrWhiteSpace(
+                FolderPathTextBox.Text))
+        {
+            ScanFolder(
+                FolderPathTextBox.Text);
+        }
+    }
+
+    private void FolderOptionChanged(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (IsLoaded &&
+            !string.IsNullOrWhiteSpace(
+                FolderPathTextBox.Text) &&
+            Directory.Exists(
+                FolderPathTextBox.Text))
+        {
+            ScanFolder(
+                FolderPathTextBox.Text);
+        }
+    }
+
+    private void ShuffleFolderButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (_folderItems.Count < 2)
+            return;
+
+        var random = Random.Shared;
+
+        for (var i = _folderItems.Count - 1;
+             i > 0;
+             i--)
+        {
+            var j =
+                random.Next(i + 1);
+
+            (_folderItems[i], _folderItems[j]) =
+                (_folderItems[j], _folderItems[i]);
+        }
+
+        FolderPlaylistService.Renumber(
+            _folderItems);
+
+        RefreshFolderPlaylistView();
+
+        _folderIndex = -1;
+
+        FolderNowPlayingText.Text =
+            "Playlist shuffled.";
+
+        UpdateDiagnostics(
+            message: "Folder playlist shuffled.");
+    }
+
+    private void FolderMoveUpButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (FolderPlaylistListBox.SelectedItem
+            is not FolderMediaItem item)
+        {
+            return;
+        }
+
+        var index =
+            _folderItems.IndexOf(item);
+
+        if (index <= 0)
+            return;
+
+        (_folderItems[index - 1], _folderItems[index]) =
+            (_folderItems[index], _folderItems[index - 1]);
+
+        FolderPlaylistService.Renumber(
+            _folderItems);
+
+        RefreshFolderPlaylistView();
+
+        FolderPlaylistListBox.SelectedItem =
+            item;
+
+        if (_folderIndex == index)
+            _folderIndex = index - 1;
+        else if (_folderIndex == index - 1)
+            _folderIndex = index;
+
+        UpdateDiagnostics(
+            message: "Moved playlist item up.");
+    }
+
+    private void FolderMoveDownButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (FolderPlaylistListBox.SelectedItem
+            is not FolderMediaItem item)
+        {
+            return;
+        }
+
+        var index =
+            _folderItems.IndexOf(item);
+
+        if (index < 0 ||
+            index >= _folderItems.Count - 1)
+        {
+            return;
+        }
+
+        (_folderItems[index + 1], _folderItems[index]) =
+            (_folderItems[index], _folderItems[index + 1]);
+
+        FolderPlaylistService.Renumber(
+            _folderItems);
+
+        RefreshFolderPlaylistView();
+
+        FolderPlaylistListBox.SelectedItem =
+            item;
+
+        if (_folderIndex == index)
+            _folderIndex = index + 1;
+        else if (_folderIndex == index + 1)
+            _folderIndex = index;
+
+        UpdateDiagnostics(
+            message: "Moved playlist item down.");
+    }
+
+    private void FolderSortAscendingButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        SortFolderPlaylist(
+            descending: false);
+    }
+
+    private void FolderSortDescendingButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        SortFolderPlaylist(
+            descending: true);
+    }
+
+    private void SortFolderPlaylist(
+        bool descending)
+    {
+        FolderMediaItem? current =
+            _folderIndex >= 0 &&
+            _folderIndex < _folderItems.Count
+                ? _folderItems[_folderIndex]
+                : null;
+
+        _folderItems =
+            (descending
+                ? _folderItems.OrderByDescending(
+                    x => x.FileName,
+                    StringComparer.OrdinalIgnoreCase)
+                : _folderItems.OrderBy(
+                    x => x.FileName,
+                    StringComparer.OrdinalIgnoreCase))
+            .ToList();
+
+        FolderPlaylistService.Renumber(
+            _folderItems);
+
+        if (current is not null)
+            _folderIndex =
+                _folderItems.IndexOf(current);
+
+        RefreshFolderPlaylistView();
+
+        UpdateDiagnostics(
+            message:
+                descending
+                    ? "Folder playlist sorted Z-A."
+                    : "Folder playlist sorted A-Z.");
+    }
+
+    private void RefreshFolderPlaylistView()
+    {
+        FolderPlaylistListBox.ItemsSource = null;
+        FolderPlaylistListBox.ItemsSource =
+            _folderItems;
+    }
+
+    private async void FolderPlaylistListBox_MouseDoubleClick(
+        object sender,
+        MouseButtonEventArgs e)
+    {
+        if (FolderPlaylistListBox.SelectedItem
+            is not FolderMediaItem item)
+        {
+            return;
+        }
+
+        var index =
+            _folderItems.IndexOf(item);
+
+        if (index >= 0)
+            await PlayFolderIndexAsync(index);
+    }
+
+    private async void FolderPlayButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (_folderItems.Count == 0)
+            return;
+
+        int index;
+
+        if (FolderPlaylistListBox.SelectedItem
+            is FolderMediaItem selected)
+        {
+            index =
+                _folderItems.IndexOf(selected);
+        }
+        else if (_folderIndex >= 0)
+        {
+            index = _folderIndex;
+        }
+        else
+        {
+            index = 0;
+        }
+
+        await PlayFolderIndexAsync(index);
+    }
+
+    private async void FolderPreviousButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (_folderItems.Count == 0)
+            return;
+
+        var next =
+            _folderIndex <= 0
+                ? _folderItems.Count - 1
+                : _folderIndex - 1;
+
+        await PlayFolderIndexAsync(next);
+    }
+
+    private async void FolderNextButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        await AdvanceFolderAsync(
+            manual: true);
+    }
+
+    private async void FolderStopButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        await StopFolderInternalAsync(
+            sendHome: true);
+
+        FolderNowPlayingText.Text =
+            "Folder playback stopped.";
+
+        UpdateDiagnostics(
+            hls: "Folder Cast stopped",
+            streamUrl: "",
+            message: "Folder playback stopped.");
+    }
+
+    private async Task PlayFolderIndexAsync(
+        int index)
+    {
+        if (_rokuClient is null)
+        {
+            FolderNowPlayingText.Text =
+                "Select a Roku device first.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(
+                _ffmpegPath))
+        {
+            FolderNowPlayingText.Text =
+                "FFmpeg was not found.";
+            return;
+        }
+
+        if (index < 0 ||
+            index >= _folderItems.Count)
+        {
+            return;
+        }
+
+        var item =
+            _folderItems[index];
+
+        FolderPlayButton.IsEnabled =
+            false;
+
+        try
+        {
+            _folderPollTimer.Stop();
+
+            await StopFolderInternalAsync(
+                sendHome: false);
+
+            _folderIndex = index;
+            _folderSawPlaying = false;
+
+            FolderPlaylistListBox.SelectedItem =
+                item;
+
+            FolderPlaylistListBox.ScrollIntoView(
+                item);
+
+            FolderNowPlayingText.Text =
+                $"Preparing: {item.FileName}";
+
+            FolderProgressText.Text =
+                $"{index + 1} of {_folderItems.Count}";
+
+            string friendlyEncoder =
+                FolderEncoderComboBox.SelectedItem
+                ?.ToString()
+                ?? "CPU (libx264)";
+
+            string encoder =
+                EncoderDetectionService
+                .ToFFmpegEncoder(
+                    friendlyEncoder);
+
+            string bitrateText =
+                ((ComboBoxItem)
+                    FolderBitrateComboBox
+                    .SelectedItem)
+                .Content.ToString()!;
+
+            int bitrate =
+                int.Parse(
+                    bitrateText.Split(' ')[0]);
+
+            await _folderTranscoder.StartAsync(
+                _ffmpegPath,
+                item.FilePath,
+                encoder,
+                bitrate);
+
+            await _folderServer.StartAsync(
+                _folderTranscoder.OutputDirectory,
+                port: 8768);
+
+            var ip =
+                NetworkHelper
+                .GetBestLocalIPv4ForRemote(
+                    _rokuClient.Device.IpAddress)
+                ?? throw new InvalidOperationException(
+                    "Could not determine the PC LAN IP.");
+
+            var streamUrl =
+                $"http://{ip}:{_folderServer.Port}/live/index.m3u8";
+
+            await _rokuClient
+                .LaunchDoweLanCasterLiveAsync(
+                    streamUrl);
+
+            FolderNowPlayingText.Text =
+                $"Now playing: {item.FileName}";
+
+            FolderStopButton.IsEnabled = true;
+            FolderPreviousButton.IsEnabled =
+                _folderItems.Count > 1;
+            FolderNextButton.IsEnabled =
+                _folderItems.Count > 1;
+
+            _folderPollTimer.Start();
+
+            SaveCurrentSettings();
+
+            UpdateDiagnostics(
+                hls: "Folder Cast running",
+                streamUrl: streamUrl,
+                message:
+                    $"Folder item {index + 1}/{_folderItems.Count}: {item.FileName}");
+        }
+        catch (Exception ex)
+        {
+            FolderNowPlayingText.Text =
+                $"Could not play {item.FileName}: {ex.Message}";
+
+            UpdateDiagnostics(
+                hls: "Folder Cast item failed",
+                message: ex.Message);
+
+            // Skip a bad item instead of killing the entire playlist.
+            if (_folderItems.Count > 1)
+            {
+                await Task.Delay(600);
+                await AdvanceFolderAsync(
+                    manual: false);
+            }
+        }
+        finally
+        {
+            FolderPlayButton.IsEnabled =
+                _folderItems.Count > 0;
+        }
+    }
+
+    private async Task AdvanceFolderAsync(
+        bool manual)
+    {
+        if (_folderAdvanceInProgress ||
+            _folderItems.Count == 0)
+        {
+            return;
+        }
+
+        _folderAdvanceInProgress = true;
+
+        try
+        {
+            var repeat =
+                ((ComboBoxItem?)
+                    FolderRepeatComboBox
+                    .SelectedItem)
+                ?.Content?.ToString()
+                ?? "Off";
+
+            if (!manual &&
+                repeat.Equals(
+                    "One",
+                    StringComparison.OrdinalIgnoreCase) &&
+                _folderIndex >= 0)
+            {
+                await PlayFolderIndexAsync(
+                    _folderIndex);
+                return;
+            }
+
+            int next;
+
+            if (FolderShuffleCheckBox.IsChecked == true &&
+                _folderItems.Count > 1)
+            {
+                do
+                {
+                    next =
+                        Random.Shared.Next(
+                            _folderItems.Count);
+                }
+                while (next == _folderIndex);
+            }
+            else
+            {
+                next =
+                    _folderIndex + 1;
+            }
+
+            if (next >= _folderItems.Count)
+            {
+                if (repeat.Equals(
+                        "All",
+                        StringComparison.OrdinalIgnoreCase) ||
+                    manual)
+                {
+                    next = 0;
+                }
+                else
+                {
+                    await StopFolderInternalAsync(
+                        sendHome: false);
+
+                    FolderNowPlayingText.Text =
+                        "Playlist finished.";
+
+                    FolderProgressText.Text =
+                        $"{_folderItems.Count} of {_folderItems.Count}";
+
+                    UpdateDiagnostics(
+                        hls: "Folder Cast finished",
+                        streamUrl: "",
+                        message: "Folder playlist finished.");
+
+                    return;
+                }
+            }
+
+            await PlayFolderIndexAsync(next);
+        }
+        finally
+        {
+            _folderAdvanceInProgress = false;
+        }
+    }
+
+    private async void FolderPollTimer_Tick(
+        object? sender,
+        EventArgs e)
+    {
+        if (_rokuClient is null ||
+            _folderIndex < 0)
+        {
+            return;
+        }
+
+        try
+        {
+            var state =
+                await _rokuClient
+                    .GetMediaPlayerStateAsync();
+
+            if (state.IsPlaying)
+            {
+                _folderSawPlaying = true;
+                return;
+            }
+
+            if (_folderSawPlaying &&
+                state.IsStopped)
+            {
+                _folderSawPlaying = false;
+                _folderPollTimer.Stop();
+
+                if (FolderAutoPlayCheckBox.IsChecked == true)
+                {
+                    await AdvanceFolderAsync(
+                        manual: false);
+                }
+                else
+                {
+                    FolderNowPlayingText.Text =
+                        "Playback finished.";
+                    FolderStopButton.IsEnabled = false;
+
+                    UpdateDiagnostics(
+                        hls: "Folder Cast item finished",
+                        streamUrl: "",
+                        message: "Auto-play next is disabled.");
+                }
+            }
+        }
+        catch
+        {
+            // A transient ECP polling error should not stop playback.
+        }
+    }
+
+    private async Task StopFolderInternalAsync(
+        bool sendHome)
+    {
+        _folderPollTimer.Stop();
+        _folderSawPlaying = false;
+
+        if (sendHome &&
+            _rokuClient is not null)
+        {
+            try
+            {
+                await _rokuClient
+                    .SendKeyAsync("Home");
+            }
+            catch
+            {
+            }
+        }
+
+        await _folderServer.StopAsync();
+        await _folderTranscoder.StopAsync();
+
+        FolderStopButton.IsEnabled = false;
+    }
+
     private void ChooseFileButton_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new Microsoft.Win32.OpenFileDialog
@@ -1068,6 +1783,9 @@ public partial class MainWindow : Window
     {
         SaveCurrentSettings();
 
+        _folderPollTimer.Stop();
+        await _folderServer.DisposeAsync();
+        await _folderTranscoder.DisposeAsync();
         await _urlServer.DisposeAsync();
         await _urlCapture.DisposeAsync();
         await _liveServer.DisposeAsync();

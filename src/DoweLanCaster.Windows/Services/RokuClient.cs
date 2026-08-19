@@ -107,5 +107,51 @@ public sealed class RokuClient : IDisposable
         response.EnsureSuccessStatusCode();
     }
 
+
+    public async Task<RokuMediaPlayerState> GetMediaPlayerStateAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var xml = await _httpClient.GetStringAsync(
+            $"http://{Device.IpAddress}:8060/query/media-player",
+            cancellationToken);
+
+        var doc = XDocument.Parse(xml);
+        var player = doc.Descendants("player").FirstOrDefault()
+            ?? doc.Root;
+
+        string state =
+            player?.Attribute("state")?.Value
+            ?? player?.Element("state")?.Value
+            ?? "";
+
+        static double? ParseDouble(string? value)
+        {
+            return double.TryParse(
+                value,
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var parsed)
+                ? parsed
+                : null;
+        }
+
+        var position =
+            ParseDouble(
+                player?.Element("position")?.Value
+                ?? player?.Attribute("position")?.Value);
+
+        var duration =
+            ParseDouble(
+                player?.Element("duration")?.Value
+                ?? player?.Attribute("duration")?.Value);
+
+        return new RokuMediaPlayerState
+        {
+            State = state,
+            PositionSeconds = position,
+            DurationSeconds = duration
+        };
+    }
+
     public void Dispose() => _httpClient.Dispose();
 }

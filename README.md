@@ -1,72 +1,85 @@
-# Dowe LanCaster v0.6.0
+# Dowe LanCaster v0.7.0
 
-Dowe LanCaster is a Windows-to-Roku LAN casting and remote-control application.
+Dowe LanCaster is a Windows-to-Roku LAN casting, playlist, live-streaming,
+link-streaming, and remote-control application.
 
-## v0.6.0 checkpoint
+## New in v0.7.0
 
-### Link Cast
-- Direct `.mp4`, `.m3u8`, `.webm`, `.mov`, `.mkv`, and similar URLs bypass yt-dlp.
-- Normal webpage URLs use yt-dlp when installed.
-- FFmpeg converts extracted/direct media to Roku-friendly H.264/AAC HLS.
-- Link Cast uses port 8767.
+### Folder Cast
+Stream a complete folder of videos as a Roku playlist.
 
-### Live Cast
-- Entire desktop
-- Individual monitors
-- Application windows
-- **System Audio (Default Output)** using Windows WASAPI loopback through NAudio
-- DirectShow microphone/input fallbacks
-- NVIDIA NVENC / AMD AMF / Intel Quick Sync / libx264
-- 30/60 FPS and selectable bitrate
-- Live Cast uses port 8766.
+- Folder picker
+- Recursive subfolder scanning
+- MP4/MKV/AVI/WebM/MOV/MPEG/TS/WMV/FLV support
+- FFmpeg H.264/AAC transcoding for mixed-format folders
+- Previous / Play / Next / Stop
+- Auto-play next
+- Shuffle
+- Repeat Off / One / All
+- Move items up/down
+- Sort A-Z / Z-A
+- Double-click to start from any item
+- Failed-item skipping
+- Current item / playlist position
+- Saved folder preferences
 
-### Roku
-- SSDP discovery plus local-LAN fallback scan
-- Manual **Add Roku by IP**
-- Remote control
-- Installed app launcher
-- Roku video player scales to the active design resolution and stays centered
+### Dedicated intro video
+Startup now plays:
 
-### Quality of life
-- Saved Roku IP
-- Saved encoder
-- Saved FPS
-- Saved bitrate
-- Saved audio source
-- Diagnostics tab
+`src\DoweLanCaster.Windows\Resources\intro.mp4`
 
-## Dependencies
+The original PNG remains as a fallback:
 
-Run:
+`src\DoweLanCaster.Windows\Resources\intro.png`
 
-`SETUP-DEPENDENCIES.cmd`
+Replace `intro.mp4` with another H.264 MP4 using the same filename to change the startup video without changing code.
 
-This installs FFmpeg and yt-dlp. NAudio is restored automatically by .NET/NuGet.
+## Existing features
+
+- Link Cast
+- Direct media URL bypass
+- yt-dlp webpage extraction
+- Live desktop / monitor / window cast
+- Native Windows system-audio loopback
+- Local File Cast
+- Roku remote
+- SSDP + LAN Roku discovery
+- Add Roku by IP
+- Saved preferences
+- Diagnostics
+- Centered/scaled Roku receiver
+
+## Ports
+
+- 8060 Roku ECP
+- 8765 File Cast
+- 8766 Live Cast
+- 8767 Link Cast
+- 8768 Folder Cast
 
 ## Build
 
-Close any running Dowe LanCaster instance first:
+Stop any running app before rebuilding:
 
 ```powershell
 Get-Process DoweLanCaster -ErrorAction SilentlyContinue | Stop-Process -Force
+dotnet restore
 dotnet clean
 dotnet build
 ```
 
-## Roku receiver
+## Roku
 
-A ready-to-sideload ZIP is included:
+Ready-to-sideload receiver:
 
 `dist\DoweLanCaster-Roku.zip`
 
-If you edit the Roku source:
-
-```powershell
-.\scripts\Package-Roku.ps1
-```
-
 ## Git checkpoint
 
-The generated package is committed and tagged as `v0.6.0`.
+The release package includes:
+
+`DoweLanCaster-v0.7.0.bundle`
+
+This Git bundle contains the v0.7.0 checkpoint commit and tag.
 
 See `docs\GIT-CHECKPOINT.txt`.

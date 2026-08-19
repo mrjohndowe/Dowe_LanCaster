@@ -166,6 +166,229 @@
 </ScrollViewer>
 </TabItem>
 
+
+<TabItem Header="Folder Cast">
+<Grid Margin="16">
+<Grid.RowDefinitions>
+<RowDefinition Height="Auto"/>
+<RowDefinition Height="12"/>
+<RowDefinition Height="*"/>
+<RowDefinition Height="12"/>
+<RowDefinition Height="Auto"/>
+</Grid.RowDefinitions>
+
+<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="16">
+<Grid>
+<Grid.ColumnDefinitions>
+<ColumnDefinition Width="Auto"/>
+<ColumnDefinition Width="10"/>
+<ColumnDefinition Width="*"/>
+<ColumnDefinition Width="10"/>
+<ColumnDefinition Width="Auto"/>
+</Grid.ColumnDefinitions>
+
+<TextBlock Text="Folder:" VerticalAlignment="Center" FontWeight="SemiBold"/>
+
+<TextBox x:Name="FolderPathTextBox"
+         Grid.Column="2"
+         Height="34"
+         IsReadOnly="True"
+         VerticalContentAlignment="Center"/>
+
+<Button Grid.Column="4"
+        Content="Choose Folder..."
+        Width="140"
+        Height="34"
+        Click="ChooseFolderButton_Click"/>
+</Grid>
+</Border>
+
+<Grid Grid.Row="2">
+<Grid.ColumnDefinitions>
+<ColumnDefinition Width="*"/>
+<ColumnDefinition Width="14"/>
+<ColumnDefinition Width="280"/>
+</Grid.ColumnDefinitions>
+
+<Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="12">
+<Grid>
+<Grid.RowDefinitions>
+<RowDefinition Height="Auto"/>
+<RowDefinition Height="8"/>
+<RowDefinition Height="*"/>
+</Grid.RowDefinitions>
+
+<DockPanel>
+<TextBlock Text="Playlist"
+           FontSize="22"
+           FontWeight="Bold"
+           DockPanel.Dock="Left"/>
+
+<TextBlock x:Name="FolderCountText"
+           Text="0 videos"
+           VerticalAlignment="Center"
+           HorizontalAlignment="Right"/>
+</DockPanel>
+
+<ListBox x:Name="FolderPlaylistListBox"
+         Grid.Row="2"
+         DisplayMemberPath="FileName"
+         MouseDoubleClick="FolderPlaylistListBox_MouseDoubleClick"/>
+</Grid>
+</Border>
+
+<Border Grid.Column="2"
+        BorderBrush="#666"
+        BorderThickness="1"
+        CornerRadius="8"
+        Padding="14">
+<StackPanel>
+<TextBlock Text="Playlist Options"
+           FontSize="20"
+           FontWeight="Bold"
+           Margin="0,0,0,12"/>
+
+<CheckBox x:Name="FolderIncludeSubfoldersCheckBox"
+          Content="Include subfolders"
+          IsChecked="True"
+          Margin="0,0,0,10"
+          Checked="FolderOptionChanged"
+          Unchecked="FolderOptionChanged"/>
+
+<CheckBox x:Name="FolderShuffleCheckBox"
+          Content="Shuffle"
+          Margin="0,0,0,10"/>
+
+<CheckBox x:Name="FolderAutoPlayCheckBox"
+          Content="Auto-play next"
+          IsChecked="True"
+          Margin="0,0,0,10"/>
+
+<TextBlock Text="Repeat" FontWeight="SemiBold"/>
+<ComboBox x:Name="FolderRepeatComboBox"
+          Height="32"
+          Margin="0,5,0,14"
+          SelectedIndex="0">
+<ComboBoxItem Content="Off"/>
+<ComboBoxItem Content="One"/>
+<ComboBoxItem Content="All"/>
+</ComboBox>
+
+<TextBlock Text="Encoder" FontWeight="SemiBold"/>
+<ComboBox x:Name="FolderEncoderComboBox"
+          Height="32"
+          Margin="0,5,0,14"/>
+
+<TextBlock Text="Quality" FontWeight="SemiBold"/>
+<ComboBox x:Name="FolderBitrateComboBox"
+          Height="32"
+          Margin="0,5,0,14"
+          SelectedIndex="1">
+<ComboBoxItem Content="4000 kbps"/>
+<ComboBoxItem Content="8000 kbps"/>
+<ComboBoxItem Content="12000 kbps"/>
+<ComboBoxItem Content="18000 kbps"/>
+</ComboBox>
+
+<UniformGrid Columns="2" Margin="0,0,0,8">
+<Button Content="Move Up"
+        Height="34"
+        Margin="0,0,4,0"
+        Click="FolderMoveUpButton_Click"/>
+<Button Content="Move Down"
+        Height="34"
+        Margin="4,0,0,0"
+        Click="FolderMoveDownButton_Click"/>
+</UniformGrid>
+
+<UniformGrid Columns="2" Margin="0,0,0,8">
+<Button Content="Sort A-Z"
+        Height="34"
+        Margin="0,0,4,0"
+        Click="FolderSortAscendingButton_Click"/>
+<Button Content="Sort Z-A"
+        Height="34"
+        Margin="4,0,0,0"
+        Click="FolderSortDescendingButton_Click"/>
+</UniformGrid>
+
+<Button Content="Rescan Folder"
+        Height="34"
+        Margin="0,0,0,8"
+        Click="RescanFolderButton_Click"/>
+
+<Button Content="Shuffle Now"
+        Height="34"
+        Click="ShuffleFolderButton_Click"/>
+</StackPanel>
+</Border>
+</Grid>
+
+<Border Grid.Row="4"
+        BorderBrush="#666"
+        BorderThickness="1"
+        CornerRadius="8"
+        Padding="14">
+<Grid>
+<Grid.ColumnDefinitions>
+<ColumnDefinition Width="Auto"/>
+<ColumnDefinition Width="10"/>
+<ColumnDefinition Width="Auto"/>
+<ColumnDefinition Width="10"/>
+<ColumnDefinition Width="Auto"/>
+<ColumnDefinition Width="10"/>
+<ColumnDefinition Width="Auto"/>
+<ColumnDefinition Width="*"/>
+</Grid.ColumnDefinitions>
+
+<Button x:Name="FolderPreviousButton"
+        Content="Previous"
+        Width="100"
+        Height="40"
+        IsEnabled="False"
+        Click="FolderPreviousButton_Click"/>
+
+<Button x:Name="FolderPlayButton"
+        Grid.Column="2"
+        Content="Play"
+        Width="100"
+        Height="40"
+        IsEnabled="False"
+        Click="FolderPlayButton_Click"/>
+
+<Button x:Name="FolderNextButton"
+        Grid.Column="4"
+        Content="Next"
+        Width="100"
+        Height="40"
+        IsEnabled="False"
+        Click="FolderNextButton_Click"/>
+
+<Button x:Name="FolderStopButton"
+        Grid.Column="6"
+        Content="Stop"
+        Width="100"
+        Height="40"
+        IsEnabled="False"
+        Click="FolderStopButton_Click"/>
+
+<StackPanel Grid.Column="7"
+            Margin="18,0,0,0"
+            VerticalAlignment="Center">
+<TextBlock x:Name="FolderNowPlayingText"
+           Text="Nothing playing"
+           FontWeight="SemiBold"
+           TextTrimming="CharacterEllipsis"/>
+<TextBlock x:Name="FolderProgressText"
+           Text="0 of 0"
+           Opacity="0.72"/>
+</StackPanel>
+</Grid>
+</Border>
+
+</Grid>
+</TabItem>
+
 <TabItem Header="File Cast">
 <StackPanel Margin="16">
 <Border BorderBrush="#666" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
