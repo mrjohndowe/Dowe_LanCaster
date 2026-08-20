@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version (for example, v0.7.0)"
+        description: "Release version (for example, v0.9.0)"
         required: true
-        default: "v0.7.0"
+        default: "v0.9.0"
         type: string
 
 permissions:
@@ -23,10 +23,13 @@ jobs:
   release:
     name: Build ZIP and Windows installer
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release_url: ${{ steps.publish.outputs.url }}
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -44,7 +47,7 @@ jobs:
             $env:TAG_NAME
           }
           if ($version -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+$') {
-            throw "Invalid version '$version'. Use a version such as v0.7.0."
+            throw "Invalid version '$version'. Use a version such as v0.9.0."
           }
           "version=$version" >> $env:GITHUB_OUTPUT
           "number=$($version.Substring(1))" >> $env:GITHUB_OUTPUT
@@ -63,7 +66,7 @@ jobs:
           $global:LASTEXITCODE = 0
 
       - name: Set up .NET 8
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.0.x
 
@@ -136,7 +139,7 @@ jobs:
           "exe=$installer" >> $env:GITHUB_OUTPUT
 
       - name: Preserve build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Dowe-LanCaster-${{ steps.version.outputs.version }}
           if-no-files-found: error
@@ -146,7 +149,8 @@ jobs:
             ${{ steps.installer.outputs.exe }}
 
       - name: Create release with ZIP, installer, and generated notes
-        uses: softprops/action-gh-release@v2
+        id: publish
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.version.outputs.version }}
           name: Dowe LanCaster ${{ steps.version.outputs.version }}
@@ -156,3 +160,11 @@ jobs:
           files: |
             ${{ steps.package.outputs.zip }}
             ${{ steps.installer.outputs.exe }}
+  update-wiki:
+    name: Update release wiki
+    needs: release
+    uses: ./.github/workflows/update-wiki.yml
+    with:
+      version: ${{ needs.release.outputs.version }}
+      release_url: ${{ needs.release.outputs.release_url }}
+    secrets: inherit
