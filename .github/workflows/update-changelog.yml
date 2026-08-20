@@ -1,0 +1,146 @@
+name: Update changelog
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Existing release tag to add, for example v0.9.0
+        required: true
+        type: string
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Existing release tag to add, for example v0.9.0
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: changelog-${{ github.event.release.tag_name || inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  update-changelog:
+    name: Add release to CHANGELOG.md
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out the default branch
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Determine release version
+        id: version
+        shell: pwsh
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          MANUAL_VERSION: ${{ inputs.version }}
+        run: |
+          $version = if (-not [string]::IsNullOrWhiteSpace($env:RELEASE_TAG)) {
+            $env:RELEASE_TAG
+          } else {
+            $env:MANUAL_VERSION
+          }
+          if ($version -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+$') {
+            throw "Invalid version '$version'. Use a tag such as v0.9.0."
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "number=$($version.Substring(1))" >> $env:GITHUB_OUTPUT
+
+      - name: Add release notes to changelog
+        id: changelog
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ steps.version.outputs.version }}
+          VERSION_NUMBER: ${{ steps.version.outputs.number }}
+        run: |
+          $path = Join-Path $env:GITHUB_WORKSPACE 'CHANGELOG.md'
+          if (-not (Test-Path $path)) {
+            throw 'CHANGELOG.md was not found on the default branch.'
+          }
+
+          $changelog = Get-Content $path -Raw
+          $escapedNumber = [regex]::Escape($env:VERSION_NUMBER)
+          if ($changelog -match "(?m)^## \[$escapedNumber\](?:\s|$)") {
+            Write-Host "CHANGELOG.md already contains $env:VERSION."
+            "changed=false" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+
+          $releaseJson = gh release view $env:VERSION `
+            --repo $env:REPOSITORY `
+            --json body,publishedAt,url
+          if ($LASTEXITCODE -ne 0) {
+            throw "Unable to read GitHub release $env:VERSION."
+          }
+          $release = $releaseJson | ConvertFrom-Json
+          $releaseDate = ([DateTimeOffset]::Parse($release.publishedAt)).UtcDateTime.ToString('yyyy-MM-dd')
+          $notes = [string]$release.body
+          if ([string]::IsNullOrWhiteSpace($notes)) {
+            $notes = 'No release notes were provided.'
+          } else {
+            # Nest GitHub's generated headings beneath the changelog version.
+            $notes = [regex]::Replace($notes.Trim(), '(?m)^(#+)', '#$1')
+          }
+
+          $unreleasedHeading = '## [Unreleased]'
+          $unreleasedIndex = $changelog.IndexOf($unreleasedHeading)
+          if ($unreleasedIndex -lt 0) {
+            throw 'CHANGELOG.md does not contain an [Unreleased] section.'
+          }
+          $nextReleaseIndex = $changelog.IndexOf("`n## [", $unreleasedIndex + $unreleasedHeading.Length)
+          if ($nextReleaseIndex -lt 0) {
+            throw 'CHANGELOG.md does not contain a release section after [Unreleased].'
+          }
+
+          $beforeReleases = $changelog.Substring(0, $nextReleaseIndex).TrimEnd()
+          $existingReleases = $changelog.Substring($nextReleaseIndex).TrimStart()
+          $newSection = "## [$env:VERSION_NUMBER] - $releaseDate`n`n$notes"
+          $changelog = "$beforeReleases`n`n$newSection`n`n$existingReleases"
+
+          $unreleasedLink = "[Unreleased]: https://github.com/$env:REPOSITORY/compare/$env:VERSION...HEAD"
+          if ($changelog -match '(?m)^\[Unreleased\]:.*$') {
+            $changelog = [regex]::Replace(
+              $changelog,
+              '(?m)^\[Unreleased\]:.*$',
+              [System.Text.RegularExpressions.MatchEvaluator]{ param($match) $unreleasedLink },
+              1
+            )
+          } else {
+            $changelog = $changelog.TrimEnd() + "`n`n$unreleasedLink"
+          }
+
+          $versionLink = "[$env:VERSION_NUMBER]: $($release.url)"
+          $unreleasedLinkIndex = $changelog.IndexOf($unreleasedLink)
+          $linkInsertIndex = $unreleasedLinkIndex + $unreleasedLink.Length
+          $changelog = $changelog.Insert($linkInsertIndex, "`n$versionLink")
+
+          # Keep the repository's Markdown line endings stable on every runner.
+          $changelog = $changelog.TrimEnd() -replace "`r?`n", "`n"
+          [System.IO.File]::WriteAllText($path, "$changelog`n", [System.Text.UTF8Encoding]::new($false))
+          "changed=true" >> $env:GITHUB_OUTPUT
+
+      - name: Commit and push changelog
+        if: steps.changelog.outputs.changed == 'true'
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- CHANGELOG.md
+          git diff --cached --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git commit -m "Update changelog for $env:VERSION"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push origin HEAD
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

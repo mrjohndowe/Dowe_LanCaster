@@ -160,6 +160,13 @@ jobs:
           files: |
             ${{ steps.package.outputs.zip }}
             ${{ steps.installer.outputs.exe }}
+  update-changelog:
+    name: Update changelog
+    needs: release
+    uses: ./.github/workflows/update-changelog.yml
+    with:
+      version: ${{ needs.release.outputs.version }}
+
   update-wiki:
     name: Update release wiki
     needs: release
