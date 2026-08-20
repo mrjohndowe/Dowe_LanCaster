@@ -1,5 +1,5 @@
 #ifndef MyAppVersion
-  #define MyAppVersion "0.7.0"
+  #define MyAppVersion "0.9.0"
 #endif
 
 #define MyAppName "Dowe LanCaster"
@@ -18,6 +18,7 @@ DisableProgramGroupPage=yes
 OutputDir=..\release-assets
 OutputBaseFilename=Dowe-LanCaster-v{#MyAppVersion}-Setup
 SetupIconFile=..\DoweLanCaster.ico
+LicenseFile=..\LICENSE.txt
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2
 SolidCompression=yes
