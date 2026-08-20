@@ -18,13 +18,19 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="12"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="12"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="8"/>
+                                                <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="18"/>
                                                 <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="Roku:" VerticalAlignment="Center" FontWeight="SemiBold"/>
                                         <ComboBox x:Name="DeviceComboBox" Grid.Column="2" MinWidth="420" Height="32" SelectionChanged="DeviceComboBox_SelectionChanged"/>
                                         <Button x:Name="ScanButton" Grid.Column="4" Content="Scan for Roku Devices" Padding="18,6" Click="ScanButton_Click"/>
-                                        <CheckBox x:Name="DarkModeCheckBox" Grid.Column="6" Content="Dark Mode" VerticalAlignment="Center" Checked="DarkModeCheckBox_Changed" Unchecked="DarkModeCheckBox_Changed"/>
+                                        <TextBlock x:Name="CurrentVersionText" Grid.Column="6" VerticalAlignment="Center" Foreground="{DynamicResource SecondaryForegroundBrush}"/>
+                                        <Button x:Name="CheckForUpdatesButton" Grid.Column="8" Content="Check for Updates" Padding="12,6" Click="CheckForUpdatesButton_Click"/>
+                                        <CheckBox x:Name="DarkModeCheckBox" Grid.Column="10" Content="Dark Mode" VerticalAlignment="Center" Checked="DarkModeCheckBox_Changed" Unchecked="DarkModeCheckBox_Changed"/>
                                 </Grid>
                         </Border>
 

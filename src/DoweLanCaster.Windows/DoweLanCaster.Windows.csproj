@@ -8,9 +8,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>DoweLanCaster</AssemblyName>
     <RootNamespace>DoweLanCaster</RootNamespace>
-    <Version>0.9.5</Version>
-    <AssemblyVersion>0.9.0.0</AssemblyVersion>
-    <FileVersion>0.9.0.0</FileVersion>
+    <Version>0.9.5.4</Version>
+    <AssemblyVersion>0.9.5.4</AssemblyVersion>
+    <FileVersion>0.9.5.4</FileVersion>
     <StartupObject>DoweLanCaster.App</StartupObject>
     <AssemblyTitle>DoweLanCaster</AssemblyTitle>
     <ApplicationIcon>DoweLanCaster.ico</ApplicationIcon>
@@ -19,7 +19,7 @@
     <Product>Dowe LanCaster</Product>
     <Description>Stream media from a Windows PC to Roku devices and control Roku over the local network.</Description>
     <Copyright>Copyright © 2026 MrJohnDowe. All rights reserved.</Copyright>
-    <PackageProjectUrl>https://mrjohndowe/Dowe_LanCaster</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/mrjohndowe/Dowe_LanCaster</PackageProjectUrl>
     <PackageIcon>logo.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/mrjohndowe/Dowe_LanCaster.git</RepositoryUrl>

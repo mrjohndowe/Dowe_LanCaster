@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     private readonly MediaLinkExtractorService _linkExtractor = new();
     private readonly AudioBackendService _audioBackendService = new();
     private readonly SettingsService _settingsService = new();
+    private readonly UpdateService _updateService = new();
     private readonly DiagnosticState _diagnostics = new();
     private readonly FolderPlaylistService _folderPlaylistService = new();
     private readonly LocalFileHlsTranscoder _folderTranscoder = new();
@@ -73,6 +74,9 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        CurrentVersionText.Text =
+            $"v{_updateService.CurrentVersion}";
 
         _settings = _settingsService.Load();
 
@@ -2021,6 +2025,97 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             StatusText.Text = $"Launch failed: {ex.Message}";
+        }
+    }
+
+    private async void CheckForUpdatesButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        CheckForUpdatesButton.IsEnabled = false;
+        CheckForUpdatesButton.Content = "Checking...";
+        StatusText.Text = "Checking for updates...";
+
+        try
+        {
+            var update = await _updateService.CheckForUpdateAsync();
+
+            if (!update.IsUpdateAvailable)
+            {
+                StatusText.Text =
+                    $"Dowe LanCaster v{update.CurrentVersion} is up to date.";
+
+                System.Windows.MessageBox.Show(
+                    this,
+                    $"You already have the latest version: v{update.CurrentVersion}.",
+                    "Dowe LanCaster Update",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(update.InstallerDownloadUrl))
+            {
+                throw new InvalidOperationException(
+                    $"Version v{update.LatestVersion} does not include a Windows installer.");
+            }
+
+            var choice = System.Windows.MessageBox.Show(
+                this,
+                $"Dowe LanCaster v{update.LatestVersion} is available.\n\n" +
+                $"Installed version: v{update.CurrentVersion}\n\n" +
+                "Download and install it now? The application will close and reopen automatically.",
+                "Dowe LanCaster Update Available",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Information);
+
+            if (choice != MessageBoxResult.Yes)
+            {
+                StatusText.Text =
+                    $"Update v{update.LatestVersion} is available.";
+                return;
+            }
+
+            var progress = new Progress<double>(percentage =>
+            {
+                CheckForUpdatesButton.Content =
+                    $"Downloading {percentage:0}%";
+                StatusText.Text =
+                    $"Downloading Dowe LanCaster v{update.LatestVersion}: {percentage:0}%";
+            });
+
+            var installerPath = await _updateService.DownloadInstallerAsync(
+                update,
+                progress);
+
+            StatusText.Text =
+                "Starting the update installer...";
+            CheckForUpdatesButton.Content = "Installing...";
+
+            UpdateService.StartInstaller(installerPath);
+            System.Windows.Application.Current.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text =
+                $"Update failed: {ex.Message}";
+
+            System.Windows.MessageBox.Show(
+                this,
+                "Dowe LanCaster could not complete the update.\n\n" +
+                ex.Message,
+                "Update Failed",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            if (CheckForUpdatesButton is not null)
+            {
+                CheckForUpdatesButton.IsEnabled = true;
+                CheckForUpdatesButton.Content = "Check for Updates";
+            }
         }
     }
 
