@@ -2,13 +2,7 @@ sub init()
     m.statusLabel = m.top.findNode("statusLabel")
     m.videoPlayer = m.top.findNode("videoPlayer")
     m.background = m.top.findNode("background")
-    m.launchSplash = m.top.findNode("launchSplash")
-    m.splashOverlay = m.top.findNode("splashOverlay")
-    m.splashTitle = m.top.findNode("splashTitle")
-    m.splashAccent = m.top.findNode("splashAccent")
-    m.splashTagline = m.top.findNode("splashTagline")
-    m.launchAnimation = m.top.findNode("launchAnimation")
-    m.splashTimer = m.top.findNode("splashTimer")
+    m.launchVideo = m.top.findNode("launchVideo")
     m.waitingGroup = m.top.findNode("waitingGroup")
     m.waitingFadeAnimation = m.top.findNode("waitingFadeAnimation")
     m.waitingScreen = m.top.findNode("waitingScreen")
@@ -22,7 +16,7 @@ sub init()
     configureScreenSize()
 
     m.videoPlayer.observeField("state", "onPlayerStateChanged")
-    m.splashTimer.observeField("fire", "onSplashFinished")
+    m.launchVideo.observeField("state", "onLaunchVideoStateChanged")
     startSplashAnimation()
 end sub
 
@@ -56,38 +50,10 @@ sub configureScreenSize()
         m.background.height = screenHeight
     end if
 
-    if m.splashOverlay <> invalid
-        m.splashOverlay.translation = [0, 0]
-        m.splashOverlay.width = screenWidth
-        m.splashOverlay.height = screenHeight
-    end if
-
-    splashWidth = screenWidth * 0.78
-    splashLeft = (screenWidth - splashWidth) / 2
-
-    if m.splashTitle <> invalid
-        m.splashTitle.width = splashWidth
-        m.splashTitle.height = screenHeight * 0.16
-        m.splashTitle.translation = [splashLeft, screenHeight * 0.34]
-        m.splashTitle.font.size = screenHeight * 0.082
-    end if
-
-    if m.splashAccent <> invalid
-        accentWidth = screenWidth * 0.33
-        m.splashAccent.width = accentWidth
-        m.splashAccent.height = screenHeight * 0.008
-        m.splashAccent.translation = [
-            (screenWidth - accentWidth) / 2,
-            screenHeight * 0.55
-        ]
-        m.splashAccent.scaleRotateCenter = [accentWidth / 2, 3]
-    end if
-
-    if m.splashTagline <> invalid
-        m.splashTagline.width = splashWidth
-        m.splashTagline.height = screenHeight * 0.08
-        m.splashTagline.translation = [splashLeft, screenHeight * 0.59]
-        m.splashTagline.font.size = screenHeight * 0.028
+    if m.launchVideo <> invalid
+        m.launchVideo.translation = [0, 0]
+        m.launchVideo.width = screenWidth
+        m.launchVideo.height = screenHeight
     end if
 
     if m.waitingScreen <> invalid
@@ -147,16 +113,23 @@ sub startSplashAnimation()
     m.videoPlayer.visible = false
     m.statusLabel.visible = false
     m.showingSplash = true
-    m.launchSplash.visible = true
-    m.launchSplash.opacity = 0
-    m.splashAccent.scale = [0, 1]
-    m.launchAnimation.control = "start"
-    m.splashTimer.control = "start"
+    content = CreateObject("roSGNode", "ContentNode")
+    content.url = "pkg:/videos/launch.mp4"
+    content.streamFormat = "mp4"
+    content.title = "Dowe LanCaster"
+    m.launchVideo.content = content
+    m.launchVideo.visible = true
+    m.launchVideo.control = "play"
 end sub
 
-sub onSplashFinished()
-    m.launchAnimation.control = "stop"
-    m.launchSplash.visible = false
+sub onLaunchVideoStateChanged()
+    state = m.launchVideo.state
+    if state <> "finished" and state <> "error"
+        return
+    end if
+
+    m.launchVideo.control = "stop"
+    m.launchVideo.visible = false
     m.showingSplash = false
 
     if m.pendingStreamUrl <> invalid and m.pendingStreamUrl <> ""
@@ -168,7 +141,8 @@ end sub
 
 sub showWaitingScreen()
     m.showingSplash = false
-    m.launchSplash.visible = false
+    m.launchVideo.control = "stop"
+    m.launchVideo.visible = false
     m.videoPlayer.control = "stop"
     m.videoPlayer.visible = false
     m.statusLabel.visible = false
@@ -176,10 +150,10 @@ sub showWaitingScreen()
     m.waitingGroup.opacity = 0
     m.waitingGroup.visible = true
     m.waitingScreen.visible = true
-    m.waitingTitle.visible = true
-    m.waitingSubtitle.visible = true
-    m.waitingInstructions.visible = true
-    m.waitingHint.visible = true
+    m.waitingTitle.visible = false
+    m.waitingSubtitle.visible = false
+    m.waitingInstructions.visible = false
+    m.waitingHint.visible = false
     m.waitingFadeAnimation.control = "start"
 end sub
 

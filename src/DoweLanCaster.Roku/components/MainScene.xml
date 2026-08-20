@@ -15,66 +15,12 @@
             translation="[0,0]"
             color="0x000000FF" />
 
-        <Group
-            id="launchSplash"
-            opacity="0"
-            visible="true">
-            <Rectangle
-                id="splashOverlay"
-                width="1280"
-                height="720"
-                translation="[0,0]"
-                color="0x050B12FF" />
-
-            <Label
-                id="splashTitle"
-                width="1000"
-                height="120"
-                translation="[140,255]"
-                horizAlign="center"
-                vertAlign="center"
-                color="0xFFFFFFFF"
-                text="DOWE LANCASTER" />
-
-            <Rectangle
-                id="splashAccent"
-                width="420"
-                height="6"
-                translation="[430,390]"
-                scale="[0,1]"
-                scaleRotateCenter="[210,3]"
-                color="0x25C7F0FF" />
-
-            <Label
-                id="splashTagline"
-                width="1000"
-                height="60"
-                translation="[140,420]"
-                horizAlign="center"
-                vertAlign="center"
-                color="0x8FDFF2FF"
-                text="CAST  •  CONTROL  •  ENJOY" />
-        </Group>
-
-        <Animation
-            id="launchAnimation"
-            duration="3.2"
-            repeat="false"
-            easeFunction="inOutQuad">
-            <FloatFieldInterpolator
-                key="[0.0,0.18,0.78,1.0]"
-                keyValue="[0.0,1.0,1.0,0.0]"
-                fieldToInterp="launchSplash.opacity" />
-            <Vector2DFieldInterpolator
-                key="[0.0,0.28,0.75,1.0]"
-                keyValue="[[0.0,1.0],[1.0,1.0],[1.0,1.0],[1.15,1.0]]"
-                fieldToInterp="splashAccent.scale" />
-        </Animation>
-
-        <Timer
-            id="splashTimer"
-            duration="3.2"
-            repeat="false" />
+        <Video
+            id="launchVideo"
+            width="1280"
+            height="720"
+            translation="[0,0]"
+            visible="true" />
 
         <Group
             id="waitingGroup"
