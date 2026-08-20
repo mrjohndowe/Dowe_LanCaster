@@ -2,18 +2,28 @@ sub init()
     m.statusLabel = m.top.findNode("statusLabel")
     m.videoPlayer = m.top.findNode("videoPlayer")
     m.background = m.top.findNode("background")
+    m.launchSplash = m.top.findNode("launchSplash")
+    m.splashOverlay = m.top.findNode("splashOverlay")
+    m.splashTitle = m.top.findNode("splashTitle")
+    m.splashAccent = m.top.findNode("splashAccent")
+    m.splashTagline = m.top.findNode("splashTagline")
+    m.launchAnimation = m.top.findNode("launchAnimation")
+    m.splashTimer = m.top.findNode("splashTimer")
+    m.waitingGroup = m.top.findNode("waitingGroup")
+    m.waitingFadeAnimation = m.top.findNode("waitingFadeAnimation")
     m.waitingScreen = m.top.findNode("waitingScreen")
     m.waitingTitle = m.top.findNode("waitingTitle")
     m.waitingSubtitle = m.top.findNode("waitingSubtitle")
     m.waitingInstructions = m.top.findNode("waitingInstructions")
     m.waitingHint = m.top.findNode("waitingHint")
     m.pendingStreamUrl = ""
-    m.playingIntro = true
+    m.showingSplash = true
 
     configureScreenSize()
 
     m.videoPlayer.observeField("state", "onPlayerStateChanged")
-    playIntro()
+    m.splashTimer.observeField("fire", "onSplashFinished")
+    startSplashAnimation()
 end sub
 
 sub configureScreenSize()
@@ -44,6 +54,40 @@ sub configureScreenSize()
         m.background.translation = [0, 0]
         m.background.width = screenWidth
         m.background.height = screenHeight
+    end if
+
+    if m.splashOverlay <> invalid
+        m.splashOverlay.translation = [0, 0]
+        m.splashOverlay.width = screenWidth
+        m.splashOverlay.height = screenHeight
+    end if
+
+    splashWidth = screenWidth * 0.78
+    splashLeft = (screenWidth - splashWidth) / 2
+
+    if m.splashTitle <> invalid
+        m.splashTitle.width = splashWidth
+        m.splashTitle.height = screenHeight * 0.16
+        m.splashTitle.translation = [splashLeft, screenHeight * 0.34]
+        m.splashTitle.font.size = screenHeight * 0.082
+    end if
+
+    if m.splashAccent <> invalid
+        accentWidth = screenWidth * 0.33
+        m.splashAccent.width = accentWidth
+        m.splashAccent.height = screenHeight * 0.008
+        m.splashAccent.translation = [
+            (screenWidth - accentWidth) / 2,
+            screenHeight * 0.55
+        ]
+        m.splashAccent.scaleRotateCenter = [accentWidth / 2, 3]
+    end if
+
+    if m.splashTagline <> invalid
+        m.splashTagline.width = splashWidth
+        m.splashTagline.height = screenHeight * 0.08
+        m.splashTagline.translation = [splashLeft, screenHeight * 0.59]
+        m.splashTagline.font.size = screenHeight * 0.028
     end if
 
     if m.waitingScreen <> invalid
@@ -97,35 +141,51 @@ sub configureScreenSize()
     end if
 end sub
 
-sub playIntro()
+sub startSplashAnimation()
     hideWaitingScreen()
-
-    content = CreateObject("roSGNode", "ContentNode")
-    content.url = "pkg:/videos/intro.mp4"
-    content.title = "Dowe LanCaster"
-    content.streamFormat = "mp4"
-
-    m.playingIntro = true
-    m.videoPlayer.content = content
-    m.videoPlayer.visible = true
+    m.videoPlayer.control = "stop"
+    m.videoPlayer.visible = false
     m.statusLabel.visible = false
-    m.videoPlayer.control = "play"
+    m.showingSplash = true
+    m.launchSplash.visible = true
+    m.launchSplash.opacity = 0
+    m.splashAccent.scale = [0, 1]
+    m.launchAnimation.control = "start"
+    m.splashTimer.control = "start"
+end sub
+
+sub onSplashFinished()
+    m.launchAnimation.control = "stop"
+    m.launchSplash.visible = false
+    m.showingSplash = false
+
+    if m.pendingStreamUrl <> invalid and m.pendingStreamUrl <> ""
+        startPendingStream()
+    else
+        showWaitingScreen()
+    end if
 end sub
 
 sub showWaitingScreen()
-    m.playingIntro = false
+    m.showingSplash = false
+    m.launchSplash.visible = false
     m.videoPlayer.control = "stop"
     m.videoPlayer.visible = false
     m.statusLabel.visible = false
 
+    m.waitingGroup.opacity = 0
+    m.waitingGroup.visible = true
     m.waitingScreen.visible = true
     m.waitingTitle.visible = true
     m.waitingSubtitle.visible = true
     m.waitingInstructions.visible = true
     m.waitingHint.visible = true
+    m.waitingFadeAnimation.control = "start"
 end sub
 
 sub hideWaitingScreen()
+    m.waitingFadeAnimation.control = "stop"
+    m.waitingGroup.visible = false
     m.waitingScreen.visible = false
     m.waitingTitle.visible = false
     m.waitingSubtitle.visible = false
@@ -141,7 +201,7 @@ sub onStreamUrlChanged()
     print "TYPE: "; m.top.mediaType
 
     if url = invalid or url = ""
-        if not m.playingIntro
+        if not m.showingSplash
             showWaitingScreen()
         end if
         return
@@ -149,7 +209,7 @@ sub onStreamUrlChanged()
 
     m.pendingStreamUrl = url
 
-    if m.playingIntro
+    if m.showingSplash
         return
     end if
 
@@ -202,20 +262,6 @@ sub onPlayerStateChanged()
 
     print "===== VIDEO STATE ====="
     print "state: "; state
-
-    if m.playingIntro
-        if state = "finished" or state = "error" or state = "stopped"
-            m.playingIntro = false
-
-            if m.pendingStreamUrl <> invalid and m.pendingStreamUrl <> ""
-                startPendingStream()
-            else
-                showWaitingScreen()
-            end if
-        end if
-
-        return
-    end if
 
     if state = "buffering"
         m.statusLabel.visible = true
