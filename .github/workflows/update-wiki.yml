@@ -1,0 +1,101 @@
+name: Update release wiki
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Release version including the leading v
+        required: true
+        type: string
+      release_url:
+        description: Published GitHub release URL
+        required: false
+        type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version, for example v0.8.0
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wiki-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  update-wiki:
+    name: Refresh GitHub Wiki
+    runs-on: windows-latest
+    steps:
+      - name: Check out release source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.version }}
+
+      - name: Clone dedicated wiki repository
+        shell: pwsh
+        env:
+          WIKI_PUSH_TOKEN: ${{ secrets.WIKI_TOKEN || github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          $remote = "https://x-access-token:$env:WIKI_PUSH_TOKEN@github.com/$env:REPOSITORY.wiki.git"
+          git clone $remote wiki-checkout
+          if ($LASTEXITCODE -ne 0) {
+            throw "Unable to clone the wiki. Configure WIKI_TOKEN with Contents write access if the workflow token cannot access it."
+          }
+
+      - name: Determine release information
+        id: release
+        shell: pwsh
+        env:
+          INPUT_URL: ${{ inputs.release_url }}
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          $url = $env:INPUT_URL
+          if ([string]::IsNullOrWhiteSpace($url)) {
+            $url = gh release view $env:VERSION --json url --jq .url 2>$null
+            if ($LASTEXITCODE -ne 0) {
+              $global:LASTEXITCODE = 0
+              $url = "https://github.com/${{ github.repository }}/releases/tag/$env:VERSION"
+            }
+          }
+          "url=$url" >> $env:GITHUB_OUTPUT
+          "date=$((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd'))" >> $env:GITHUB_OUTPUT
+
+      - name: Generate current wiki information
+        shell: pwsh
+        env:
+          VERSION: ${{ inputs.version }}
+          RELEASE_URL: ${{ steps.release.outputs.url }}
+          RELEASE_DATE: ${{ steps.release.outputs.date }}
+        run: |
+          .\scripts\Update-Wiki.ps1 `
+            -WikiPath .\wiki-checkout `
+            -Version $env:VERSION `
+            -ReleaseUrl $env:RELEASE_URL `
+            -ReleaseDate $env:RELEASE_DATE
+
+      - name: Commit and push changed wiki pages
+        shell: pwsh
+        working-directory: wiki-checkout
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- '*.md'
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Wiki is already current for $env:VERSION."
+            exit 0
+          }
+          $global:LASTEXITCODE = 0
+          git commit -m "Update wiki for $env:VERSION"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push origin HEAD
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
