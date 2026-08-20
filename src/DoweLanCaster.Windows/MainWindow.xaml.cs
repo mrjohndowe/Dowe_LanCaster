@@ -276,15 +276,10 @@ public partial class MainWindow : Window
                 _ytDlpPath = YtDlpLocator.Find();
             }
 
-            if (string.IsNullOrWhiteSpace(_ytDlpPath) ||
-                !File.Exists(_ytDlpPath))
-            {
-                throw new InvalidOperationException(
-                    @"This is a webpage URL. Install tools\yt-dlp\yt-dlp.exe to extract it.");
-            }
-
             LinkStatusText.Text =
-                "Webpage detected. Extracting media...";
+                string.IsNullOrWhiteSpace(_ytDlpPath)
+                    ? "Webpage detected. Scanning for embedded media..."
+                    : "Webpage detected. Extracting media...";
 
             var media =
                 await _linkExtractor.ExtractAsync(

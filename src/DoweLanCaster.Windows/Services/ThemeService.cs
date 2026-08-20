@@ -51,11 +51,30 @@ public static class ThemeService
             resources,
             "SelectionBrush",
             dark ? "#314A59" : "#CDEFFC");
+
+        Set(resources, System.Windows.SystemColors.ControlBrushKey,
+            dark ? "#222832" : "#F0F0F0");
+        Set(resources, System.Windows.SystemColors.ControlTextBrushKey,
+            dark ? "#F4F7FA" : "#17202A");
+        Set(resources, System.Windows.SystemColors.WindowBrushKey,
+            dark ? "#222832" : "#FFFFFF");
+        Set(resources, System.Windows.SystemColors.WindowTextBrushKey,
+            dark ? "#F4F7FA" : "#17202A");
+        Set(resources, System.Windows.SystemColors.HighlightBrushKey,
+            dark ? "#314A59" : "#CDEFFC");
+        Set(resources, System.Windows.SystemColors.HighlightTextBrushKey,
+            dark ? "#FFFFFF" : "#17202A");
+        Set(resources, System.Windows.SystemColors.GrayTextBrushKey,
+            dark ? "#8F9AA7" : "#6B737C");
+        Set(resources, System.Windows.SystemColors.MenuBrushKey,
+            dark ? "#222832" : "#FFFFFF");
+        Set(resources, System.Windows.SystemColors.MenuTextBrushKey,
+            dark ? "#F4F7FA" : "#17202A");
     }
 
     private static void Set(
         System.Windows.ResourceDictionary resources,
-        string key,
+        object key,
         string color)
     {
         var parsedColor =

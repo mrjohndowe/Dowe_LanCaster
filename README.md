@@ -1,7 +1,20 @@
-# Dowe LanCaster v0.8.0
+# Dowe LanCaster v0.9.0
 
 Dowe LanCaster is a Windows-to-Roku LAN casting, playlist, live-streaming,
 link-streaming, and remote-control application.
+
+## New in v0.9.0
+
+### Improved Link Cast webpage extraction
+Link Cast now resolves public webpage URLs with bundled yt-dlp and falls back
+to detecting standard video, source, Open Graph, JSON, MP4, WebM, and HLS
+references embedded in the page. Required Referer and browser headers are
+passed to FFmpeg. DRM, authentication, paywalls, and access controls are not
+bypassed.
+
+### Complete Dark Mode control styling
+Dark Mode now provides readable colors for dropdowns, tabs, buttons, disabled
+controls, lists, selections, hover states, and standard WPF system controls.
 
 ## New in v0.8.0
 

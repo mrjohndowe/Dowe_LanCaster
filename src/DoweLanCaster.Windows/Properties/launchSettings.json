@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DoweLanCaster.Windows": {
+      "commandName": "Project",
+      "debugEngines": "managed,native"
+    }
+  }
+}
