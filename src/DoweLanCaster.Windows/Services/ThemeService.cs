@@ -70,6 +70,26 @@ public static class ThemeService
             dark ? "#222832" : "#FFFFFF");
         Set(resources, System.Windows.SystemColors.MenuTextBrushKey,
             dark ? "#F4F7FA" : "#17202A");
+        Set(resources, System.Windows.SystemColors.ScrollBarBrushKey,
+            dark ? "#222832" : "#F0F0F0");
+        Set(resources, System.Windows.SystemColors.ControlLightBrushKey,
+            dark ? "#2B3440" : "#E3E3E3");
+        Set(resources, System.Windows.SystemColors.ControlLightLightBrushKey,
+            dark ? "#3C4652" : "#FFFFFF");
+        Set(resources, System.Windows.SystemColors.ControlDarkBrushKey,
+            dark ? "#191D24" : "#A0A0A0");
+        Set(resources, System.Windows.SystemColors.ControlDarkDarkBrushKey,
+            dark ? "#101318" : "#696969");
+        Set(resources, System.Windows.SystemColors.ActiveBorderBrushKey,
+            dark ? "#3C4652" : "#B4B4B4");
+        Set(resources, System.Windows.SystemColors.InactiveBorderBrushKey,
+            dark ? "#303844" : "#F4F7FC");
+        Set(resources, System.Windows.SystemColors.WindowFrameBrushKey,
+            dark ? "#101318" : "#646464");
+        Set(resources, System.Windows.SystemColors.InactiveSelectionHighlightBrushKey,
+            dark ? "#2B3E4A" : "#DADADA");
+        Set(resources, System.Windows.SystemColors.InactiveSelectionHighlightTextBrushKey,
+            dark ? "#F4F7FA" : "#17202A");
     }
 
     private static void Set(
