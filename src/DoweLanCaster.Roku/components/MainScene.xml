@@ -15,6 +15,61 @@
             translation="[0,0]"
             color="0x000000FF" />
 
+        <Poster
+            id="waitingScreen"
+            width="1280"
+            height="720"
+            translation="[0,0]"
+            uri="pkg:/images/waiting-screen.png"
+            loadDisplayMode="scaleToFill"
+            visible="false" />
+
+        <Label
+            id="waitingTitle"
+            width="1000"
+            height="80"
+            translation="[140,150]"
+            horizAlign="center"
+            vertAlign="center"
+            color="0x4EDCFFFF"
+            text="DOWE LANCASTER"
+            visible="false" />
+
+        <Label
+            id="waitingSubtitle"
+            width="1000"
+            height="60"
+            translation="[140,230]"
+            horizAlign="center"
+            vertAlign="center"
+            color="0xFFFFFFFF"
+            text="Waiting for a stream"
+            visible="false" />
+
+        <Label
+            id="waitingInstructions"
+            width="1000"
+            height="190"
+            translation="[140,320]"
+            horizAlign="center"
+            vertAlign="center"
+            wrap="true"
+            numLines="4"
+            color="0xD8E4EEFF"
+            text="1. Open Dowe LanCaster on your Windows PC&#10;2. Select this Roku device&#10;3. Choose Link Cast, Live Cast, File Cast, or Folder Cast"
+            visible="false" />
+
+        <Label
+            id="waitingHint"
+            width="1000"
+            height="50"
+            translation="[140,545]"
+            horizAlign="center"
+            vertAlign="center"
+            color="0x7EDFF5FF"
+            text="Keep this screen open while connecting"
+            visible="false" />
+
         <Video
             id="videoPlayer"
             width="1280"
@@ -29,6 +84,8 @@
             translation="[240,300]"
             horizAlign="center"
             vertAlign="center"
-            text="Dowe LanCaster ready" />
+            color="0xFFFFFFFF"
+            visible="false"
+            text="" />
     </children>
 </component>

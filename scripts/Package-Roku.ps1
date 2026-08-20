@@ -19,6 +19,10 @@ try {
         $items += "images"
     }
 
+    if (Test-Path ".\videos") {
+        $items += "videos"
+    }
+
     & tar.exe -a -c -f $OutputZip @items
 
     if ($LASTEXITCODE -ne 0) {
