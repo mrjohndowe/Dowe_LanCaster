@@ -23,6 +23,10 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.1] - 2026-08-20
+
+**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.8.0...v0.9.1
+
 ## [0.8.0] - 2026-08-19
 
 ### Added
@@ -100,7 +104,8 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   High Profile Level 4.1 encoding.
 - Waited for playable media segments before launching the Roku receiver.
 
-[Unreleased]: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.9.1
 [0.8.0]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.8.0
 [0.7.1]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.7.1
 [0.7.0]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.7.0
