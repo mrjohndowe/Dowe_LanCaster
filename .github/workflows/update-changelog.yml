@@ -76,11 +76,32 @@ jobs:
             exit 0
           }
 
-          $releaseJson = gh release view $env:VERSION `
-            --repo $env:REPOSITORY `
-            --json body,publishedAt,url
-          if ($LASTEXITCODE -ne 0) {
-            throw "Unable to read GitHub release $env:VERSION."
+          # A release-created workflow can start before GitHub's release API is
+          # consistent across jobs. Retry the lookup instead of failing the
+          # changelog immediately after a successful publish.
+          $releaseJson = $null
+          $releaseError = $null
+          $maximumAttempts = 12
+          for ($attempt = 1; $attempt -le $maximumAttempts; $attempt++) {
+            $releaseOutput = gh release view $env:VERSION `
+              --repo $env:REPOSITORY `
+              --json body,publishedAt,url 2>&1
+
+            if ($LASTEXITCODE -eq 0) {
+              $releaseJson = $releaseOutput -join "`n"
+              break
+            }
+
+            $releaseError = $releaseOutput -join "`n"
+            $global:LASTEXITCODE = 0
+            if ($attempt -lt $maximumAttempts) {
+              Write-Warning "Release $env:VERSION is not visible yet (attempt $attempt of $maximumAttempts). Retrying in 10 seconds."
+              Start-Sleep -Seconds 10
+            }
+          }
+
+          if ([string]::IsNullOrWhiteSpace($releaseJson)) {
+            throw "Unable to read GitHub release $env:VERSION after $maximumAttempts attempts. Last GitHub response: $releaseError"
           }
           $release = $releaseJson | ConvertFrom-Json
           $releaseDate = ([DateTimeOffset]::Parse($release.publishedAt)).UtcDateTime.ToString('yyyy-MM-dd')
