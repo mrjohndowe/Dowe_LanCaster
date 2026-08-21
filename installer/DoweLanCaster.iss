@@ -91,9 +91,9 @@ begin
   WizardForm.FinishedHeadingLabel.Font.Name := 'Segoe UI Semibold';
   WizardForm.FinishedHeadingLabel.Font.Color := DoweText;
   WizardForm.FinishedLabel.Font.Color := DoweSecondaryText;
-  WizardForm.InstallingLabel.Font.Name := 'Segoe UI Semibold';
-  WizardForm.InstallingLabel.Font.Color := DoweCyan;
-  WizardForm.StatusLabel.Font.Color := DoweSecondaryText;
+  WizardForm.StatusLabel.Font.Name := 'Segoe UI Semibold';
+  WizardForm.StatusLabel.Font.Color := DoweCyan;
+  WizardForm.FilenameLabel.Font.Color := DoweSecondaryText;
 
   DoweProgressTrack := TPanel.Create(WizardForm);
   DoweProgressTrack.Parent := WizardForm.InstallingPage;
@@ -135,7 +135,7 @@ begin
       (Int64(CurProgress) * 100) div MaxProgress;
     DoweProgressFill.Width :=
       (Int64(CurProgress) * DoweProgressTrack.ClientWidth) div MaxProgress;
-    WizardForm.InstallingLabel.Caption :=
+    WizardForm.StatusLabel.Caption :=
       Format('Installing Dowe LanCaster: %d%%', [PercentComplete]);
   end;
 end;
