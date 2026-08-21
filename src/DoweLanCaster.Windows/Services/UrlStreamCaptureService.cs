@@ -69,27 +69,7 @@ public sealed class UrlStreamCaptureService : IAsyncDisposable
         psi.ArgumentList.Add("-hide_banner");
         psi.ArgumentList.Add("-y");
 
-        if (media.HttpHeaders.Count > 0)
-        {
-            var headerBuilder = new StringBuilder();
-
-            foreach (var pair in media.HttpHeaders)
-            {
-                if (string.Equals(pair.Key, "Accept-Encoding", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                headerBuilder.Append(pair.Key)
-                    .Append(": ")
-                    .Append(pair.Value)
-                    .Append("\r\n");
-            }
-
-            if (headerBuilder.Length > 0)
-            {
-                psi.ArgumentList.Add("-headers");
-                psi.ArgumentList.Add(headerBuilder.ToString());
-            }
-        }
+        AddInputHeaders(psi, media.HttpHeaders);
 
         psi.ArgumentList.Add("-reconnect");
         psi.ArgumentList.Add("1");
@@ -101,17 +81,43 @@ public sealed class UrlStreamCaptureService : IAsyncDisposable
         psi.ArgumentList.Add("-i");
         psi.ArgumentList.Add(media.MediaUrl);
 
+        var hasSeparateAudio =
+            !string.IsNullOrWhiteSpace(media.AudioUrl);
+
+        if (hasSeparateAudio)
+        {
+            AddInputHeaders(
+                psi,
+                media.AudioHttpHeaders.Count > 0
+                    ? media.AudioHttpHeaders
+                    : media.HttpHeaders);
+            psi.ArgumentList.Add("-i");
+            psi.ArgumentList.Add(media.AudioUrl!);
+        }
+
+        psi.ArgumentList.Add("-map");
+        psi.ArgumentList.Add("0:v:0");
+        psi.ArgumentList.Add("-map");
+        psi.ArgumentList.Add(
+            hasSeparateAudio
+                ? "1:a:0"
+                : "0:a:0?");
+
         foreach (var arg in videoEncoding.Split(' ', StringSplitOptions.RemoveEmptyEntries))
             psi.ArgumentList.Add(arg);
 
         psi.ArgumentList.Add("-c:a");
         psi.ArgumentList.Add("aac");
+        psi.ArgumentList.Add("-profile:a");
+        psi.ArgumentList.Add("aac_low");
         psi.ArgumentList.Add("-b:a");
         psi.ArgumentList.Add("160k");
         psi.ArgumentList.Add("-ac");
         psi.ArgumentList.Add("2");
         psi.ArgumentList.Add("-ar");
         psi.ArgumentList.Add("48000");
+        psi.ArgumentList.Add("-af");
+        psi.ArgumentList.Add("aresample=async=1:first_pts=0");
         psi.ArgumentList.Add("-pix_fmt");
         psi.ArgumentList.Add("yuv420p");
         psi.ArgumentList.Add("-force_key_frames");
@@ -203,6 +209,38 @@ public sealed class UrlStreamCaptureService : IAsyncDisposable
         {
             return "";
         }
+    }
+
+    private static void AddInputHeaders(
+        ProcessStartInfo processStartInfo,
+        IReadOnlyDictionary<string, string> headers)
+    {
+        if (headers.Count == 0)
+            return;
+
+        var headerBuilder = new StringBuilder();
+
+        foreach (var pair in headers)
+        {
+            if (string.Equals(
+                    pair.Key,
+                    "Accept-Encoding",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            headerBuilder.Append(pair.Key)
+                .Append(": ")
+                .Append(pair.Value)
+                .Append("\r\n");
+        }
+
+        if (headerBuilder.Length == 0)
+            return;
+
+        processStartInfo.ArgumentList.Add("-headers");
+        processStartInfo.ArgumentList.Add(headerBuilder.ToString());
     }
 
     public async Task StopAsync()

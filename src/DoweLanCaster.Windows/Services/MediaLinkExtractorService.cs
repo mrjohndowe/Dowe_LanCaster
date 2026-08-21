@@ -94,7 +94,11 @@ public sealed class MediaLinkExtractorService
             "--referer",
             pageUrl,
             "--format",
-            "best[protocol^=http][vcodec!=none]/best[vcodec!=none]/best",
+            "bestvideo[protocol^=http]+bestaudio[protocol^=http]/" +
+            "bestvideo+bestaudio/" +
+            "best[protocol^=http][vcodec!=none][acodec!=none]/" +
+            "best[vcodec!=none][acodec!=none]/" +
+            "best[protocol^=http][vcodec!=none]/best",
             pageUrl
         };
 
@@ -123,31 +127,62 @@ public sealed class MediaLinkExtractorService
         var root = doc.RootElement;
 
         string mediaUrl = GetString(root, "url");
+        string? audioUrl = null;
+        var videoHeaders = ReadHeaders(root);
+        IReadOnlyDictionary<string, string> audioHeaders =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        if (root.TryGetProperty("requested_formats", out var requestedFormats) &&
+            requestedFormats.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var format in requestedFormats.EnumerateArray())
+            {
+                var formatUrl = GetString(format, "url");
+                if (string.IsNullOrWhiteSpace(formatUrl))
+                    continue;
+
+                var videoCodec = GetString(format, "vcodec");
+                var audioCodec = GetString(format, "acodec");
+                var hasVideo = !string.IsNullOrWhiteSpace(videoCodec) &&
+                    !videoCodec.Equals("none", StringComparison.OrdinalIgnoreCase);
+                var hasAudio = !string.IsNullOrWhiteSpace(audioCodec) &&
+                    !audioCodec.Equals("none", StringComparison.OrdinalIgnoreCase);
+
+                if (hasVideo && string.IsNullOrWhiteSpace(mediaUrl))
+                {
+                    mediaUrl = formatUrl;
+                    videoHeaders = ReadHeaders(format);
+                }
+
+                if (hasAudio && !hasVideo && string.IsNullOrWhiteSpace(audioUrl))
+                {
+                    audioUrl = formatUrl;
+                    audioHeaders = ReadHeaders(format);
+                }
+            }
+        }
 
         if (string.IsNullOrWhiteSpace(mediaUrl))
             throw new InvalidOperationException(
                 "The page was recognized, but no single directly streamable audio/video format was available.");
 
-        var headers = new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);
-
-        if (root.TryGetProperty("http_headers", out var headerElement) &&
-            headerElement.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var property in headerElement.EnumerateObject())
-                if (property.Value.ValueKind == JsonValueKind.String)
-                    headers[property.Name] = property.Value.GetString() ?? "";
-        }
+        LogLine?.Invoke(
+            string.IsNullOrWhiteSpace(audioUrl)
+                ? "yt-dlp selected a combined media stream; FFmpeg will map its audio track."
+                : "yt-dlp selected separate video and audio streams; FFmpeg will combine them.");
 
         return new ExtractedMedia
         {
             PageUrl = pageUrl,
             Title = GetString(root, "title"),
             MediaUrl = mediaUrl,
+            AudioUrl = audioUrl,
             Protocol = GetString(root, "protocol"),
             Extension = GetString(root, "ext"),
             ThumbnailUrl = GetNullableString(root, "thumbnail"),
             IsLive = GetBool(root, "is_live"),
-            HttpHeaders = headers
+            HttpHeaders = videoHeaders,
+            AudioHttpHeaders = audioHeaders
         };
     }
 
@@ -303,5 +338,26 @@ public sealed class MediaLinkExtractorService
             return value.GetBoolean();
 
         return false;
+    }
+
+    private static IReadOnlyDictionary<string, string> ReadHeaders(
+        JsonElement element)
+    {
+        var headers =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        if (!element.TryGetProperty("http_headers", out var headerElement) ||
+            headerElement.ValueKind != JsonValueKind.Object)
+        {
+            return headers;
+        }
+
+        foreach (var property in headerElement.EnumerateObject())
+        {
+            if (property.Value.ValueKind == JsonValueKind.String)
+                headers[property.Name] = property.Value.GetString() ?? "";
+        }
+
+        return headers;
     }
 }
