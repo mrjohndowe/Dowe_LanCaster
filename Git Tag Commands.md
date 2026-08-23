@@ -87,22 +87,22 @@ Open **PowerShell as Administrator**, then run:
 
 ```powershell
 New-NetFirewallRule `
-  -DisplayName "Allow TCP Port 8080" `
+  -DisplayName "Allow TCP Port 3000" `
   -Direction Inbound `
   -Protocol TCP `
-  -LocalPort 8080 `
+  -LocalPort 3000 `
   -Action Allow `
   -Profile Domain,Private
 ```
 
-Replace `8080` with the port you need.
+Replace `3000` with the port you need.
 
 For UDP, change `-Protocol TCP` to `-Protocol UDP`.
 
 To allow both TCP and UDP:
 
 ```powershell
-$port = 8888
+$port = 3000
 
 New-NetFirewallRule -DisplayName "Allow TCP Port $port" -Direction Inbound -Protocol TCP -LocalPort $port -Action Allow -Profile Domain,Private
 New-NetFirewallRule -DisplayName "Allow UDP Port $port" -Direction Inbound -Protocol UDP -LocalPort $port -Action Allow -Profile Domain,Private
@@ -111,15 +111,15 @@ New-NetFirewallRule -DisplayName "Allow UDP Port $port" -Direction Inbound -Prot
 Verify the rules:
 
 ```powershell
-Get-NetFirewallRule -DisplayName "Allow * Port 8888" |
+Get-NetFirewallRule -DisplayName "Allow * Port 3000" |
     Get-NetFirewallPortFilter
 ```
 
 Remove them later:
 
 ```powershell
-Remove-NetFirewallRule -DisplayName "Allow TCP Port 8080"
-Remove-NetFirewallRule -DisplayName "Allow UDP Port 8080"
+Remove-NetFirewallRule -DisplayName "Allow TCP Port 3000"
+Remove-NetFirewallRule -DisplayName "Allow UDP Port 3000"
 ```
 
 If the computer must accept connections while using a **Public** network profile, add `Public` to `-Profile`. That is broader exposure, so only do it when necessary. Opening the firewall port permits traffic to reach the computer, but an application or service must also be running and listening on that port.
