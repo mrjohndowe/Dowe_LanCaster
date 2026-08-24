@@ -95,6 +95,12 @@ begin
   WizardForm.StatusLabel.Font.Color := DoweCyan;
   WizardForm.FilenameLabel.Font.Color := DoweSecondaryText;
 
+  { The Ready page memo retains the native light window background unless it
+    is styled explicitly. The form-wide white foreground then becomes
+    unreadable in that control. }
+  WizardForm.ReadyMemo.Color := DoweSurface;
+  WizardForm.ReadyMemo.Font.Color := DoweText;
+
   DoweProgressTrack := TPanel.Create(WizardForm);
   DoweProgressTrack.Parent := WizardForm.InstallingPage;
   DoweProgressTrack.Left := WizardForm.ProgressGauge.Left;
