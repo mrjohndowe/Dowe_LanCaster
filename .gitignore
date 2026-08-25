@@ -15,8 +15,14 @@ obj/
 
 # Build output / packages
 dist/
+release-build/
 publish/
 *.zip
+
+# Downloaded release dependencies are packaged by Build-Release.ps1 and must
+# not be committed; FFmpeg exceeds GitHub's normal file-size limit.
+tools/ffmpeg/*.exe
+tools/yt-dlp/*.exe
 
 # Local app settings
 appsettings.local.json

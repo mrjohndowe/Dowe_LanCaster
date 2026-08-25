@@ -145,6 +145,7 @@ public partial class MainWindow : Window
 
         if (string.IsNullOrWhiteSpace(_ffmpegPath))
         {
+            SetFfmpegUnavailableOptions();
             LiveStatusText.Text =
                 "FFmpeg not found. Run SETUP-DEPENDENCIES.cmd or place ffmpeg.exe in tools\\ffmpeg.";
             UpdateDiagnostics(message: "FFmpeg not found.");
@@ -171,6 +172,9 @@ public partial class MainWindow : Window
             EncoderComboBox.SelectedItem = preferred;
             LinkEncoderComboBox.SelectedItem = preferred;
             FolderEncoderComboBox.SelectedItem = preferred;
+            EncoderComboBox.IsEnabled = true;
+            LinkEncoderComboBox.IsEnabled = true;
+            FolderEncoderComboBox.IsEnabled = true;
 
             LiveStatusText.Text =
                 $"FFmpeg ready: {_ffmpegPath}";
@@ -533,7 +537,19 @@ public partial class MainWindow : Window
     {
         if (string.IsNullOrWhiteSpace(_ffmpegPath))
         {
-            AudioDeviceComboBox.ItemsSource = null;
+            AudioDeviceComboBox.ItemsSource =
+                new[]
+                {
+                    new AudioSourceOption
+                    {
+                        Kind = AudioSourceKind.None,
+                        Name = "No Audio (FFmpeg unavailable)"
+                    }
+                };
+            AudioDeviceComboBox.SelectedIndex = 0;
+            AudioDeviceComboBox.IsEnabled = false;
+            IncludeAudioCheckBox.IsChecked = false;
+            IncludeAudioCheckBox.IsEnabled = false;
             LiveStatusText.Text =
                 "FFmpeg is required for audio capture.";
             return;
@@ -565,6 +581,8 @@ public partial class MainWindow : Window
                 preferred
                 ?? systemAudio
                 ?? sources.FirstOrDefault();
+            AudioDeviceComboBox.IsEnabled = true;
+            IncludeAudioCheckBox.IsEnabled = true;
 
             LiveStatusText.Text =
                 $"Found {sources.Count} audio option(s).";
@@ -578,6 +596,21 @@ public partial class MainWindow : Window
                 $"Audio detection failed: {ex.Message}";
             UpdateDiagnostics(message: ex.Message);
         }
+    }
+
+    private void SetFfmpegUnavailableOptions()
+    {
+        var unavailable = new[] { "FFmpeg unavailable" };
+
+        EncoderComboBox.ItemsSource = unavailable;
+        LinkEncoderComboBox.ItemsSource = unavailable;
+        FolderEncoderComboBox.ItemsSource = unavailable;
+        EncoderComboBox.SelectedIndex = 0;
+        LinkEncoderComboBox.SelectedIndex = 0;
+        FolderEncoderComboBox.SelectedIndex = 0;
+        EncoderComboBox.IsEnabled = false;
+        LinkEncoderComboBox.IsEnabled = false;
+        FolderEncoderComboBox.IsEnabled = false;
     }
 
     private void SaveCurrentSettings()
