@@ -512,16 +512,16 @@
                                                                 <ListBox x:Name="AppsGridListBox" Visibility="Collapsed" MouseDoubleClick="AppsListBox_MouseDoubleClick">
                                                                         <ListBox.ItemsPanel>
                                                                                 <ItemsPanelTemplate>
-                                                                                        <WrapPanel/>
+                                                                                        <UniformGrid Columns="3"/>
                                                                                 </ItemsPanelTemplate>
                                                                         </ListBox.ItemsPanel>
                                                                         <ListBox.ItemTemplate>
                                                                                 <DataTemplate>
-                                                                                        <StackPanel Width="104" Margin="5">
-                                                                                                <Border Width="96" Height="72" Background="#20242A" BorderBrush="#343A43" BorderThickness="1" CornerRadius="6">
-                                                                                                        <Image Source="{Binding IconUrl}" Stretch="Uniform" Margin="4"/>
+                                                                                        <StackPanel Height="148" Margin="8" VerticalAlignment="Stretch">
+                                                                                                <Border Height="108" Background="#20242A" BorderBrush="#343A43" BorderThickness="1" CornerRadius="6">
+                                                                                                        <Image Source="{Binding IconUrl}" Stretch="Uniform" Margin="8"/>
                                                                                                 </Border>
-                                                                                                <TextBlock Text="{Binding Name}" TextAlignment="Center" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="36" Margin="0,5,0,0"/>
+                                                                                                <TextBlock Text="{Binding Name}" TextAlignment="Center" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="40" Margin="0,8,0,0"/>
                                                                                         </StackPanel>
                                                                                 </DataTemplate>
                                                                         </ListBox.ItemTemplate>
