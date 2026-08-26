@@ -1,20 +1,12 @@
 <?php
 declare(strict_types=1);
 
-$release = [
-    'version' => '0.7.0',
-    'windows_file' => '../dist/DoweLanCaster-Windows-x64.zip',
-    'roku_file' => '../dist/DoweLanCaster-Roku.zip',
-];
+const GITHUB_RELEASE_API =
+    'https://api.github.com/repos/mrjohndowe/Dowe_LanCaster/releases/latest';
 
-function fileSizeLabel(string $path): string
+function fileSizeLabel(?int $bytes): string
 {
-    if (!is_file($path)) {
-        return 'Build locally';
-    }
-
-    $bytes = filesize($path);
-    if ($bytes === false) {
+    if ($bytes === null || $bytes <= 0) {
         return 'Download';
     }
 
@@ -23,10 +15,59 @@ function fileSizeLabel(string $path): string
         : number_format($bytes / 1024, 0) . ' KB';
 }
 
-function downloadAvailable(string $path): bool
+function latestRelease(): array
 {
-    return is_file($path);
+    $fallback = [
+        'version' => '0.7.0',
+        'url' => 'https://github.com/mrjohndowe/Dowe_LanCaster/releases',
+        'installer' => null,
+        'portable' => null,
+    ];
+
+    $context = stream_context_create([
+        'http' => [
+            'header' => "Accept: application/vnd.github+json\r\n" .
+                "User-Agent: Dowe-LanCaster-Website\r\n",
+            'timeout' => 4,
+        ],
+    ]);
+
+    $json = @file_get_contents(GITHUB_RELEASE_API, false, $context);
+    $data = is_string($json) ? json_decode($json, true) : null;
+
+    if (!is_array($data) || empty($data['tag_name']) || !is_array($data['assets'] ?? null)) {
+        return $fallback;
+    }
+
+    $release = [
+        'version' => ltrim((string) $data['tag_name'], 'v'),
+        'url' => (string) ($data['html_url'] ?? $fallback['url']),
+        'installer' => null,
+        'portable' => null,
+    ];
+
+    foreach ($data['assets'] as $asset) {
+        if (!is_array($asset) || empty($asset['browser_download_url'])) {
+            continue;
+        }
+
+        $download = [
+            'name' => (string) ($asset['name'] ?? ''),
+            'url' => (string) $asset['browser_download_url'],
+            'size' => isset($asset['size']) ? (int) $asset['size'] : null,
+        ];
+
+        if (substr($download['name'], -10) === '-Setup.exe') {
+            $release['installer'] = $download;
+        } elseif (substr($download['name'], -16) === '-Windows-x64.zip') {
+            $release['portable'] = $download;
+        }
+    }
+
+    return $release;
 }
+
+$release = latestRelease();
 ?>
 <!doctype html>
 <html lang="en">
@@ -189,20 +230,21 @@ function downloadAvailable(string $path): bool
                     <p>Dowe LanCaster <?= htmlspecialchars($release['version']) ?> for Windows x64. The Roku receiver is packaged separately for sideloading.</p>
                 </div>
                 <div class="download-actions">
-                    <?php if (downloadAvailable($release['windows_file'])): ?>
-                        <a class="download-row primary-download" href="<?= htmlspecialchars($release['windows_file']) ?>" download>
-                            <span><strong>Windows app</strong><small>ZIP · <?= fileSizeLabel($release['windows_file']) ?></small></span><b>↓</b>
+                    <?php if ($release['installer'] !== null): ?>
+                        <a class="download-row primary-download" href="<?= htmlspecialchars($release['installer']['url']) ?>">
+                            <span><strong>Windows installer</strong><small>EXE · <?= fileSizeLabel($release['installer']['size']) ?></small></span><b>↓</b>
                         </a>
                     <?php else: ?>
                         <div class="download-row unavailable">
-                            <span><strong>Windows app</strong><small>Run BUILD-RELEASE.cmd first</small></span><b>—</b>
+                            <span><strong>Windows installer</strong><small>Release download unavailable</small></span><b>—</b>
                         </div>
                     <?php endif; ?>
-                    <?php if (downloadAvailable($release['roku_file'])): ?>
-                        <a class="download-row" href="<?= htmlspecialchars($release['roku_file']) ?>" download>
-                            <span><strong>Roku receiver</strong><small>ZIP · <?= fileSizeLabel($release['roku_file']) ?></small></span><b>↓</b>
+                    <?php if ($release['portable'] !== null): ?>
+                        <a class="download-row" href="<?= htmlspecialchars($release['portable']['url']) ?>">
+                            <span><strong>Portable Windows ZIP</strong><small>ZIP · <?= fileSizeLabel($release['portable']['size']) ?></small></span><b>↓</b>
                         </a>
                     <?php endif; ?>
+                    <a class="fine-print" href="<?= htmlspecialchars($release['url']) ?>">View release notes and all available downloads on GitHub.</a>
                     <p class="fine-print">Requires Windows 10/11, .NET 8, a Roku device, and both devices on the same private network. Public link casting does not bypass DRM, paywalls, or protected playback.</p>
                 </div>
             </div>
