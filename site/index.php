@@ -36,7 +36,7 @@ function downloadAvailable(string $path): bool
     <meta name="description" content="Dowe LanCaster casts video, folders, links, and your Windows screen to Roku over your local network.">
     <meta name="theme-color" content="#071016">
     <title>Dowe LanCaster <?= htmlspecialchars($release['version']) ?> — Cast Windows to Roku</title>
-    <link rel="icon" href="../DoweLanCaster.ico">
+    <link rel="icon" href="assets/favicon.ico">
     <link rel="stylesheet" href="assets/site.css">
     <script src="assets/site.js" defer></script>
 </head>
@@ -46,7 +46,7 @@ function downloadAvailable(string $path): bool
 
     <header class="site-header">
         <a class="brand" href="#top" aria-label="Dowe LanCaster home">
-            <img src="../logo.png" alt="" width="44" height="44">
+            <img src="assets/logo.png" alt="" width="44" height="44">
             <span>Dowe <strong>LanCaster</strong></span>
         </a>
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
@@ -210,7 +210,7 @@ function downloadAvailable(string $path): bool
     </main>
 
     <footer class="site-footer section-shell">
-        <a class="brand" href="#top"><img src="../logo.png" alt="" width="36" height="36"><span>Dowe <strong>LanCaster</strong></span></a>
+        <a class="brand" href="#top"><img src="assets/logo.png" alt="" width="36" height="36"><span>Dowe <strong>LanCaster</strong></span></a>
         <p>Built for the living room. Streamed on your LAN.</p>
         <span>Version <?= htmlspecialchars($release['version']) ?></span>
     </footer>
