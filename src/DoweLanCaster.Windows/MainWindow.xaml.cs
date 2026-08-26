@@ -1001,6 +1001,7 @@ public partial class MainWindow : Window
         _rokuClient?.Dispose();
         _rokuClient = null;
         AppsListBox.ItemsSource = null;
+        AppsGridListBox.ItemsSource = null;
 
         if (DeviceComboBox.SelectedItem is not RokuDevice device)
             return;
@@ -2031,6 +2032,7 @@ public partial class MainWindow : Window
         {
             var apps = await _rokuClient.GetAppsAsync();
             AppsListBox.ItemsSource = apps;
+            AppsGridListBox.ItemsSource = apps;
             StatusText.Text = $"Loaded {apps.Count} installed apps.";
         }
         catch (Exception ex)
@@ -2045,9 +2047,22 @@ public partial class MainWindow : Window
     private async void AppsListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e) =>
         await LaunchSelectedAppAsync();
 
+    private void AppsDisplayMode_Changed(object sender, RoutedEventArgs e)
+    {
+        if (AppsListBox is null || AppsGridListBox is null)
+            return;
+
+        var showGrid = AppsGridViewButton.IsChecked == true;
+        AppsListBox.Visibility = showGrid ? Visibility.Collapsed : Visibility.Visible;
+        AppsGridListBox.Visibility = showGrid ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private async Task LaunchSelectedAppAsync()
     {
-        if (_rokuClient is null || AppsListBox.SelectedItem is not RokuApp app)
+        var app = AppsListBox.SelectedItem as RokuApp
+            ?? AppsGridListBox.SelectedItem as RokuApp;
+
+        if (_rokuClient is null || app is null)
             return;
 
         try

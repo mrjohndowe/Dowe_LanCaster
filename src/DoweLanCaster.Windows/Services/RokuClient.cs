@@ -61,7 +61,10 @@ public sealed class RokuClient : IDisposable
             .Select(x => new RokuApp
             {
                 Id = x.Attribute("id")?.Value ?? "",
-                Name = x.Value.Trim()
+                Name = x.Value.Trim(),
+                IconUrl =
+                    $"http://{Device.IpAddress}:8060/query/icon/" +
+                    Uri.EscapeDataString(x.Attribute("id")?.Value ?? "")
             })
             .Where(x => !string.IsNullOrWhiteSpace(x.Id))
             .OrderBy(x => x.Name)

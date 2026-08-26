@@ -488,9 +488,45 @@
 
                                                         <TextBlock Text="Installed Roku Apps" FontSize="24" FontWeight="Bold"/>
 
-                                                        <Button Grid.Row="1" Content="Refresh Apps" HorizontalAlignment="Left" Padding="14,6" Margin="0,12" Click="RefreshAppsButton_Click"/>
+                                                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,12">
+                                                                <Button Content="Refresh Apps" Padding="14,6" Click="RefreshAppsButton_Click"/>
+                                                                <TextBlock Text="Display:" VerticalAlignment="Center" Margin="18,0,6,0"/>
+                                                                <RadioButton x:Name="AppsListViewButton" Content="List" IsChecked="True" VerticalAlignment="Center" Margin="0,0,10,0" Checked="AppsDisplayMode_Changed"/>
+                                                                <RadioButton x:Name="AppsGridViewButton" Content="Grid" VerticalAlignment="Center" Checked="AppsDisplayMode_Changed"/>
+                                                        </StackPanel>
 
-                                                        <ListBox x:Name="AppsListBox" Grid.Row="2" DisplayMemberPath="Name" MouseDoubleClick="AppsListBox_MouseDoubleClick"/>
+                                                        <Grid Grid.Row="2">
+                                                                <ListBox x:Name="AppsListBox" MouseDoubleClick="AppsListBox_MouseDoubleClick">
+                                                                        <ListBox.ItemTemplate>
+                                                                                <DataTemplate>
+                                                                                        <StackPanel Orientation="Horizontal" Margin="4">
+                                                                                                <Border Width="42" Height="42" Background="#20242A" CornerRadius="5" Margin="0,0,10,0">
+                                                                                                        <Image Source="{Binding IconUrl}" Stretch="Uniform"/>
+                                                                                                </Border>
+                                                                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                                                        </StackPanel>
+                                                                                </DataTemplate>
+                                                                        </ListBox.ItemTemplate>
+                                                                </ListBox>
+
+                                                                <ListBox x:Name="AppsGridListBox" Visibility="Collapsed" MouseDoubleClick="AppsListBox_MouseDoubleClick">
+                                                                        <ListBox.ItemsPanel>
+                                                                                <ItemsPanelTemplate>
+                                                                                        <WrapPanel/>
+                                                                                </ItemsPanelTemplate>
+                                                                        </ListBox.ItemsPanel>
+                                                                        <ListBox.ItemTemplate>
+                                                                                <DataTemplate>
+                                                                                        <StackPanel Width="104" Margin="5">
+                                                                                                <Border Width="96" Height="72" Background="#20242A" BorderBrush="#343A43" BorderThickness="1" CornerRadius="6">
+                                                                                                        <Image Source="{Binding IconUrl}" Stretch="Uniform" Margin="4"/>
+                                                                                                </Border>
+                                                                                                <TextBlock Text="{Binding Name}" TextAlignment="Center" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="36" Margin="0,5,0,0"/>
+                                                                                        </StackPanel>
+                                                                                </DataTemplate>
+                                                                        </ListBox.ItemTemplate>
+                                                                </ListBox>
+                                                        </Grid>
 
                                                         <Button Grid.Row="3" Content="Launch Selected App" Height="42" Margin="0,12,0,0" Click="LaunchSelectedAppButton_Click"/>
                                                 </Grid>
