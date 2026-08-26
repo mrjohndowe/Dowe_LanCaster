@@ -399,6 +399,12 @@
                                                         <Setter Property="BorderBrush" Value="#3FE1FF"/>
                                                         <Setter Property="Foreground" Value="#06151B"/>
                                                 </Style>
+
+                                                <Style x:Key="RemotePowerButtonStyle" TargetType="Button" BasedOn="{StaticResource RemoteRoundButtonStyle}">
+                                                        <Setter Property="Background" Value="#A83A3A"/>
+                                                        <Setter Property="BorderBrush" Value="#EE7777"/>
+                                                        <Setter Property="Foreground" Value="White"/>
+                                                </Style>
                                         </Grid.Resources>
 
                                         <Viewbox Grid.Column="0" Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Stretch">
@@ -411,10 +417,11 @@
                                                                 <TextBlock Text="DOWE LANCASTER" Foreground="#4EDCFF" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" Margin="0,0,0,3"/>
                                                                 <TextBlock Text="ROKU REMOTE" Foreground="#AAB3BE" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,22"/>
 
-                                                                <UniformGrid Columns="3" Margin="0,0,0,14">
+                                                                <UniformGrid Columns="4" Margin="0,0,0,14">
                                                                         <Button Content="↩ Back" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Height="44" Tag="Back" Click="RemoteButton_Click"/>
                                                                         <Button Content="⌂ Home" Style="{StaticResource RemoteAccentButtonStyle}" Margin="4" Height="44" Tag="Home" Click="RemoteButton_Click"/>
                                                                         <Button Content="↶ Replay" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Height="44" Tag="InstantReplay" Click="RemoteButton_Click"/>
+                                                                        <Button Content="⏻ Power" ToolTip="Power control for compatible Roku TVs" Style="{StaticResource RemotePowerButtonStyle}" Margin="4" Height="44" Tag="Power" Click="RemoteButton_Click"/>
                                                                 </UniformGrid>
 
                                                                 <Border Background="#20242A" BorderBrush="#343A43" BorderThickness="1" CornerRadius="86" Width="250" Height="250" HorizontalAlignment="Center" Padding="14" Margin="0,4,0,14">
