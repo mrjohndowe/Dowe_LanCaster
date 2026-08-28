@@ -18,6 +18,11 @@ sub Main(args as Dynamic)
             print "streamUrl = "; args.streamUrl
             scene.streamUrl = args.streamUrl
         end if
+
+        if args.controlUrl <> invalid
+            print "controlUrl = "; args.controlUrl
+            scene.controlUrl = args.controlUrl
+        end if
     end if
 
     screen.Show()

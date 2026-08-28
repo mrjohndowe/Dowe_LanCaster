@@ -8,6 +8,9 @@ namespace DoweLanCaster.Services;
 public sealed class LiveStreamingServer : IAsyncDisposable
 {
     private WebApplication? _app;
+    private string _directory = "";
+    private string? _controlStreamUrl;
+    private string _controlMediaType = "hls";
 
     public int Port { get; private set; } = 8766;
     public event Action<string>? RequestLog;
@@ -17,12 +20,17 @@ public sealed class LiveStreamingServer : IAsyncDisposable
         int port = 8766,
         CancellationToken token = default)
     {
-        await StopAsync(token);
-
         if (!Directory.Exists(directory))
             throw new DirectoryNotFoundException(directory);
 
+        if (_app is not null && port != Port)
+            throw new InvalidOperationException("The streaming server is already running on a different port.");
+
         Port = port;
+        _directory = directory;
+
+        if (_app is not null)
+            return;
 
         var builder = WebApplication.CreateSlimBuilder();
         builder.WebHost.UseUrls($"http://0.0.0.0:{Port}");
@@ -35,10 +43,17 @@ public sealed class LiveStreamingServer : IAsyncDisposable
             return Results.Text("OK");
         });
 
+        app.MapGet("/control", () => Results.Json(new
+        {
+            active = !string.IsNullOrWhiteSpace(_controlStreamUrl),
+            streamUrl = _controlStreamUrl ?? "",
+            mediaType = _controlMediaType
+        }));
+
         app.MapGet("/live/{file}", async (string file, HttpContext context) =>
         {
             string safe = Path.GetFileName(file);
-            string path = Path.Combine(directory, safe);
+            string path = Path.Combine(_directory, safe);
 
             if (!File.Exists(path))
             {
@@ -87,6 +102,12 @@ public sealed class LiveStreamingServer : IAsyncDisposable
         _app = app;
     }
 
+    public void SetControlState(string? streamUrl, string mediaType = "hls")
+    {
+        _controlStreamUrl = streamUrl;
+        _controlMediaType = mediaType;
+    }
+
     public async Task StopAsync(CancellationToken token = default)
     {
         if (_app is null)
@@ -94,6 +115,8 @@ public sealed class LiveStreamingServer : IAsyncDisposable
 
         var app = _app;
         _app = null;
+        _controlStreamUrl = null;
+        _directory = "";
 
         try
         {

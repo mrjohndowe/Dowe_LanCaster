@@ -43,6 +43,7 @@ public partial class MainWindow : Window
     private int _folderIndex = -1;
     private bool _folderSawPlaying;
     private bool _folderAdvanceInProgress;
+    private bool _folderReceiverLaunched;
     private SpeechRecognitionEngine? _voiceRecognizer;
     private bool _voiceListening;
 
@@ -1428,8 +1429,17 @@ public partial class MainWindow : Window
         {
             _folderPollTimer.Stop();
 
-            await StopFolderInternalAsync(
-                sendHome: false);
+            var launchReceiver = !_folderReceiverLaunched;
+
+            if (launchReceiver)
+            {
+                await StopFolderInternalAsync(
+                    sendHome: false);
+            }
+            else
+            {
+                await _folderTranscoder.StopAsync();
+            }
 
             _folderIndex = index;
             _folderSawPlaying = false;
@@ -1484,11 +1494,23 @@ public partial class MainWindow : Window
                     "Could not determine the PC LAN IP.");
 
             var streamUrl =
-                $"http://{ip}:{_folderServer.Port}/live/index.m3u8";
+                $"http://{ip}:{_folderServer.Port}/live/index.m3u8" +
+                $"?item={Guid.NewGuid():N}";
 
-            await _rokuClient
-                .LaunchDoweLanCasterLiveAsync(
-                    streamUrl);
+            _folderServer.SetControlState(streamUrl);
+
+            if (launchReceiver)
+            {
+                var controlUrl =
+                    $"http://{ip}:{_folderServer.Port}/control";
+
+                await _rokuClient
+                    .LaunchDoweLanCasterLiveAsync(
+                        streamUrl,
+                        controlUrl);
+
+                _folderReceiverLaunched = true;
+            }
 
             FolderNowPlayingText.Text =
                 $"Now playing: {item.FileName}";
@@ -1677,6 +1699,8 @@ public partial class MainWindow : Window
     {
         _folderPollTimer.Stop();
         _folderSawPlaying = false;
+        _folderReceiverLaunched = false;
+        _folderServer.SetControlState(null);
 
         if (sendHome &&
             _rokuClient is not null)

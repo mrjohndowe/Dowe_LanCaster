@@ -100,11 +100,15 @@ public sealed class RokuClient : IDisposable
 
     public async Task LaunchDoweLanCasterLiveAsync(
         string streamUrl,
+        string? controlUrl = null,
         CancellationToken cancellationToken = default)
     {
         var url =
             $"http://{Device.IpAddress}:8060/launch/dev" +
-            $"?streamUrl={Uri.EscapeDataString(streamUrl)}&mediaType=hls";
+            $"?streamUrl={Uri.EscapeDataString(streamUrl)}&mediaType=hls" +
+            (string.IsNullOrWhiteSpace(controlUrl)
+                ? ""
+                : $"&controlUrl={Uri.EscapeDataString(controlUrl)}");
 
         using var response = await _httpClient.PostAsync(url, null, cancellationToken);
         response.EnsureSuccessStatusCode();

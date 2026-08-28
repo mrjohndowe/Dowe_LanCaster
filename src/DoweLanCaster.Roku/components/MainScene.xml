@@ -3,6 +3,7 @@
     <interface>
         <field id="streamUrl" type="string" onChange="onStreamUrlChanged"/>
         <field id="mediaType" type="string"/>
+        <field id="controlUrl" type="string"/>
     </interface>
 
     <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
@@ -110,5 +111,7 @@
             color="0xFFFFFFFF"
             visible="false"
             text="" />
+
+        <Timer id="folderControlTimer" duration="1" repeat="true" />
     </children>
 </component>

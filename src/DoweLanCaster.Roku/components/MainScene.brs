@@ -10,6 +10,9 @@ sub init()
     m.waitingSubtitle = m.top.findNode("waitingSubtitle")
     m.waitingInstructions = m.top.findNode("waitingInstructions")
     m.waitingHint = m.top.findNode("waitingHint")
+    m.folderControlTimer = m.top.findNode("folderControlTimer")
+    m.controlUrl = ""
+    m.currentStreamUrl = ""
     m.pendingStreamUrl = ""
     m.showingSplash = true
 
@@ -17,7 +20,48 @@ sub init()
 
     m.videoPlayer.observeField("state", "onPlayerStateChanged")
     m.launchVideo.observeField("state", "onLaunchVideoStateChanged")
+    m.top.observeField("controlUrl", "onControlUrlChanged")
+    m.folderControlTimer.observeField("fire", "onFolderControlTimer")
+    onControlUrlChanged()
     startSplashAnimation()
+end sub
+
+sub onControlUrlChanged()
+    m.controlUrl = m.top.controlUrl
+    if m.controlUrl <> invalid and m.controlUrl <> ""
+        m.folderControlTimer.control = "start"
+    else
+        m.folderControlTimer.control = "stop"
+    end if
+end sub
+
+sub onFolderControlTimer()
+    if m.controlUrl = invalid or m.controlUrl = ""
+        return
+    end if
+
+    transfer = CreateObject("roUrlTransfer")
+    transfer.SetUrl(m.controlUrl)
+    response = transfer.GetToString()
+    if response = invalid or response = ""
+        return
+    end if
+
+    control = ParseJson(response)
+
+    if control = invalid or control.active <> true
+        return
+    end if
+
+    if control.streamUrl <> invalid and control.streamUrl <> "" and control.streamUrl <> m.currentStreamUrl
+        m.top.mediaType = control.mediaType
+        m.pendingStreamUrl = control.streamUrl
+        m.currentStreamUrl = control.streamUrl
+
+        if not m.showingSplash
+            startPendingStream()
+        end if
+    end if
 end sub
 
 sub configureScreenSize()
@@ -182,6 +226,7 @@ sub onStreamUrlChanged()
     end if
 
     m.pendingStreamUrl = url
+    m.currentStreamUrl = url
 
     if m.showingSplash
         return
