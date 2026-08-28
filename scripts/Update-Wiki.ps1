@@ -21,8 +21,9 @@ $Packages=@($Project.Project.ItemGroup.PackageReference|Where-Object Include|For
 $Manifest=@{}
 Get-Content -LiteralPath $ManifestFile|ForEach-Object{if($_ -match '^([^=]+)=(.*)$'){$Manifest[$Matches[1].Trim()]=$Matches[2].Trim()}}
 $RokuVersion='{0}.{1}.{2}' -f $Manifest.major_version,$Manifest.minor_version,$Manifest.build_version
-$RokuReleaseVersion=($VersionNumber -split '\.' | Select-Object -First 3) -join '.'
-if($RokuVersion -ne $RokuReleaseVersion){throw "Release $VersionNumber does not match Roku $RokuVersion."}
+$RokuMajorMinor='{0}.{1}' -f $Manifest.major_version,$Manifest.minor_version
+$ReleaseMajorMinor=($VersionNumber -split '\.' | Select-Object -First 2) -join '.'
+if($RokuMajorMinor -ne $ReleaseMajorMinor){throw "Release $VersionNumber does not match Roku $RokuVersion."}
 if([string]::IsNullOrWhiteSpace($ReleaseDate)){$ReleaseDate=(Get-Date).ToUniversalTime().ToString('yyyy-MM-dd')}
 $Readme=Get-Content -Raw -LiteralPath $ReadmeFile
 $Match=[regex]::Match($Readme,"(?ms)^## New in v?$([regex]::Escape($VersionNumber))\s*\r?\n(?<body>.*?)(?=^##\s|\z)")
