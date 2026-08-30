@@ -12,7 +12,7 @@ $ReadmeFile=Join-Path $ProjectRoot 'README.md'
 $WikiRoot=[IO.Path]::GetFullPath($WikiPath)
 if(-not (Test-Path -LiteralPath $WikiRoot -PathType Container)){throw "Wiki directory not found: $WikiRoot"}
 $VersionNumber=$Version.Trim().TrimStart('v')
-if($VersionNumber -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$'){throw "Invalid version '$Version'."}
+if($VersionNumber -notmatch '^[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?$'){throw "Invalid version '$Version'."}
 $VersionTag="v$VersionNumber"
 [xml]$Project=Get-Content -Raw -LiteralPath $ProjectFile
 $ProjectVersion=[string]($Project.Project.PropertyGroup.Version|Select-Object -First 1)

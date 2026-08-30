@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ inputs.version }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref || inputs.version }}
 
       - name: Clone dedicated wiki repository
         shell: pwsh
