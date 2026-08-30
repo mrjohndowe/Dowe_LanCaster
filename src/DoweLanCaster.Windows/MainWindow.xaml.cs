@@ -163,12 +163,8 @@ public partial class MainWindow : Window
             FolderEncoderComboBox.ItemsSource = encoders;
 
             var preferred =
-                encoders.FirstOrDefault(x =>
-                    string.Equals(
-                        x,
-                        _settings.PreferredEncoder,
-                        StringComparison.OrdinalIgnoreCase))
-                ?? encoders.FirstOrDefault();
+                EncoderDetectionService.GetBestAvailable(
+                    encoders);
 
             EncoderComboBox.SelectedItem = preferred;
             LinkEncoderComboBox.SelectedItem = preferred;
@@ -362,8 +358,7 @@ public partial class MainWindow : Window
                 sendHome: false);
 
             string friendlyEncoder =
-                LinkEncoderComboBox.SelectedItem?.ToString()
-                ?? "CPU (libx264)";
+                SelectBestEncoder(LinkEncoderComboBox);
 
             string encoder =
                 EncoderDetectionService.ToFFmpegEncoder(
@@ -614,6 +609,20 @@ public partial class MainWindow : Window
         FolderEncoderComboBox.IsEnabled = false;
     }
 
+    private static string SelectBestEncoder(ComboBox comboBox)
+    {
+        var encoders = comboBox.Items
+            .OfType<string>()
+            .ToArray();
+
+        var best =
+            EncoderDetectionService.GetBestAvailable(encoders)
+            ?? "CPU (libx264)";
+
+        comboBox.SelectedItem = best;
+        return best;
+    }
+
     private void SaveCurrentSettings()
     {
         if (DeviceComboBox.SelectedItem is RokuDevice device)
@@ -815,8 +824,7 @@ public partial class MainWindow : Window
         }
 
         string friendlyEncoder =
-            EncoderComboBox.SelectedItem?.ToString()
-            ?? "CPU (libx264)";
+            SelectBestEncoder(EncoderComboBox);
 
         string encoder =
             EncoderDetectionService.ToFFmpegEncoder(
@@ -1457,9 +1465,7 @@ public partial class MainWindow : Window
                 $"{index + 1} of {_folderItems.Count}";
 
             string friendlyEncoder =
-                FolderEncoderComboBox.SelectedItem
-                ?.ToString()
-                ?? "CPU (libx264)";
+                SelectBestEncoder(FolderEncoderComboBox);
 
             string encoder =
                 EncoderDetectionService
