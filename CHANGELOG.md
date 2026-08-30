@@ -23,6 +23,18 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.13] - 2026-08-30
+
+### Changed
+
+- Restored manual encoder selection. Link Cast, Live Cast, and Folder Cast now
+  use the encoder selected in their dropdown instead of overriding it when a
+  stream starts.
+- Added public TeraBox video share links to Link Cast and a clear message when
+  a share does not expose a directly playable public stream.
+
+**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.12...v0.9.5.13
+
 ## [0.9.5.12] - 2026-08-30
 
 **Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.11...v0.9.5.12
@@ -140,7 +152,8 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   High Profile Level 4.1 encoding.
 - Waited for playable media segments before launching the Roku receiver.
 
-[Unreleased]: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.12...HEAD
+[Unreleased]: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.13...HEAD
+[0.9.5.13]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.9.5.13
 [0.9.5.12]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.9.5.12
 [0.9.5.10]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.9.5.10
 [0.9.5.9]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.9.5.9
