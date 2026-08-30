@@ -4,6 +4,17 @@ namespace DoweLanCaster.Services;
 
 public sealed class EncoderDetectionService
 {
+    private static readonly string[] PreferredEncoderOrder =
+    {
+        "NVIDIA NVENC",
+        "AMD AMF",
+        "Intel Quick Sync",
+        "Direct3D 12 Video",
+        "Microsoft Media Foundation",
+        "CPU (OpenH264)",
+        "CPU (libx264)"
+    };
+
     public async Task<IReadOnlyList<string>> DetectAsync(string ffmpegPath, CancellationToken token = default)
     {
         var psi = new ProcessStartInfo(ffmpegPath, "-hide_banner -encoders")
@@ -21,11 +32,34 @@ public sealed class EncoderDetectionService
         var text = (await stdout) + "\n" + (await stderr);
 
         var encoders = new List<string>();
-        if (text.Contains("h264_nvenc", StringComparison.OrdinalIgnoreCase)) encoders.Add("NVIDIA NVENC");
-        if (text.Contains("h264_amf", StringComparison.OrdinalIgnoreCase)) encoders.Add("AMD AMF");
-        if (text.Contains("h264_qsv", StringComparison.OrdinalIgnoreCase)) encoders.Add("Intel Quick Sync");
+
+        AddIfAvailable(text, encoders, "h264_nvenc", "NVIDIA NVENC");
+        AddIfAvailable(text, encoders, "h264_amf", "AMD AMF");
+        AddIfAvailable(text, encoders, "h264_qsv", "Intel Quick Sync");
+        AddIfAvailable(text, encoders, "h264_mf", "Microsoft Media Foundation");
+        AddIfAvailable(text, encoders, "h264_d3d12va", "Direct3D 12 Video");
+        AddIfAvailable(text, encoders, "h264_vulkan", "Vulkan Video");
+        AddIfAvailable(text, encoders, "libopenh264", "CPU (OpenH264)");
         encoders.Add("CPU (libx264)");
         return encoders;
+    }
+
+    private static void AddIfAvailable(
+        string encoderOutput,
+        ICollection<string> encoders,
+        string ffmpegName,
+        string displayName)
+    {
+        if (encoderOutput.Contains(ffmpegName, StringComparison.OrdinalIgnoreCase))
+            encoders.Add(displayName);
+    }
+
+    public static string? GetBestAvailable(
+        IReadOnlyList<string> encoders)
+    {
+        return PreferredEncoderOrder.FirstOrDefault(candidate =>
+                   encoders.Contains(candidate, StringComparer.OrdinalIgnoreCase))
+            ?? encoders.FirstOrDefault();
     }
 
     public static string ToFFmpegEncoder(string friendly) => friendly switch
@@ -33,6 +67,10 @@ public sealed class EncoderDetectionService
         "NVIDIA NVENC" => "h264_nvenc",
         "AMD AMF" => "h264_amf",
         "Intel Quick Sync" => "h264_qsv",
+        "Microsoft Media Foundation" => "h264_mf",
+        "Direct3D 12 Video" => "h264_d3d12va",
+        "Vulkan Video" => "h264_vulkan",
+        "CPU (OpenH264)" => "libopenh264",
         _ => "libx264"
     };
 }
