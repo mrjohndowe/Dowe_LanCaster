@@ -162,9 +162,11 @@ public partial class MainWindow : Window
             LinkEncoderComboBox.ItemsSource = encoders;
             FolderEncoderComboBox.ItemsSource = encoders;
 
-            var preferred =
-                EncoderDetectionService.GetBestAvailable(
-                    encoders);
+            var preferred = encoders.Contains(
+                _settings.PreferredEncoder,
+                StringComparer.OrdinalIgnoreCase)
+                ? _settings.PreferredEncoder
+                : encoders.FirstOrDefault();
 
             EncoderComboBox.SelectedItem = preferred;
             LinkEncoderComboBox.SelectedItem = preferred;
@@ -358,7 +360,8 @@ public partial class MainWindow : Window
                 sendHome: false);
 
             string friendlyEncoder =
-                SelectBestEncoder(LinkEncoderComboBox);
+                LinkEncoderComboBox.SelectedItem?.ToString()
+                ?? "CPU (libx264)";
 
             string encoder =
                 EncoderDetectionService.ToFFmpegEncoder(
@@ -616,12 +619,9 @@ public partial class MainWindow : Window
             .OfType<string>()
             .ToArray();
 
-        var best =
-            EncoderDetectionService.GetBestAvailable(encoders)
+        return comboBox.SelectedItem?.ToString()
+            ?? encoders.FirstOrDefault()
             ?? "CPU (libx264)";
-
-        comboBox.SelectedItem = best;
-        return best;
     }
 
     private void SaveCurrentSettings()
@@ -825,7 +825,8 @@ public partial class MainWindow : Window
         }
 
         string friendlyEncoder =
-            SelectBestEncoder(EncoderComboBox);
+            EncoderComboBox.SelectedItem?.ToString()
+            ?? "CPU (libx264)";
 
         string encoder =
             EncoderDetectionService.ToFFmpegEncoder(
@@ -1466,7 +1467,8 @@ public partial class MainWindow : Window
                 $"{index + 1} of {_folderItems.Count}";
 
             string friendlyEncoder =
-                SelectBestEncoder(FolderEncoderComboBox);
+                FolderEncoderComboBox.SelectedItem?.ToString()
+                ?? "CPU (libx264)";
 
             string encoder =
                 EncoderDetectionService

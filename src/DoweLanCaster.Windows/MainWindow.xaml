@@ -60,7 +60,7 @@
                                                 <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
                                                         <StackPanel>
                                                                 <TextBlock Text="Stream a Video Link" FontSize="24" FontWeight="Bold" Margin="0,0,0,8"/>
-                                                                <TextBlock Text="Paste a public, non-DRM webpage or direct media URL. Dowe LanCaster extracts the media, converts it to Roku-friendly HLS, and streams it over your LAN." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,14"/>
+                                                                <TextBlock Text="Paste a public, non-DRM webpage, direct media URL, or TeraBox share link. Dowe LanCaster extracts the media, converts it to Roku-friendly HLS, and streams it over your LAN." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,14"/>
                                                                 <TextBlock Text="Video URL" FontWeight="SemiBold"/>
                                                                 <TextBox x:Name="LinkUrlTextBox" Height="36" Margin="0,6,0,12" VerticalContentAlignment="Center"/>
                                                                 <StackPanel Orientation="Horizontal">
@@ -121,7 +121,7 @@
                                                 <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18">
                                                         <StackPanel>
                                                                 <TextBlock Text="Compatibility" FontSize="20" FontWeight="Bold" Margin="0,0,0,8"/>
-                                                                <TextBlock Text="Works with direct media links and many sites supported by yt-dlp. DRM-protected video, paywalled streams, or sites that block extraction are not bypassed." TextWrapping="Wrap" Opacity="0.78"/>
+                                                                <TextBlock Text="Works with direct media links, public TeraBox video shares, and many sites supported by yt-dlp. Keep TeraBox shares public and use the latest yt-dlp from SETUP-DEPENDENCIES.cmd. DRM-protected video, paywalled streams, sign-in-only shares, or sites that block extraction are not bypassed." TextWrapping="Wrap" Opacity="0.78"/>
                                                         </StackPanel>
                                                 </Border>
 

@@ -66,6 +66,14 @@ public sealed class MediaLinkExtractorService
         if (embedded is not null)
             return embedded;
 
+        if (IsTeraBoxShare(uri))
+        {
+            throw new InvalidOperationException(
+                "This TeraBox share did not expose a public, directly playable video stream. " +
+                "In TeraBox, make sure the file is a video and the share is set to Anyone with the link, " +
+                "then run SETUP-DEPENDENCIES.cmd to update yt-dlp and try the share URL again.");
+        }
+
         throw new InvalidOperationException(
             ytDlpFailure?.Message ??
             "The webpage did not expose a public, non-DRM MP4 or HLS video stream.");
@@ -291,6 +299,17 @@ public sealed class MediaLinkExtractorService
         }
 
         return score;
+    }
+
+    private static bool IsTeraBoxShare(Uri uri)
+    {
+        var host = uri.Host;
+        return host.Equals("terabox.com", StringComparison.OrdinalIgnoreCase) ||
+            host.EndsWith(".terabox.com", StringComparison.OrdinalIgnoreCase) ||
+            host.Equals("terabox.app", StringComparison.OrdinalIgnoreCase) ||
+            host.EndsWith(".terabox.app", StringComparison.OrdinalIgnoreCase) ||
+            host.Equals("terabox.link", StringComparison.OrdinalIgnoreCase) ||
+            host.EndsWith(".terabox.link", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string GetPageTitle(string html)

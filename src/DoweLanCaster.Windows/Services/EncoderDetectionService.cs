@@ -4,17 +4,6 @@ namespace DoweLanCaster.Services;
 
 public sealed class EncoderDetectionService
 {
-    private static readonly string[] PreferredEncoderOrder =
-    {
-        "NVIDIA NVENC",
-        "AMD AMF",
-        "Intel Quick Sync",
-        "Direct3D 12 Video",
-        "Microsoft Media Foundation",
-        "CPU (OpenH264)",
-        "CPU (libx264)"
-    };
-
     public async Task<IReadOnlyList<string>> DetectAsync(string ffmpegPath, CancellationToken token = default)
     {
         var psi = new ProcessStartInfo(ffmpegPath, "-hide_banner -encoders")
@@ -52,14 +41,6 @@ public sealed class EncoderDetectionService
     {
         if (encoderOutput.Contains(ffmpegName, StringComparison.OrdinalIgnoreCase))
             encoders.Add(displayName);
-    }
-
-    public static string? GetBestAvailable(
-        IReadOnlyList<string> encoders)
-    {
-        return PreferredEncoderOrder.FirstOrDefault(candidate =>
-                   encoders.Contains(candidate, StringComparer.OrdinalIgnoreCase))
-            ?? encoders.FirstOrDefault();
     }
 
     public static string ToFFmpegEncoder(string friendly) => friendly switch
