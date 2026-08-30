@@ -23,6 +23,17 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.14] - 2026-08-30
+
+### Added
+
+- Recognized signed TeraBox `/share/streaming` URLs as HLS sources for Link
+  Cast, including the browser-style request headers needed to fetch the stream.
+- Attached the Roku receiver ZIP as its own GitHub Release asset in future
+  releases, as well as including it in the portable Windows ZIP.
+
+**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.13...v0.9.5.14
+
 ## [0.9.5.13] - 2026-08-30
 
 ### Changed
@@ -152,7 +163,8 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   High Profile Level 4.1 encoding.
 - Waited for playable media segments before launching the Roku receiver.
 
-[Unreleased]: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.13...HEAD
+[Unreleased]: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.14...HEAD
+[0.9.5.14]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.9.5.14
 [0.9.5.13]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.9.5.13
 [0.9.5.12]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.9.5.12
 [0.9.5.10]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.9.5.10
