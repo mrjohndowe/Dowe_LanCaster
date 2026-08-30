@@ -121,7 +121,7 @@
                                                 <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18">
                                                         <StackPanel>
                                                                 <TextBlock Text="Compatibility" FontSize="20" FontWeight="Bold" Margin="0,0,0,8"/>
-                                                                <TextBlock Text="Works with direct media links, public TeraBox video shares, and many sites supported by yt-dlp. Keep TeraBox shares public and use the latest yt-dlp from SETUP-DEPENDENCIES.cmd. DRM-protected video, paywalled streams, sign-in-only shares, or sites that block extraction are not bypassed." TextWrapping="Wrap" Opacity="0.78"/>
+                                                                <TextBlock Text="Works with direct media links, TeraBox streaming URLs, public TeraBox video shares, and many sites supported by yt-dlp. TeraBox URLs containing /share/streaming and M3U8 parameters are detected as HLS. Keep TeraBox shares public and use the latest yt-dlp from SETUP-DEPENDENCIES.cmd. DRM-protected video, paywalled streams, sign-in-only shares, or sites that block extraction are not bypassed." TextWrapping="Wrap" Opacity="0.78"/>
                                                         </StackPanel>
                                                 </Border>
 

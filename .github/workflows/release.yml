@@ -70,6 +70,18 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Package Roku receiver
+        id: roku
+        shell: pwsh
+        run: |
+          & 'scripts/Package-Roku.ps1'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $rokuPackage = Join-Path $env:GITHUB_WORKSPACE 'dist/DoweLanCaster-Roku.zip'
+          if (-not (Test-Path $rokuPackage)) {
+            throw "Roku package was not created at $rokuPackage"
+          }
+          "zip=$rokuPackage" >> $env:GITHUB_OUTPUT
+
       - name: Publish self-contained Windows application
         shell: pwsh
         env:
@@ -147,6 +159,7 @@ jobs:
           path: |
             ${{ steps.package.outputs.zip }}
             ${{ steps.installer.outputs.exe }}
+            ${{ steps.roku.outputs.zip }}
 
       - name: Create release with ZIP, installer, and generated notes
         id: publish
@@ -160,6 +173,7 @@ jobs:
           files: |
             ${{ steps.package.outputs.zip }}
             ${{ steps.installer.outputs.exe }}
+            ${{ steps.roku.outputs.zip }}
   update-changelog:
     name: Update changelog
     needs: release

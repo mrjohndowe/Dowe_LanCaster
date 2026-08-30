@@ -236,12 +236,16 @@ public partial class MainWindow : Window
                     out var extension))
             {
                 var path = uri.AbsolutePath.TrimEnd('/');
+                var isTeraBoxStream =
+                    DirectMediaDetector.IsTeraBoxStreamingUrl(url);
 
                 _extractedMedia = new ExtractedMedia
                 {
                     PageUrl = url,
                     MediaUrl = url,
-                    Title = Path.GetFileNameWithoutExtension(path),
+                    Title = isTeraBoxStream
+                        ? "TeraBox video"
+                        : Path.GetFileNameWithoutExtension(path),
                     Protocol =
                         extension.Equals(
                             ".m3u8",
@@ -252,7 +256,19 @@ public partial class MainWindow : Window
                     IsLive =
                         extension.Equals(
                             ".m3u8",
-                            StringComparison.OrdinalIgnoreCase)
+                            StringComparison.OrdinalIgnoreCase),
+                    HttpHeaders = isTeraBoxStream
+                        ? new Dictionary<string, string>(
+                            StringComparer.OrdinalIgnoreCase)
+                        {
+                            ["Referer"] = $"{uri.Scheme}://{uri.Host}/",
+                            ["User-Agent"] =
+                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                                "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                                "Chrome/124.0.0.0 Safari/537.36"
+                        }
+                        : new Dictionary<string, string>(
+                            StringComparer.OrdinalIgnoreCase)
                 };
 
                 LinkTitleText.Text =
@@ -268,8 +284,9 @@ public partial class MainWindow : Window
                         ? "HLS media"
                         : "Direct media";
 
-                LinkStatusText.Text =
-                    "Direct media detected. Ready to stream to Roku.";
+                LinkStatusText.Text = isTeraBoxStream
+                    ? "TeraBox HLS stream detected. Ready to stream to Roku."
+                    : "Direct media detected. Ready to stream to Roku.";
 
                 StreamLinkButton.IsEnabled = true;
                 UpdateDiagnostics(
