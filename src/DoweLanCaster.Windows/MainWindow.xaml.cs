@@ -609,7 +609,8 @@ public partial class MainWindow : Window
         FolderEncoderComboBox.IsEnabled = false;
     }
 
-    private static string SelectBestEncoder(ComboBox comboBox)
+    private static string SelectBestEncoder(
+        System.Windows.Controls.ComboBox comboBox)
     {
         var encoders = comboBox.Items
             .OfType<string>()
