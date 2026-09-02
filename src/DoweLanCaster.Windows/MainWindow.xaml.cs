@@ -1873,7 +1873,16 @@ public partial class MainWindow : Window
         {
             Owner = this
         };
-        _remoteWindow.Closed += (_, _) => _remoteWindow = null;
+        EmbeddedRemoteViewbox.Visibility = Visibility.Collapsed;
+        EmbeddedRemoteColumn.Width = new GridLength(0);
+        EmbeddedRemoteGapColumn.Width = new GridLength(0);
+        _remoteWindow.Closed += (_, _) =>
+        {
+            _remoteWindow = null;
+            EmbeddedRemoteViewbox.Visibility = Visibility.Visible;
+            EmbeddedRemoteColumn.Width = new GridLength(430);
+            EmbeddedRemoteGapColumn.Width = new GridLength(18);
+        };
         _remoteWindow.Show();
     }
 

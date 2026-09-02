@@ -359,8 +359,8 @@
                         <TabItem Header="Remote">
                                 <Grid Margin="16">
                                         <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="0"/>
-                                                <ColumnDefinition Width="0"/>
+                                                <ColumnDefinition x:Name="EmbeddedRemoteColumn" Width="430"/>
+                                                <ColumnDefinition x:Name="EmbeddedRemoteGapColumn" Width="18"/>
                                                 <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
 
@@ -407,7 +407,7 @@
                                                 </Style>
                                         </Grid.Resources>
 
-                                        <Viewbox Grid.Column="0" Visibility="Collapsed" Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Stretch">
+                                        <Viewbox x:Name="EmbeddedRemoteViewbox" Grid.Column="0" Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Stretch">
                                                 <Border Width="390" HorizontalAlignment="Center" Background="#15181D" BorderBrush="#3B414A" BorderThickness="2" CornerRadius="52" Padding="24" SnapsToDevicePixels="True">
                                                         <Border.Effect>
                                                                 <DropShadowEffect BlurRadius="24" ShadowDepth="5" Opacity="0.35"/>
