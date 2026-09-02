@@ -48,6 +48,7 @@ public partial class MainWindow : Window
     private SpeechRecognitionEngine? _voiceRecognizer;
     private bool _voiceListening;
     private string? _pcAudioMonitorUrl;
+    private RemoteWindow? _remoteWindow;
 
     private static readonly IReadOnlyDictionary<string, string> VoiceCommandMap =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -1842,13 +1843,52 @@ public partial class MainWindow : Window
 
         try
         {
-            await _rokuClient.SendKeyAsync(key);
+            await SendRemoteKeyAsync(key);
             StatusText.Text = $"Sent: {key}";
         }
         catch (Exception ex)
         {
             StatusText.Text = $"Remote command failed: {ex.Message}";
         }
+    }
+
+    private void OpenRemoteWindowButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_rokuClient is null)
+        {
+            StatusText.Text = "Select a Roku device first.";
+            return;
+        }
+
+        if (_remoteWindow is not null)
+        {
+            _remoteWindow.Activate();
+            return;
+        }
+
+        _remoteWindow = new RemoteWindow(
+            _rokuClient.Device.Name,
+            SendRemoteKeyAsync,
+            SetRokuVolumeAsync)
+        {
+            Owner = this
+        };
+        _remoteWindow.Closed += (_, _) => _remoteWindow = null;
+        _remoteWindow.Show();
+    }
+
+    private Task SendRemoteKeyAsync(string key)
+    {
+        return _rokuClient?.SendKeyAsync(key)
+            ?? Task.FromException(
+                new InvalidOperationException("Select a Roku device first."));
+    }
+
+    private Task SetRokuVolumeAsync(int level)
+    {
+        return _rokuClient?.SetVolumeAsync(level)
+            ?? Task.FromException(
+                new InvalidOperationException("Select a Roku device first."));
     }
 
     private async void SetVolumeButton_Click(object sender, RoutedEventArgs e)
@@ -1869,7 +1909,7 @@ public partial class MainWindow : Window
         try
         {
             StatusText.Text = $"Setting Roku volume to {level}...";
-            await _rokuClient.SetVolumeAsync(level);
+            await SetRokuVolumeAsync(level);
             StatusText.Text = $"Roku volume set to {level}.";
         }
         catch (Exception ex)
