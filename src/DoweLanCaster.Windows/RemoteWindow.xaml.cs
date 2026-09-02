@@ -21,7 +21,7 @@ public partial class RemoteWindow : Window
 
     private async void RemoteButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button { Tag: string key })
+        if (sender is not System.Windows.Controls.Button { Tag: string key })
             return;
 
         try
