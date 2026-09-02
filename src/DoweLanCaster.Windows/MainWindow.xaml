@@ -506,12 +506,12 @@
                                                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,12">
                                                                 <Button Content="Refresh Apps" Padding="14,6" Click="RefreshAppsButton_Click"/>
                                                                 <TextBlock Text="Display:" VerticalAlignment="Center" Margin="18,0,6,0"/>
-                                                                <RadioButton x:Name="AppsListViewButton" Content="List" IsChecked="True" VerticalAlignment="Center" Margin="0,0,10,0" Checked="AppsDisplayMode_Changed"/>
-                                                                <RadioButton x:Name="AppsGridViewButton" Content="Grid" VerticalAlignment="Center" Checked="AppsDisplayMode_Changed"/>
+                                                                <RadioButton x:Name="AppsListViewButton" Content="List" VerticalAlignment="Center" Margin="0,0,10,0" Checked="AppsDisplayMode_Changed"/>
+                                                                <RadioButton x:Name="AppsGridViewButton" Content="Grid" IsChecked="True" VerticalAlignment="Center" Checked="AppsDisplayMode_Changed"/>
                                                         </StackPanel>
 
                                                         <Grid Grid.Row="2">
-                                                                <ListBox x:Name="AppsListBox" MouseDoubleClick="AppsListBox_MouseDoubleClick">
+                                                                <ListBox x:Name="AppsListBox" Visibility="Collapsed" MouseDoubleClick="AppsListBox_MouseDoubleClick">
                                                                         <ListBox.ItemTemplate>
                                                                                 <DataTemplate>
                                                                                         <StackPanel Orientation="Horizontal" Margin="4">
@@ -524,10 +524,10 @@
                                                                         </ListBox.ItemTemplate>
                                                                 </ListBox>
 
-                                                                <ListBox x:Name="AppsGridListBox" Visibility="Collapsed" MouseDoubleClick="AppsListBox_MouseDoubleClick">
+                                                                <ListBox x:Name="AppsGridListBox" MouseDoubleClick="AppsListBox_MouseDoubleClick">
                                                                         <ListBox.ItemsPanel>
                                                                                 <ItemsPanelTemplate>
-                                                                                        <UniformGrid Columns="3"/>
+                                                                                        <UniformGrid Columns="6"/>
                                                                                 </ItemsPanelTemplate>
                                                                         </ListBox.ItemsPanel>
                                                                         <ListBox.ItemTemplate>
