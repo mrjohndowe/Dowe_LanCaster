@@ -23,6 +23,22 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.18] - 2026-09-02
+
+### Changed
+
+- Moved the Roku remote controls into the resizable pop-out window and added a
+  compact Pop-out Remote button at the top-right of the Remote section.
+- Matched the pop-out remote's button colors, rounded layout, directional pad,
+  playback controls, and volume controls to the in-app remote.
+
+### Fixed
+
+- Removed the inactive in-app remote panel so the app no longer presents its
+  cast-only PC audio monitor as Roku Private Listening.
+
+**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.17...v0.9.5.18
+
 ## [0.9.5.17] - 2026-09-02
 
 ### Fixed
@@ -196,7 +212,8 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   High Profile Level 4.1 encoding.
 - Waited for playable media segments before launching the Roku receiver.
 
-[Unreleased]: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.17...HEAD
+[Unreleased]: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.18...HEAD
+[0.9.5.18]: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.17...v0.9.5.18
 [0.9.5.17]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.9.5.17
 [0.9.5.16]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.9.5.16
 [0.9.5.15]: https://github.com/mrjohndowe/Dowe_LanCaster/releases/tag/v0.9.5.15

@@ -359,8 +359,8 @@
                         <TabItem Header="Remote">
                                 <Grid Margin="16">
                                         <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="430"/>
-                                                <ColumnDefinition Width="18"/>
+                                                <ColumnDefinition Width="0"/>
+                                                <ColumnDefinition Width="0"/>
                                                 <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
 
@@ -407,7 +407,7 @@
                                                 </Style>
                                         </Grid.Resources>
 
-                                        <Viewbox Grid.Column="0" Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Stretch">
+                                        <Viewbox Grid.Column="0" Visibility="Collapsed" Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Stretch">
                                                 <Border Width="390" HorizontalAlignment="Center" Background="#15181D" BorderBrush="#3B414A" BorderThickness="2" CornerRadius="52" Padding="24" SnapsToDevicePixels="True">
                                                         <Border.Effect>
                                                                 <DropShadowEffect BlurRadius="24" ShadowDepth="5" Opacity="0.35"/>
@@ -501,6 +501,7 @@
                                                         </Grid.RowDefinitions>
 
                                                         <TextBlock Text="Installed Roku Apps" FontSize="24" FontWeight="Bold"/>
+                                                        <Button Grid.Row="0" Content="Pop-out Remote" HorizontalAlignment="Right" Padding="12,6" Click="OpenRemoteWindowButton_Click" ToolTip="Open the resizable Roku Remote window"/>
 
                                                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,12">
                                                                 <Button Content="Refresh Apps" Padding="14,6" Click="RefreshAppsButton_Click"/>

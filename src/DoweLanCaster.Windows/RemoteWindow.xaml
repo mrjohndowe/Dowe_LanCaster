@@ -10,6 +10,39 @@
         WindowStartupLocation="CenterOwner"
         Background="#15181D"
         Foreground="White">
+    <Window.Resources>
+        <Style x:Key="RemoteRoundButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#2A2E35"/>
+            <Setter Property="BorderBrush" Value="#454B55"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="RemoteButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="24" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="RemoteButtonBorder" Property="Background" Value="#3A414B"/></Trigger>
+                            <Trigger Property="IsPressed" Value="True"><Setter TargetName="RemoteButtonBorder" Property="Background" Value="#149EC2"/></Trigger>
+                            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="RemoteButtonBorder" Property="Opacity" Value="0.45"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="RemoteAccentButtonStyle" TargetType="Button" BasedOn="{StaticResource RemoteRoundButtonStyle}">
+            <Setter Property="Background" Value="#15AFCF"/>
+            <Setter Property="BorderBrush" Value="#3FE1FF"/>
+            <Setter Property="Foreground" Value="#06151B"/>
+        </Style>
+        <Style x:Key="RemotePowerButtonStyle" TargetType="Button" BasedOn="{StaticResource RemoteRoundButtonStyle}">
+            <Setter Property="Background" Value="#A83A3A"/>
+            <Setter Property="BorderBrush" Value="#EE7777"/>
+        </Style>
+    </Window.Resources>
     <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -18,20 +51,21 @@
         </Grid.RowDefinitions>
 
         <StackPanel>
-            <TextBlock Text="DOWE LANCASTER" Foreground="#4EDCFF" FontWeight="Bold" FontSize="18" HorizontalAlignment="Center"/>
-            <TextBlock x:Name="DeviceText" Text="ROKU REMOTE" Foreground="#AAB3BE" FontSize="12" HorizontalAlignment="Center" Margin="0,4,0,14"/>
+            <TextBlock Text="DOWE LANCASTER" Foreground="#4EDCFF" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" Margin="0,0,0,3"/>
+            <TextBlock x:Name="DeviceText" Text="ROKU REMOTE" Foreground="#AAB3BE" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,22"/>
         </StackPanel>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
                 <UniformGrid Columns="4" Margin="0,0,0,12">
-                    <Button Content="Back" Tag="Back" Margin="4" Height="44" Click="RemoteButton_Click"/>
-                    <Button Content="Home" Tag="Home" Margin="4" Height="44" Click="RemoteButton_Click"/>
-                    <Button Content="Replay" Tag="InstantReplay" Margin="4" Height="44" Click="RemoteButton_Click"/>
-                    <Button Content="Power" Tag="Power" Margin="4" Height="44" Click="RemoteButton_Click"/>
+                    <Button Content="↩ Back" Style="{StaticResource RemoteRoundButtonStyle}" Tag="Back" Margin="4" Height="44" Click="RemoteButton_Click"/>
+                    <Button Content="⌂ Home" Style="{StaticResource RemoteAccentButtonStyle}" Tag="Home" Margin="4" Height="44" Click="RemoteButton_Click"/>
+                    <Button Content="↶ Replay" Style="{StaticResource RemoteRoundButtonStyle}" Tag="InstantReplay" Margin="4" Height="44" Click="RemoteButton_Click"/>
+                    <Button Content="⏻ Power" Style="{StaticResource RemotePowerButtonStyle}" Tag="Power" Margin="4" Height="44" Click="RemoteButton_Click"/>
                 </UniformGrid>
 
-                <Grid Width="250" Height="250" HorizontalAlignment="Center" Margin="0,2,0,14">
+                <Border Background="#20242A" BorderBrush="#343A43" BorderThickness="1" CornerRadius="86" Width="250" Height="250" HorizontalAlignment="Center" Padding="14" Margin="0,4,0,14">
+                <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
@@ -42,23 +76,24 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Row="0" Grid.Column="1" Content="▲" FontSize="24" Margin="5" Tag="Up" Click="RemoteButton_Click"/>
-                    <Button Grid.Row="1" Grid.Column="0" Content="◀" FontSize="24" Margin="5" Tag="Left" Click="RemoteButton_Click"/>
-                    <Button Grid.Row="1" Grid.Column="1" Content="OK" FontSize="18" Margin="5" Tag="Select" Click="RemoteButton_Click"/>
-                    <Button Grid.Row="1" Grid.Column="2" Content="▶" FontSize="24" Margin="5" Tag="Right" Click="RemoteButton_Click"/>
-                    <Button Grid.Row="2" Grid.Column="1" Content="▼" FontSize="24" Margin="5" Tag="Down" Click="RemoteButton_Click"/>
+                    <Button Grid.Row="0" Grid.Column="1" Content="▲" FontSize="24" Style="{StaticResource RemoteRoundButtonStyle}" Margin="5" Tag="Up" Click="RemoteButton_Click"/>
+                    <Button Grid.Row="1" Grid.Column="0" Content="◀" FontSize="24" Style="{StaticResource RemoteRoundButtonStyle}" Margin="5" Tag="Left" Click="RemoteButton_Click"/>
+                    <Button Grid.Row="1" Grid.Column="1" Content="OK" FontSize="18" Style="{StaticResource RemoteAccentButtonStyle}" Margin="2" Tag="Select" Click="RemoteButton_Click"/>
+                    <Button Grid.Row="1" Grid.Column="2" Content="▶" FontSize="24" Style="{StaticResource RemoteRoundButtonStyle}" Margin="5" Tag="Right" Click="RemoteButton_Click"/>
+                    <Button Grid.Row="2" Grid.Column="1" Content="▼" FontSize="24" Style="{StaticResource RemoteRoundButtonStyle}" Margin="5" Tag="Down" Click="RemoteButton_Click"/>
                 </Grid>
+                </Border>
 
                 <UniformGrid Columns="3" Margin="0,0,0,8">
-                    <Button Content="⏪" FontSize="20" Margin="4" Height="44" Tag="Rev" Click="RemoteButton_Click"/>
-                    <Button Content="⏯" FontSize="20" Margin="4" Height="44" Tag="Play" Click="RemoteButton_Click"/>
-                    <Button Content="⏩" FontSize="20" Margin="4" Height="44" Tag="Fwd" Click="RemoteButton_Click"/>
+                    <Button Content="⏪" FontSize="20" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Height="48" Tag="Rev" Click="RemoteButton_Click"/>
+                    <Button Content="⏯" FontSize="21" Style="{StaticResource RemoteAccentButtonStyle}" Margin="4" Height="48" Tag="Play" Click="RemoteButton_Click"/>
+                    <Button Content="⏩" FontSize="20" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Height="48" Tag="Fwd" Click="RemoteButton_Click"/>
                 </UniformGrid>
 
                 <UniformGrid Columns="3" Margin="0,0,0,8">
-                    <Button Content="Vol −" Margin="4" Height="42" Tag="VolumeDown" Click="RemoteButton_Click"/>
-                    <Button Content="Mute" Margin="4" Height="42" Tag="VolumeMute" Click="RemoteButton_Click"/>
-                    <Button Content="Vol +" Margin="4" Height="42" Tag="VolumeUp" Click="RemoteButton_Click"/>
+                    <Button Content="Vol −" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Height="44" Tag="VolumeDown" Click="RemoteButton_Click"/>
+                    <Button Content="Mute" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Height="44" Tag="VolumeMute" Click="RemoteButton_Click"/>
+                    <Button Content="Vol +" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Height="44" Tag="VolumeUp" Click="RemoteButton_Click"/>
                 </UniformGrid>
 
                 <Grid Margin="4,0,4,10">
@@ -67,7 +102,7 @@
                         <ColumnDefinition Width="110"/>
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="VolumeTextBox" Text="25" Height="40" Padding="12,0" VerticalContentAlignment="Center" ToolTip="Roku TV volume, from 0 to 100"/>
-                    <Button Grid.Column="1" Content="Set Volume" Margin="8,0,0,0" Height="40" Click="SetVolumeButton_Click"/>
+                    <Button Grid.Column="1" Content="Set Volume" Style="{StaticResource RemoteAccentButtonStyle}" Margin="8,0,0,0" Height="40" Click="SetVolumeButton_Click"/>
                 </Grid>
             </StackPanel>
         </ScrollViewer>
