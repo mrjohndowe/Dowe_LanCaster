@@ -31,6 +31,25 @@ public sealed class RokuClient : IDisposable
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task SetVolumeAsync(
+        int level,
+        CancellationToken cancellationToken = default)
+    {
+        if (level is < 0 or > 100)
+            throw new ArgumentOutOfRangeException(
+                nameof(level),
+                "Volume must be between 0 and 100.");
+
+        // Roku ECP provides relative volume keys but no current-volume query or
+        // absolute-volume endpoint. Resetting to the minimum first makes the
+        // requested value predictable on compatible Roku TV audio controls.
+        for (var i = 0; i < 100; i++)
+            await SendKeyAsync("VolumeDown", cancellationToken);
+
+        for (var i = 0; i < level; i++)
+            await SendKeyAsync("VolumeUp", cancellationToken);
+    }
+
     public async Task SendTextAsync(
         string text,
         CancellationToken cancellationToken = default)

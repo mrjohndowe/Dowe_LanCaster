@@ -1,5 +1,5 @@
 #ifndef MyAppVersion
-  #define MyAppVersion "0.9.5.14"
+  #define MyAppVersion "0.9.5.15"
 #endif
 
 #define MyAppName "Dowe LanCaster"

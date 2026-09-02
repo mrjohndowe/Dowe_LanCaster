@@ -22,6 +22,7 @@ public partial class MainWindow : Window
     private readonly UrlStreamCaptureService _urlCapture = new();
     private readonly MediaLinkExtractorService _linkExtractor = new();
     private readonly AudioBackendService _audioBackendService = new();
+    private readonly PcAudioMonitorService _pcAudioMonitor = new();
     private readonly SettingsService _settingsService = new();
     private readonly UpdateService _updateService = new();
     private readonly DiagnosticState _diagnostics = new();
@@ -46,6 +47,7 @@ public partial class MainWindow : Window
     private bool _folderReceiverLaunched;
     private SpeechRecognitionEngine? _voiceRecognizer;
     private bool _voiceListening;
+    private string? _pcAudioMonitorUrl;
 
     private static readonly IReadOnlyDictionary<string, string> VoiceCommandMap =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -416,6 +418,7 @@ public partial class MainWindow : Window
 
             LinkStreamUrlTextBox.Text =
                 streamUrl;
+            SetPcAudioMonitorSource(streamUrl);
 
             LinkStatusText.Text =
                 "Launching Dowe LanCaster on the Roku...";
@@ -483,6 +486,7 @@ public partial class MainWindow : Window
         await _urlServer.StopAsync();
         await _urlCapture.StopAsync();
         LinkStreamUrlTextBox.Clear();
+        await StopPcAudioMonitorAsync();
 
         if (sendHome)
         {
@@ -901,6 +905,7 @@ public partial class MainWindow : Window
                 $"http://{ip}:{_liveServer.Port}/live/index.m3u8";
 
             LiveStreamUrlTextBox.Text = url;
+            SetPcAudioMonitorSource(url);
 
             LiveStatusText.Text =
                 "Launching Dowe LanCaster receiver...";
@@ -961,6 +966,7 @@ public partial class MainWindow : Window
         await _liveServer.StopAsync();
         await _liveCapture.StopAsync();
         LiveStreamUrlTextBox.Clear();
+        await StopPcAudioMonitorAsync();
 
         if (sendHome)
         {
@@ -1522,6 +1528,7 @@ public partial class MainWindow : Window
             var streamUrl =
                 $"http://{ip}:{_folderServer.Port}/live/index.m3u8" +
                 $"?item={Guid.NewGuid():N}";
+            SetPcAudioMonitorSource(streamUrl);
 
             _folderServer.SetControlState(streamUrl);
 
@@ -1743,6 +1750,7 @@ public partial class MainWindow : Window
 
         await _folderServer.StopAsync();
         await _folderTranscoder.StopAsync();
+        await StopPcAudioMonitorAsync();
 
         FolderStopButton.IsEnabled = false;
     }
@@ -1788,6 +1796,7 @@ public partial class MainWindow : Window
 
             var streamUrl = $"http://{ip}:{_mediaServer.Port}/media";
             StreamUrlTextBox.Text = streamUrl;
+            SetPcAudioMonitorSource(streamUrl);
 
             await _rokuClient.LaunchDoweLanCasterAsync(streamUrl);
 
@@ -1821,6 +1830,7 @@ public partial class MainWindow : Window
 
         await _mediaServer.StopAsync();
         StreamUrlTextBox.Clear();
+        await StopPcAudioMonitorAsync();
         CastStatusText.Text = "Casting stopped.";
         StatusText.Text = "Ready.";
     }
@@ -1839,6 +1849,76 @@ public partial class MainWindow : Window
         {
             StatusText.Text = $"Remote command failed: {ex.Message}";
         }
+    }
+
+    private async void SetVolumeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_rokuClient is null)
+        {
+            StatusText.Text = "Select a Roku device first.";
+            return;
+        }
+
+        if (!int.TryParse(VolumeLevelTextBox.Text, out var level) ||
+            level is < 0 or > 100)
+        {
+            StatusText.Text = "Enter a Roku volume from 0 to 100.";
+            return;
+        }
+
+        try
+        {
+            StatusText.Text = $"Setting Roku volume to {level}...";
+            await _rokuClient.SetVolumeAsync(level);
+            StatusText.Text = $"Roku volume set to {level}.";
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Could not set Roku volume: {ex.Message}";
+        }
+    }
+
+    private async void HeadphoneModeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_pcAudioMonitor.IsPlaying)
+        {
+            await StopPcAudioMonitorAsync();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_pcAudioMonitorUrl))
+        {
+            HeadphoneStatusText.Text =
+                "Start a Link, Live, Folder, or File cast before enabling headphone mode.";
+            return;
+        }
+
+        try
+        {
+            await _pcAudioMonitor.StartAsync(_pcAudioMonitorUrl);
+            HeadphoneModeButton.Content = "🎧  Stop Listening on This PC";
+            HeadphoneStatusText.Text =
+                "Playing the current Dowe LanCaster stream through your Windows default output.";
+        }
+        catch (Exception ex)
+        {
+            HeadphoneStatusText.Text =
+                $"Headphone mode could not start: {ex.Message}";
+        }
+    }
+
+    private void SetPcAudioMonitorSource(string streamUrl)
+    {
+        _pcAudioMonitorUrl = streamUrl;
+    }
+
+    private async Task StopPcAudioMonitorAsync()
+    {
+        await _pcAudioMonitor.StopAsync();
+        _pcAudioMonitorUrl = null;
+        HeadphoneModeButton.Content = "🎧  Listen on This PC";
+        HeadphoneStatusText.Text =
+            "Headphone mode is off. Select your headphones as the Windows default output.";
     }
 
     private async void SendTextButton_Click(object sender, RoutedEventArgs e)
@@ -2240,6 +2320,7 @@ public partial class MainWindow : Window
         await _folderTranscoder.DisposeAsync();
         await _urlServer.DisposeAsync();
         await _urlCapture.DisposeAsync();
+        await _pcAudioMonitor.DisposeAsync();
         await _liveServer.DisposeAsync();
         await _liveCapture.DisposeAsync();
         await _mediaServer.DisposeAsync();
