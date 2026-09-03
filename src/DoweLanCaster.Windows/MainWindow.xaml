@@ -395,9 +395,9 @@
                                                 </Style>
 
                                                 <Style x:Key="RemoteAccentButtonStyle" TargetType="Button" BasedOn="{StaticResource RemoteRoundButtonStyle}">
-                                                        <Setter Property="Background" Value="#15AFCF"/>
-                                                        <Setter Property="BorderBrush" Value="#3FE1FF"/>
-                                                        <Setter Property="Foreground" Value="#06151B"/>
+                                                        <Setter Property="Background" Value="#6C3C97"/>
+                                                        <Setter Property="BorderBrush" Value="#BD94DE"/>
+                                                        <Setter Property="Foreground" Value="White"/>
                                                 </Style>
 
                                                 <Style x:Key="RemotePowerButtonStyle" TargetType="Button" BasedOn="{StaticResource RemoteRoundButtonStyle}">
@@ -414,7 +414,7 @@
                                                         </Border.Effect>
 
                                                         <StackPanel>
-                                                                <TextBlock Text="DOWE LANCASTER" Foreground="#4EDCFF" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" Margin="0,0,0,3"/>
+                                                                <TextBlock Text="DOWE LANCASTER" Foreground="#BD94DE" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" Margin="0,0,0,3"/>
                                                                 <TextBlock Text="ROKU REMOTE" Foreground="#AAB3BE" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,22"/>
 
                                                                 <Button Content="Open Pop-out Remote" Style="{StaticResource RemoteAccentButtonStyle}" Height="40" Margin="4,0,4,12" Click="OpenRemoteWindowButton_Click"/>
