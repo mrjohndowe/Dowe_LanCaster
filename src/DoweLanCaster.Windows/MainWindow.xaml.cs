@@ -1,4 +1,5 @@
 using System.IO;
+using System.Diagnostics;
 using System.Speech.Recognition;
 using System.Windows;
 using System.Windows.Controls;
@@ -94,6 +95,7 @@ public partial class MainWindow : Window
             await InitializeFFmpegAsync();
             InitializeYtDlp();
             await RefreshAudioSourcesAsync();
+            LoadChangelog();
 
             if (!string.IsNullOrWhiteSpace(_settings.LastFolderPath) &&
                 Directory.Exists(_settings.LastFolderPath))
@@ -165,6 +167,7 @@ public partial class MainWindow : Window
             EncoderComboBox.ItemsSource = encoders;
             LinkEncoderComboBox.ItemsSource = encoders;
             FolderEncoderComboBox.ItemsSource = encoders;
+            SettingsEncoderComboBox.ItemsSource = encoders;
 
             var preferred = encoders.Contains(
                 _settings.PreferredEncoder,
@@ -175,9 +178,11 @@ public partial class MainWindow : Window
             EncoderComboBox.SelectedItem = preferred;
             LinkEncoderComboBox.SelectedItem = preferred;
             FolderEncoderComboBox.SelectedItem = preferred;
+            SettingsEncoderComboBox.SelectedItem = preferred;
             EncoderComboBox.IsEnabled = true;
             LinkEncoderComboBox.IsEnabled = true;
             FolderEncoderComboBox.IsEnabled = true;
+            SettingsEncoderComboBox.IsEnabled = true;
 
             LiveStatusText.Text =
                 $"FFmpeg ready: {_ffmpegPath}";
@@ -535,6 +540,17 @@ public partial class MainWindow : Window
         SelectComboItemByContent(
             LinkBitrateComboBox,
             $"{_settings.PreferredBitrateKbps} kbps");
+
+        SelectComboItemByContent(
+            SettingsFpsComboBox,
+            _settings.PreferredFps.ToString());
+
+        SelectComboItemByContent(
+            SettingsBitrateComboBox,
+            $"{_settings.PreferredBitrateKbps} kbps");
+
+        SettingsIncludeAudioCheckBox.IsChecked =
+            _settings.IncludeSystemAudio;
     }
 
     private static void SelectComboItemByContent(
@@ -587,6 +603,7 @@ public partial class MainWindow : Window
                     _ffmpegPath);
 
             AudioDeviceComboBox.ItemsSource = sources;
+            SettingsAudioSourceComboBox.ItemsSource = sources;
 
             var preferred =
                 sources.FirstOrDefault(x =>
@@ -603,6 +620,8 @@ public partial class MainWindow : Window
                 preferred
                 ?? systemAudio
                 ?? sources.FirstOrDefault();
+            SettingsAudioSourceComboBox.SelectedItem =
+                AudioDeviceComboBox.SelectedItem;
             AudioDeviceComboBox.IsEnabled = true;
             IncludeAudioCheckBox.IsEnabled = true;
 
@@ -627,12 +646,15 @@ public partial class MainWindow : Window
         EncoderComboBox.ItemsSource = unavailable;
         LinkEncoderComboBox.ItemsSource = unavailable;
         FolderEncoderComboBox.ItemsSource = unavailable;
+        SettingsEncoderComboBox.ItemsSource = unavailable;
         EncoderComboBox.SelectedIndex = 0;
         LinkEncoderComboBox.SelectedIndex = 0;
         FolderEncoderComboBox.SelectedIndex = 0;
+        SettingsEncoderComboBox.SelectedIndex = 0;
         EncoderComboBox.IsEnabled = false;
         LinkEncoderComboBox.IsEnabled = false;
         FolderEncoderComboBox.IsEnabled = false;
+        SettingsEncoderComboBox.IsEnabled = false;
     }
 
     private static string SelectBestEncoder(
@@ -706,6 +728,58 @@ public partial class MainWindow : Window
             DarkModeCheckBox.IsChecked == true;
 
         _settingsService.Save(_settings);
+    }
+
+    private void LoadChangelog()
+    {
+        var changelogPath = Path.Combine(AppContext.BaseDirectory, "CHANGELOG.md");
+        ChangelogTextBox.Text = File.Exists(changelogPath)
+            ? File.ReadAllText(changelogPath)
+            : "No changelog was included with this installation.";
+    }
+
+    private void SaveAndApplySettingsButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (SettingsEncoderComboBox.SelectedItem is not null)
+        {
+            EncoderComboBox.SelectedItem = SettingsEncoderComboBox.SelectedItem;
+            LinkEncoderComboBox.SelectedItem = SettingsEncoderComboBox.SelectedItem;
+            FolderEncoderComboBox.SelectedItem = SettingsEncoderComboBox.SelectedItem;
+        }
+
+        CopyComboSelection(SettingsFpsComboBox, FpsComboBox);
+        CopyComboSelection(SettingsBitrateComboBox, BitrateComboBox);
+        CopyComboSelection(SettingsBitrateComboBox, LinkBitrateComboBox);
+        CopyComboSelection(SettingsBitrateComboBox, FolderBitrateComboBox);
+
+        if (SettingsAudioSourceComboBox.SelectedItem is not null)
+            AudioDeviceComboBox.SelectedItem = SettingsAudioSourceComboBox.SelectedItem;
+
+        IncludeAudioCheckBox.IsChecked =
+            SettingsIncludeAudioCheckBox.IsChecked == true;
+
+        SaveCurrentSettings();
+        SettingsStatusText.Text = "Defaults saved and applied to the cast tabs.";
+    }
+
+    private static void CopyComboSelection(
+        System.Windows.Controls.ComboBox source,
+        System.Windows.Controls.ComboBox target)
+    {
+        if (source.SelectedItem is ComboBoxItem item)
+            SelectComboItemByContent(target, item.Content?.ToString() ?? string.Empty);
+    }
+
+    private void OpenWindowsSoundSettingsButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        Process.Start(new ProcessStartInfo("ms-settings:sound")
+        {
+            UseShellExecute = true
+        });
     }
 
     private async void AddRokuByIpButton_Click(

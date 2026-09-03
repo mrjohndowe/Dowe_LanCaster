@@ -8,9 +8,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>DoweLanCaster</AssemblyName>
     <RootNamespace>DoweLanCaster</RootNamespace>
-    <Version>0.9.5.27</Version>
-    <AssemblyVersion>0.9.5.27</AssemblyVersion>
-    <FileVersion>0.9.5.27</FileVersion>
+    <Version>0.9.5.28</Version>
+    <AssemblyVersion>0.9.5.28</AssemblyVersion>
+    <FileVersion>0.9.5.28</FileVersion>
     <StartupObject>DoweLanCaster.App</StartupObject>
     <AssemblyTitle>DoweLanCaster</AssemblyTitle>
     <ApplicationIcon>DoweLanCaster.ico</ApplicationIcon>
@@ -64,6 +64,10 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="..\..\CHANGELOG.md" Link="CHANGELOG.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>

@@ -575,6 +575,76 @@
                                 </Grid>
                         </TabItem>
 
+                        <TabItem Header="Settings">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <StackPanel Margin="16">
+                                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+                                                        <StackPanel>
+                                                                <TextBlock Text="Casting Defaults" FontSize="24" FontWeight="Bold" Margin="0,0,0,8"/>
+                                                                <TextBlock Text="Choose the settings used when you start a new cast. You can still change a setting for a single cast from its own tab." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,16"/>
+                                                                <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                                <ColumnDefinition Width="18"/>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <StackPanel>
+                                                                                <TextBlock Text="Preferred encoder" FontWeight="SemiBold"/>
+                                                                                <ComboBox x:Name="SettingsEncoderComboBox" Height="34" Margin="0,6,0,14"/>
+                                                                                <TextBlock Text="Default frame rate" FontWeight="SemiBold"/>
+                                                                                <ComboBox x:Name="SettingsFpsComboBox" Height="34" Margin="0,6,0,0">
+                                                                                        <ComboBoxItem Content="30"/>
+                                                                                        <ComboBoxItem Content="60"/>
+                                                                                </ComboBox>
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Column="2">
+                                                                                <TextBlock Text="Default video quality" FontWeight="SemiBold"/>
+                                                                                <ComboBox x:Name="SettingsBitrateComboBox" Height="34" Margin="0,6,0,14">
+                                                                                        <ComboBoxItem Content="4000 kbps"/>
+                                                                                        <ComboBoxItem Content="8000 kbps"/>
+                                                                                        <ComboBoxItem Content="12000 kbps"/>
+                                                                                        <ComboBoxItem Content="18000 kbps"/>
+                                                                                </ComboBox>
+                                                                                <TextBlock Text="Default PC audio source" FontWeight="SemiBold"/>
+                                                                                <ComboBox x:Name="SettingsAudioSourceComboBox" Height="34" Margin="0,6,0,0"/>
+                                                                        </StackPanel>
+                                                                </Grid>
+                                                                <CheckBox x:Name="SettingsIncludeAudioCheckBox" Content="Stream PC audio by default for new Live Casts" Margin="0,16,0,0"/>
+                                                        </StackPanel>
+                                                </Border>
+
+                                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+                                                        <StackPanel>
+                                                                <TextBlock Text="Roku Private Listening" FontSize="22" FontWeight="Bold" Margin="0,0,0,8"/>
+                                                                <TextBlock Text="Listening speaker" FontWeight="SemiBold"/>
+                                                                <TextBlock Text="Windows default playback device" Margin="0,6,0,4"/>
+                                                                <TextBlock Text="Private Listening sends Roku audio to the Windows playback device marked as Default. Change that device in Windows Sound settings—for example, to switch between speakers and headphones." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,12"/>
+                                                                <Button Content="Open Windows Sound Settings" HorizontalAlignment="Left" Padding="14,6" Click="OpenWindowsSoundSettingsButton_Click"/>
+                                                        </StackPanel>
+                                                </Border>
+
+                                                <StackPanel Orientation="Horizontal">
+                                                        <Button Content="Save and Apply Defaults" Height="42" Padding="18,6" Click="SaveAndApplySettingsButton_Click"/>
+                                                        <TextBlock x:Name="SettingsStatusText" VerticalAlignment="Center" Margin="12,0,0,0" Opacity="0.78"/>
+                                                </StackPanel>
+                                        </StackPanel>
+                                </ScrollViewer>
+                        </TabItem>
+
+                        <TabItem Header="Changelog">
+                                <Grid Margin="16">
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <StackPanel Margin="0,0,0,12">
+                                                <TextBlock Text="Dowe LanCaster Changelog" FontSize="24" FontWeight="Bold"/>
+                                                <TextBlock Text="Release notes included with this version of Dowe LanCaster." Opacity="0.78" Margin="0,6,0,0"/>
+                                        </StackPanel>
+                                        <TextBox x:Name="ChangelogTextBox" Grid.Row="1" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontFamily="Consolas" Text="Changelog is loading..."/>
+                                </Grid>
+                        </TabItem>
+
                 </TabControl>
 
                 <StatusBar Grid.Row="3" Margin="0,12,0,0">
