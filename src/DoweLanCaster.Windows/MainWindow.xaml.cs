@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     private readonly MediaLinkExtractorService _linkExtractor = new();
     private readonly AudioBackendService _audioBackendService = new();
     private readonly PcAudioMonitorService _pcAudioMonitor = new();
+    private readonly RokuPrivateListeningService _privateListening = new();
     private readonly SettingsService _settingsService = new();
     private readonly UpdateService _updateService = new();
     private readonly DiagnosticState _diagnostics = new();
@@ -1927,30 +1928,31 @@ public partial class MainWindow : Window
 
     private async void HeadphoneModeButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_pcAudioMonitor.IsPlaying)
+        if (_rokuClient is null)
         {
-            await StopPcAudioMonitorAsync();
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_pcAudioMonitorUrl))
-        {
-            HeadphoneStatusText.Text =
-                "Start a Link, Live, Folder, or File cast before enabling headphone mode.";
+            HeadphoneStatusText.Text = "Select a Roku device first.";
             return;
         }
 
         try
         {
-            await _pcAudioMonitor.StartAsync(_pcAudioMonitorUrl);
-            HeadphoneModeButton.Content = "🎧  Stop Listening on This PC";
+            if (_privateListening.IsRunning)
+            {
+                await _privateListening.StopAsync();
+                HeadphoneModeButton.Content = "🎧  Start Roku Private Listening";
+                HeadphoneStatusText.Text = "Private Listening is off.";
+                return;
+            }
+
+            await _privateListening.StartAsync(_rokuClient.Device.IpAddress);
+            HeadphoneModeButton.Content = "🎧  Stop Roku Private Listening";
             HeadphoneStatusText.Text =
-                "Playing the current Dowe LanCaster stream through your Windows default output.";
+                "Connecting Roku audio to this PC...";
         }
         catch (Exception ex)
         {
             HeadphoneStatusText.Text =
-                $"Headphone mode could not start: {ex.Message}";
+                $"Private Listening could not start: {ex.Message}";
         }
     }
 
@@ -1963,9 +1965,6 @@ public partial class MainWindow : Window
     {
         await _pcAudioMonitor.StopAsync();
         _pcAudioMonitorUrl = null;
-        HeadphoneModeButton.Content = "🎧  Listen on This PC";
-        HeadphoneStatusText.Text =
-            "Headphone mode is off. Select your headphones as the Windows default output.";
     }
 
     private async void SendTextButton_Click(object sender, RoutedEventArgs e)
@@ -2368,6 +2367,7 @@ public partial class MainWindow : Window
         await _urlServer.DisposeAsync();
         await _urlCapture.DisposeAsync();
         await _pcAudioMonitor.DisposeAsync();
+        await _privateListening.DisposeAsync();
         await _liveServer.DisposeAsync();
         await _liveCapture.DisposeAsync();
         await _mediaServer.DisposeAsync();

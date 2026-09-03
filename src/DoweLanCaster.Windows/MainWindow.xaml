@@ -472,8 +472,8 @@
                                                                         <Button Grid.Column="1" Content="Set Volume" Style="{StaticResource RemoteAccentButtonStyle}" Height="42" Margin="8,0,0,0" Click="SetVolumeButton_Click"/>
                                                                 </Grid>
 
-                                                                <Button x:Name="HeadphoneModeButton" Visibility="Collapsed" Content="🎧  Listen on This PC" Style="{StaticResource RemoteRoundButtonStyle}" Height="46" Margin="4,0,4,10" Click="HeadphoneModeButton_Click"/>
-                                                                <TextBlock x:Name="HeadphoneStatusText" Visibility="Collapsed" Text="Headphone mode is off. Select your headphones as the Windows default output." Foreground="#AAB3BE" FontSize="11" TextAlignment="Center" TextWrapping="Wrap" Margin="8,0,8,12"/>
+                                                                <Button x:Name="HeadphoneModeButton" Content="🎧  Start Roku Private Listening" Style="{StaticResource RemoteRoundButtonStyle}" Height="46" Margin="4,0,4,10" Click="HeadphoneModeButton_Click"/>
+                                                                <TextBlock x:Name="HeadphoneStatusText" Text="Private Listening is off." Foreground="#AAB3BE" FontSize="11" TextAlignment="Center" TextWrapping="Wrap" Margin="8,0,8,12"/>
 
                                                                 <Button x:Name="VoiceControlButton" Content="🎤  Start Voice Control" Style="{StaticResource RemoteAccentButtonStyle}" Height="48" Margin="4,2,4,4" Click="VoiceControlButton_Click"/>
 
