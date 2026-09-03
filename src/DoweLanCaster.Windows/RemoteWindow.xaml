@@ -34,9 +34,9 @@
             </Setter>
         </Style>
         <Style x:Key="RemoteAccentButtonStyle" TargetType="Button" BasedOn="{StaticResource RemoteRoundButtonStyle}">
-            <Setter Property="Background" Value="#6C3C97"/>
-            <Setter Property="BorderBrush" Value="#BD94DE"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#15AFCF"/>
+            <Setter Property="BorderBrush" Value="#3FE1FF"/>
+            <Setter Property="Foreground" Value="#06151B"/>
         </Style>
         <Style x:Key="RemotePowerButtonStyle" TargetType="Button" BasedOn="{StaticResource RemoteRoundButtonStyle}">
             <Setter Property="Background" Value="#A83A3A"/>
@@ -55,7 +55,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel>
-            <TextBlock Text="DOWE LANCASTER" Foreground="#BD94DE" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" Margin="0,0,0,3"/>
+            <TextBlock Text="DOWE LANCASTER" Foreground="#4EDCFF" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" Margin="0,0,0,3"/>
             <TextBlock x:Name="DeviceText" Text="ROKU REMOTE" Foreground="#AAB3BE" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,22"/>
         </StackPanel>
 

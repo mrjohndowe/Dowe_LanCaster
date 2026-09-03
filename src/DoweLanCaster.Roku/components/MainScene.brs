@@ -299,6 +299,17 @@ sub onPlayerStateChanged()
 
     else if state = "finished"
         m.pendingStreamUrl = ""
-        showWaitingScreen()
+
+        ' Folder Cast keeps this receiver open and supplies the next item
+        ' through the control endpoint. Do not return to the launch/waiting
+        ' flow between items; that makes the receiver look as if it restarted.
+        if m.controlUrl <> invalid and m.controlUrl <> ""
+            m.videoPlayer.control = "stop"
+            m.videoPlayer.visible = false
+            m.statusLabel.visible = true
+            m.statusLabel.text = "Loading next video..."
+        else
+            showWaitingScreen()
+        end if
     end if
 end sub
