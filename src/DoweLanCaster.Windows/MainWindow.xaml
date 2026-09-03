@@ -524,7 +524,12 @@
                                                                         </ListBox.ItemTemplate>
                                                                 </ListBox>
 
-                                                                <ListBox x:Name="AppsGridListBox" MouseDoubleClick="AppsListBox_MouseDoubleClick">
+                                                                <ListBox x:Name="AppsGridListBox" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" MouseDoubleClick="AppsListBox_MouseDoubleClick">
+                                                                        <ListBox.ItemContainerStyle>
+                                                                                <Style TargetType="ListBoxItem">
+                                                                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                                                </Style>
+                                                                        </ListBox.ItemContainerStyle>
                                                                         <ListBox.ItemsPanel>
                                                                                 <ItemsPanelTemplate>
                                                                                         <UniformGrid Columns="6"/>
@@ -532,7 +537,7 @@
                                                                         </ListBox.ItemsPanel>
                                                                         <ListBox.ItemTemplate>
                                                                                 <DataTemplate>
-                                                                                        <StackPanel Height="148" Margin="8" VerticalAlignment="Stretch">
+                                                                                        <StackPanel Height="148" Margin="6" VerticalAlignment="Stretch">
                                                                                                 <Border Height="108" Background="#20242A" BorderBrush="#343A43" BorderThickness="1" CornerRadius="6">
                                                                                                         <Image Source="{Binding IconUrl}" Stretch="Uniform" Margin="8"/>
                                                                                                 </Border>
