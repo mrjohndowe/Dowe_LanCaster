@@ -491,6 +491,15 @@
                                                 </Border>
                                         </Viewbox>
 
+                                        <Border x:Name="PopoutRemotePlaceholder" Grid.Column="0" Visibility="Collapsed" Width="390" HorizontalAlignment="Center" Background="#15181D" BorderBrush="#3B414A" BorderThickness="2" CornerRadius="52" Padding="24">
+                                                <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="DOWE LANCASTER" Foreground="#4EDCFF" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center"/>
+                                                        <TextBlock Text="ROKU REMOTE" Foreground="#AAB3BE" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,32"/>
+                                                        <TextBlock Text="Remote is open in its pop-out window" FontSize="16" FontWeight="SemiBold" TextAlignment="Center" TextWrapping="Wrap"/>
+                                                        <Button Content="Bring Pop-out Remote Forward" Style="{StaticResource RemoteAccentButtonStyle}" Height="42" Margin="4,24,4,0" Click="OpenRemoteWindowButton_Click"/>
+                                                </StackPanel>
+                                        </Border>
+
                                         <Border Grid.Column="2" BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource SurfaceBrush}" BorderThickness="1" CornerRadius="12" Padding="18">
                                                 <Grid>
                                                         <Grid.RowDefinitions>
