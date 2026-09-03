@@ -1,5 +1,7 @@
 using System.IO;
 using System.Diagnostics;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Speech.Recognition;
 using System.Windows;
 using System.Windows.Controls;
@@ -164,9 +166,6 @@ public partial class MainWindow : Window
             var encoders =
                 await _encoderDetection.DetectAsync(_ffmpegPath);
 
-            EncoderComboBox.ItemsSource = encoders;
-            LinkEncoderComboBox.ItemsSource = encoders;
-            FolderEncoderComboBox.ItemsSource = encoders;
             SettingsEncoderComboBox.ItemsSource = encoders;
 
             var preferred = encoders.Contains(
@@ -175,13 +174,7 @@ public partial class MainWindow : Window
                 ? _settings.PreferredEncoder
                 : encoders.FirstOrDefault();
 
-            EncoderComboBox.SelectedItem = preferred;
-            LinkEncoderComboBox.SelectedItem = preferred;
-            FolderEncoderComboBox.SelectedItem = preferred;
             SettingsEncoderComboBox.SelectedItem = preferred;
-            EncoderComboBox.IsEnabled = true;
-            LinkEncoderComboBox.IsEnabled = true;
-            FolderEncoderComboBox.IsEnabled = true;
             SettingsEncoderComboBox.IsEnabled = true;
 
             LiveStatusText.Text =
@@ -386,7 +379,7 @@ public partial class MainWindow : Window
                 sendHome: false);
 
             string friendlyEncoder =
-                LinkEncoderComboBox.SelectedItem?.ToString()
+                SettingsEncoderComboBox.SelectedItem?.ToString()
                 ?? "CPU (libx264)";
 
             string encoder =
@@ -394,7 +387,7 @@ public partial class MainWindow : Window
                     friendlyEncoder);
 
             string bitrateText =
-                ((ComboBoxItem)LinkBitrateComboBox.SelectedItem)
+                ((ComboBoxItem)SettingsBitrateComboBox.SelectedItem)
                 .Content.ToString()!;
 
             int bitrate =
@@ -507,9 +500,6 @@ public partial class MainWindow : Window
         ManualRokuIpTextBox.Text =
             _settings.LastRokuIp ?? "";
 
-        IncludeAudioCheckBox.IsChecked =
-            _settings.IncludeSystemAudio;
-
         FolderPathTextBox.Text =
             _settings.LastFolderPath ?? "";
 
@@ -528,18 +518,6 @@ public partial class MainWindow : Window
         SelectComboItemByContent(
             FolderRepeatComboBox,
             _settings.FolderRepeatMode);
-
-        SelectComboItemByContent(
-            FpsComboBox,
-            _settings.PreferredFps.ToString());
-
-        SelectComboItemByContent(
-            BitrateComboBox,
-            $"{_settings.PreferredBitrateKbps} kbps");
-
-        SelectComboItemByContent(
-            LinkBitrateComboBox,
-            $"{_settings.PreferredBitrateKbps} kbps");
 
         SelectComboItemByContent(
             SettingsFpsComboBox,
@@ -575,7 +553,7 @@ public partial class MainWindow : Window
     {
         if (string.IsNullOrWhiteSpace(_ffmpegPath))
         {
-            AudioDeviceComboBox.ItemsSource =
+            SettingsAudioSourceComboBox.ItemsSource =
                 new[]
                 {
                     new AudioSourceOption
@@ -584,10 +562,10 @@ public partial class MainWindow : Window
                         Name = "No Audio (FFmpeg unavailable)"
                     }
                 };
-            AudioDeviceComboBox.SelectedIndex = 0;
-            AudioDeviceComboBox.IsEnabled = false;
-            IncludeAudioCheckBox.IsChecked = false;
-            IncludeAudioCheckBox.IsEnabled = false;
+            SettingsAudioSourceComboBox.SelectedIndex = 0;
+            SettingsAudioSourceComboBox.IsEnabled = false;
+            SettingsIncludeAudioCheckBox.IsChecked = false;
+            SettingsIncludeAudioCheckBox.IsEnabled = false;
             LiveStatusText.Text =
                 "FFmpeg is required for audio capture.";
             return;
@@ -602,7 +580,6 @@ public partial class MainWindow : Window
                 await _audioBackendService.GetAudioSourcesAsync(
                     _ffmpegPath);
 
-            AudioDeviceComboBox.ItemsSource = sources;
             SettingsAudioSourceComboBox.ItemsSource = sources;
 
             var preferred =
@@ -616,14 +593,12 @@ public partial class MainWindow : Window
                 sources.FirstOrDefault(x =>
                     x.Kind == AudioSourceKind.SystemLoopback);
 
-            AudioDeviceComboBox.SelectedItem =
+            SettingsAudioSourceComboBox.SelectedItem =
                 preferred
                 ?? systemAudio
                 ?? sources.FirstOrDefault();
-            SettingsAudioSourceComboBox.SelectedItem =
-                AudioDeviceComboBox.SelectedItem;
-            AudioDeviceComboBox.IsEnabled = true;
-            IncludeAudioCheckBox.IsEnabled = true;
+            SettingsAudioSourceComboBox.IsEnabled = true;
+            SettingsIncludeAudioCheckBox.IsEnabled = true;
 
             LiveStatusText.Text =
                 $"Found {sources.Count} audio option(s).";
@@ -643,17 +618,8 @@ public partial class MainWindow : Window
     {
         var unavailable = new[] { "FFmpeg unavailable" };
 
-        EncoderComboBox.ItemsSource = unavailable;
-        LinkEncoderComboBox.ItemsSource = unavailable;
-        FolderEncoderComboBox.ItemsSource = unavailable;
         SettingsEncoderComboBox.ItemsSource = unavailable;
-        EncoderComboBox.SelectedIndex = 0;
-        LinkEncoderComboBox.SelectedIndex = 0;
-        FolderEncoderComboBox.SelectedIndex = 0;
         SettingsEncoderComboBox.SelectedIndex = 0;
-        EncoderComboBox.IsEnabled = false;
-        LinkEncoderComboBox.IsEnabled = false;
-        FolderEncoderComboBox.IsEnabled = false;
         SettingsEncoderComboBox.IsEnabled = false;
     }
 
@@ -677,15 +643,15 @@ public partial class MainWindow : Window
             _settings.LastRokuIp = ManualRokuIpTextBox.Text.Trim();
 
         _settings.PreferredEncoder =
-            EncoderComboBox.SelectedItem?.ToString();
+            SettingsEncoderComboBox.SelectedItem?.ToString();
 
         _settings.PreferredAudioSource =
-            AudioDeviceComboBox.SelectedItem?.ToString();
+            SettingsAudioSourceComboBox.SelectedItem?.ToString();
 
         _settings.IncludeSystemAudio =
-            IncludeAudioCheckBox.IsChecked == true;
+            SettingsIncludeAudioCheckBox.IsChecked == true;
 
-        if (FpsComboBox.SelectedItem is ComboBoxItem fpsItem &&
+        if (SettingsFpsComboBox.SelectedItem is ComboBoxItem fpsItem &&
             int.TryParse(
                 fpsItem.Content?.ToString(),
                 out var fps))
@@ -693,7 +659,7 @@ public partial class MainWindow : Window
             _settings.PreferredFps = fps;
         }
 
-        if (BitrateComboBox.SelectedItem is ComboBoxItem bitrateItem)
+        if (SettingsBitrateComboBox.SelectedItem is ComboBoxItem bitrateItem)
         {
             var text =
                 bitrateItem.Content?.ToString()
@@ -733,43 +699,77 @@ public partial class MainWindow : Window
     private void LoadChangelog()
     {
         var changelogPath = Path.Combine(AppContext.BaseDirectory, "CHANGELOG.md");
-        ChangelogTextBox.Text = File.Exists(changelogPath)
+        var markdown = File.Exists(changelogPath)
             ? File.ReadAllText(changelogPath)
-            : "No changelog was included with this installation.";
+            : "# Changelog\n\nNo changelog was included with this installation.";
+        ChangelogBrowser.NavigateToString(ConvertChangelogToHtml(markdown));
+    }
+
+    private static string ConvertChangelogToHtml(string markdown)
+    {
+        var html = new StringBuilder("""
+            <html><head><meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <style>
+              body { background:#181C22; color:#F5F7FA; font-family:Segoe UI,Arial,sans-serif; margin:20px; line-height:1.5; }
+              h1 { color:#4EDCFF; font-size:26px; border-bottom:1px solid #3B414A; padding-bottom:10px; }
+              h2 { color:#4EDCFF; font-size:21px; margin-top:26px; }
+              h3 { color:#FFFFFF; font-size:16px; margin-top:18px; }
+              p, li { color:#D9E0E7; }
+              a { color:#6DDAF5; } code { color:#BDEEFF; background:#252B33; padding:2px 4px; }
+            </style></head><body>
+            """);
+
+        var inList = false;
+        foreach (var rawLine in markdown.Replace("\r\n", "\n").Split('\n'))
+        {
+            var line = rawLine.Trim();
+            if (line.StartsWith("- ", StringComparison.Ordinal))
+            {
+                if (!inList)
+                {
+                    html.Append("<ul>");
+                    inList = true;
+                }
+                html.Append("<li>").Append(FormatChangelogLine(line[2..])).Append("</li>");
+                continue;
+            }
+
+            if (inList)
+            {
+                html.Append("</ul>");
+                inList = false;
+            }
+
+            if (line.StartsWith("### ", StringComparison.Ordinal))
+                html.Append("<h3>").Append(FormatChangelogLine(line[4..])).Append("</h3>");
+            else if (line.StartsWith("## ", StringComparison.Ordinal))
+                html.Append("<h2>").Append(FormatChangelogLine(line[3..])).Append("</h2>");
+            else if (line.StartsWith("# ", StringComparison.Ordinal))
+                html.Append("<h1>").Append(FormatChangelogLine(line[2..])).Append("</h1>");
+            else if (!string.IsNullOrWhiteSpace(line))
+                html.Append("<p>").Append(FormatChangelogLine(line)).Append("</p>");
+        }
+
+        if (inList)
+            html.Append("</ul>");
+
+        return html.Append("</body></html>").ToString();
+    }
+
+    private static string FormatChangelogLine(string text)
+    {
+        var result = System.Net.WebUtility.HtmlEncode(text);
+        result = Regex.Replace(result, @"\*\*(.+?)\*\*", "<strong>$1</strong>");
+        result = Regex.Replace(result, @"`(.+?)`", "<code>$1</code>");
+        return Regex.Replace(result, @"\[([^\]]+)\]\((https?://[^\)]+)\)", "<a href=\"$2\">$1</a>");
     }
 
     private void SaveAndApplySettingsButton_Click(
         object sender,
         RoutedEventArgs e)
     {
-        if (SettingsEncoderComboBox.SelectedItem is not null)
-        {
-            EncoderComboBox.SelectedItem = SettingsEncoderComboBox.SelectedItem;
-            LinkEncoderComboBox.SelectedItem = SettingsEncoderComboBox.SelectedItem;
-            FolderEncoderComboBox.SelectedItem = SettingsEncoderComboBox.SelectedItem;
-        }
-
-        CopyComboSelection(SettingsFpsComboBox, FpsComboBox);
-        CopyComboSelection(SettingsBitrateComboBox, BitrateComboBox);
-        CopyComboSelection(SettingsBitrateComboBox, LinkBitrateComboBox);
-        CopyComboSelection(SettingsBitrateComboBox, FolderBitrateComboBox);
-
-        if (SettingsAudioSourceComboBox.SelectedItem is not null)
-            AudioDeviceComboBox.SelectedItem = SettingsAudioSourceComboBox.SelectedItem;
-
-        IncludeAudioCheckBox.IsChecked =
-            SettingsIncludeAudioCheckBox.IsChecked == true;
-
         SaveCurrentSettings();
-        SettingsStatusText.Text = "Defaults saved and applied to the cast tabs.";
-    }
-
-    private static void CopyComboSelection(
-        System.Windows.Controls.ComboBox source,
-        System.Windows.Controls.ComboBox target)
-    {
-        if (source.SelectedItem is ComboBoxItem item)
-            SelectComboItemByContent(target, item.Content?.ToString() ?? string.Empty);
+        SettingsStatusText.Text = "Defaults saved. New casts will use them.";
     }
 
     private void OpenWindowsSoundSettingsButton_Click(
@@ -922,7 +922,7 @@ public partial class MainWindow : Window
         }
 
         string friendlyEncoder =
-            EncoderComboBox.SelectedItem?.ToString()
+            SettingsEncoderComboBox.SelectedItem?.ToString()
             ?? "CPU (libx264)";
 
         string encoder =
@@ -931,11 +931,11 @@ public partial class MainWindow : Window
 
         int fps =
             int.Parse(
-                ((ComboBoxItem)FpsComboBox.SelectedItem)
+                ((ComboBoxItem)SettingsFpsComboBox.SelectedItem)
                 .Content.ToString()!);
 
         string bitrateText =
-            ((ComboBoxItem)BitrateComboBox.SelectedItem)
+            ((ComboBoxItem)SettingsBitrateComboBox.SelectedItem)
             .Content.ToString()!;
 
         int bitrate =
@@ -944,8 +944,8 @@ public partial class MainWindow : Window
 
         string? audioName = null;
 
-        if (IncludeAudioCheckBox.IsChecked == true &&
-            AudioDeviceComboBox.SelectedItem is AudioSourceOption audio)
+        if (SettingsIncludeAudioCheckBox.IsChecked == true &&
+            SettingsAudioSourceComboBox.SelectedItem is AudioSourceOption audio)
         {
             if (audio.Kind != AudioSourceKind.None)
                 audioName = audio.DeviceName;
@@ -1566,7 +1566,7 @@ public partial class MainWindow : Window
                 $"{index + 1} of {_folderItems.Count}";
 
             string friendlyEncoder =
-                FolderEncoderComboBox.SelectedItem?.ToString()
+                SettingsEncoderComboBox.SelectedItem?.ToString()
                 ?? "CPU (libx264)";
 
             string encoder =
@@ -1576,7 +1576,7 @@ public partial class MainWindow : Window
 
             string bitrateText =
                 ((ComboBoxItem)
-                    FolderBitrateComboBox
+                    SettingsBitrateComboBox
                     .SelectedItem)
                 .Content.ToString()!;
 
@@ -1944,7 +1944,10 @@ public partial class MainWindow : Window
         _remoteWindow = new RemoteWindow(
             _rokuClient.Device.Name,
             SendRemoteKeyAsync,
-            SetRokuVolumeAsync)
+            SetRokuVolumeAsync,
+            TogglePrivateListeningAsync,
+            SendTextToRokuAsync,
+            ToggleVoiceControlFromRemote)
         {
             Owner = this
         };
@@ -2002,32 +2005,33 @@ public partial class MainWindow : Window
 
     private async void HeadphoneModeButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_rokuClient is null)
-        {
-            HeadphoneStatusText.Text = "Select a Roku device first.";
-            return;
-        }
-
         try
         {
-            if (_privateListening.IsRunning)
-            {
-                await _privateListening.StopAsync();
-                HeadphoneModeButton.Content = "🎧  Start Roku Private Listening";
-                HeadphoneStatusText.Text = "Private Listening is off.";
-                return;
-            }
-
-            await _privateListening.StartAsync(_rokuClient.Device.IpAddress);
-            HeadphoneModeButton.Content = "🎧  Stop Roku Private Listening";
-            HeadphoneStatusText.Text =
-                "Connecting Roku audio to this PC...";
+            HeadphoneStatusText.Text = await TogglePrivateListeningAsync();
         }
         catch (Exception ex)
         {
             HeadphoneStatusText.Text =
                 $"Private Listening could not start: {ex.Message}";
         }
+    }
+
+    private async Task<string> TogglePrivateListeningAsync()
+    {
+        if (_rokuClient is null)
+            throw new InvalidOperationException("Select a Roku device first.");
+
+        if (_privateListening.IsRunning)
+        {
+            await _privateListening.StopAsync();
+            HeadphoneModeButton.Content = "🎧  Start Roku Private Listening";
+            return "Private Listening is off.";
+        }
+
+        HeadphoneStatusText.Text = "Connecting Roku audio to this PC...";
+        await _privateListening.StartAsync(_rokuClient.Device.IpAddress);
+        HeadphoneModeButton.Content = "🎧  Stop Roku Private Listening";
+        return "Roku audio is playing on this PC.";
     }
 
     private void SetPcAudioMonitorSource(string streamUrl)
@@ -2048,7 +2052,7 @@ public partial class MainWindow : Window
 
         try
         {
-            await _rokuClient.SendTextAsync(RokuTextInput.Text);
+            await SendTextToRokuAsync(RokuTextInput.Text);
             RokuTextInput.Clear();
             StatusText.Text = "Text sent.";
         }
@@ -2056,6 +2060,18 @@ public partial class MainWindow : Window
         {
             StatusText.Text = $"Text failed: {ex.Message}";
         }
+    }
+
+    private Task SendTextToRokuAsync(string text)
+    {
+        return _rokuClient?.SendTextAsync(text)
+            ?? Task.FromException(new InvalidOperationException("Select a Roku device first."));
+    }
+
+    private string ToggleVoiceControlFromRemote()
+    {
+        VoiceControlButton_Click(this, new RoutedEventArgs());
+        return VoiceStatusText.Text;
     }
 
     private void RokuTextInput_TextChanged(

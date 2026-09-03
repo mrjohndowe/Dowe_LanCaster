@@ -11,10 +11,10 @@ public sealed class RokuPrivateListeningService : IAsyncDisposable
 
     public bool IsRunning => _process is { HasExited: false };
 
-    public Task StartAsync(string rokuIpAddress)
+    public async Task StartAsync(string rokuIpAddress)
     {
         if (IsRunning)
-            return Task.CompletedTask;
+            return;
 
         var javaPath = FindJavaPath();
         var jarPath = Path.Combine(
@@ -32,7 +32,9 @@ public sealed class RokuPrivateListeningService : IAsyncDisposable
             FileName = javaPath,
             UseShellExecute = false,
             CreateNoWindow = true,
-            RedirectStandardInput = true
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
         };
         startInfo.ArgumentList.Add("-jar");
         startInfo.ArgumentList.Add(jarPath);
@@ -43,9 +45,34 @@ public sealed class RokuPrivateListeningService : IAsyncDisposable
             ffmpegDirectory,
             Environment.GetEnvironmentVariable("PATH") ?? string.Empty);
 
+        var connection = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
         _process = Process.Start(startInfo)
             ?? throw new InvalidOperationException("Could not start Roku Private Listening.");
-        return Task.CompletedTask;
+        _process.EnableRaisingEvents = true;
+        _process.OutputDataReceived += (_, eventArgs) =>
+        {
+            if (string.Equals(eventArgs.Data, "PRIVATE_LISTENING_CONNECTED", StringComparison.Ordinal))
+                connection.TrySetResult();
+        };
+        _process.ErrorDataReceived += (_, eventArgs) =>
+        {
+            if (eventArgs.Data?.StartsWith("PRIVATE_LISTENING_FAILED:", StringComparison.Ordinal) == true)
+                connection.TrySetException(new InvalidOperationException(eventArgs.Data));
+        };
+        _process.Exited += (_, _) => connection.TrySetException(
+            new InvalidOperationException("Private Listening stopped before Roku audio connected."));
+        _process.BeginOutputReadLine();
+        _process.BeginErrorReadLine();
+
+        if (await Task.WhenAny(connection.Task, Task.Delay(TimeSpan.FromSeconds(12))) != connection.Task)
+        {
+            await StopAsync();
+            throw new TimeoutException(
+                "Roku did not confirm Private Listening within 12 seconds.");
+        }
+
+        await connection.Task;
     }
 
     public async Task StopAsync()

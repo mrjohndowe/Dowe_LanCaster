@@ -108,6 +108,14 @@
                     <TextBox x:Name="VolumeTextBox" Text="25" Height="40" Padding="12,0" VerticalContentAlignment="Center" ToolTip="Roku TV volume, from 0 to 100"/>
                     <Button Grid.Column="1" Content="Set Volume" Style="{StaticResource RemoteAccentButtonStyle}" Margin="8,0,0,0" Height="40" Click="SetVolumeButton_Click"/>
                 </Grid>
+
+                <Button x:Name="PrivateListeningButton" Content="🎧  Start Roku Private Listening" Style="{StaticResource RemoteRoundButtonStyle}" Height="46" Margin="4,0,4,8" Click="PrivateListeningButton_Click"/>
+
+                <Button x:Name="VoiceControlButton" Content="🎤  Start Voice Control" Style="{StaticResource RemoteAccentButtonStyle}" Height="44" Margin="4,0,4,8" Click="VoiceControlButton_Click"/>
+
+                <TextBlock Text="Keyboard Text" Foreground="White" FontWeight="SemiBold" FontSize="15" Margin="4,4,0,7"/>
+                <TextBox x:Name="RokuTextInput" Height="50" Padding="12,8" FontSize="16" VerticalContentAlignment="Center"/>
+                <Button Content="Send Text to Roku" Style="{StaticResource RemoteAccentButtonStyle}" Height="42" Margin="4,8,4,6" Click="SendTextButton_Click"/>
             </StackPanel>
         </ScrollViewer>
 

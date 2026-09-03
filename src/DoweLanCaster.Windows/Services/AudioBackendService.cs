@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using DoweLanCaster.Models;
+using NAudio.CoreAudioApi;
 
 namespace DoweLanCaster.Services;
 
@@ -20,6 +21,21 @@ public sealed class AudioBackendService
                 DeviceName = "__SYSTEM_LOOPBACK__"
             }
         };
+
+        using (var enumerator = new MMDeviceEnumerator())
+        {
+            foreach (var device in enumerator.EnumerateAudioEndPoints(
+                         DataFlow.Render,
+                         DeviceState.Active))
+            {
+                result.Add(new AudioSourceOption
+                {
+                    Kind = AudioSourceKind.SystemLoopback,
+                    Name = $"PC playback — {device.FriendlyName}",
+                    DeviceName = $"__LOOPBACK__:{device.ID}"
+                });
+            }
+        }
 
         var devices = await GetDirectShowDevicesAsync(ffmpegPath, token);
 

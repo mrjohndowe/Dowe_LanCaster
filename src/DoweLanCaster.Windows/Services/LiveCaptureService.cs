@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using DoweLanCaster.Models;
+using NAudio.CoreAudioApi;
 using NAudio.Wave;
 
 namespace DoweLanCaster.Services;
@@ -58,11 +59,9 @@ public sealed class LiveCaptureService : IAsyncDisposable
             _ => throw new NotSupportedException("Unsupported capture source.")
         };
 
-        bool useLoopback =
-            string.Equals(
-                audioDevice,
-                "__SYSTEM_LOOPBACK__",
-                StringComparison.Ordinal);
+        bool useLoopback = audioDevice is not null &&
+            (string.Equals(audioDevice, "__SYSTEM_LOOPBACK__", StringComparison.Ordinal) ||
+             audioDevice.StartsWith("__LOOPBACK__:", StringComparison.Ordinal));
 
         string audioInput = "";
         string maps = "-map 0:v:0";
@@ -70,7 +69,7 @@ public sealed class LiveCaptureService : IAsyncDisposable
 
         if (useLoopback)
         {
-            _loopbackCapture = new WasapiLoopbackCapture();
+            _loopbackCapture = CreateLoopbackCapture(audioDevice);
 
             var format = _loopbackCapture.WaveFormat;
             var pipeName = "DoweLanCasterAudio-" + Guid.NewGuid().ToString("N");
@@ -214,6 +213,20 @@ public sealed class LiveCaptureService : IAsyncDisposable
 
         throw new TimeoutException(
             "FFmpeg started but did not create a playable HLS playlist.");
+    }
+
+    private static WasapiLoopbackCapture CreateLoopbackCapture(
+        string? audioDevice)
+    {
+        const string prefix = "__LOOPBACK__:";
+        if (audioDevice?.StartsWith(prefix, StringComparison.Ordinal) == true)
+        {
+            using var enumerator = new MMDeviceEnumerator();
+            return new WasapiLoopbackCapture(
+                enumerator.GetDevice(audioDevice[prefix.Length..]));
+        }
+
+        return new WasapiLoopbackCapture();
     }
 
     private async Task StartLoopbackCaptureAsync(
