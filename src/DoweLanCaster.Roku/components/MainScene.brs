@@ -14,6 +14,7 @@ sub init()
     m.controlUrl = ""
     m.currentStreamUrl = ""
     m.pendingStreamUrl = ""
+    m.folderMode = false
     m.showingSplash = true
 
     configureScreenSize()
@@ -29,10 +30,34 @@ end sub
 sub onControlUrlChanged()
     m.controlUrl = m.top.controlUrl
     if m.controlUrl <> invalid and m.controlUrl <> ""
+        m.folderMode = true
         m.folderControlTimer.control = "start"
+
+        ' Folder Cast owns this receiver for the whole playlist. Skip the
+        ' channel launch movie and keep one SceneGraph session alive.
+        if m.showingSplash
+            m.launchVideo.control = "stop"
+            m.launchVideo.visible = false
+            m.showingSplash = false
+
+            if m.pendingStreamUrl <> invalid and m.pendingStreamUrl <> ""
+                startPendingStream()
+            else
+                showFolderTransition("Preparing first video...")
+            end if
+        end if
     else
+        m.folderMode = false
         m.folderControlTimer.control = "stop"
     end if
+end sub
+
+sub showFolderTransition(message as String)
+    hideWaitingScreen()
+    m.launchVideo.control = "stop"
+    m.launchVideo.visible = false
+    m.statusLabel.visible = true
+    m.statusLabel.text = message
 end sub
 
 sub onFolderControlTimer()
@@ -295,7 +320,11 @@ sub onPlayerStateChanged()
         m.videoPlayer.visible = true
 
     else if state = "error"
-        showWaitingScreen()
+        if m.folderMode
+            showFolderTransition("Skipping unavailable video...")
+        else
+            showWaitingScreen()
+        end if
 
     else if state = "finished"
         m.pendingStreamUrl = ""
@@ -303,11 +332,10 @@ sub onPlayerStateChanged()
         ' Folder Cast keeps this receiver open and supplies the next item
         ' through the control endpoint. Do not return to the launch/waiting
         ' flow between items; that makes the receiver look as if it restarted.
-        if m.controlUrl <> invalid and m.controlUrl <> ""
-            m.videoPlayer.control = "stop"
-            m.videoPlayer.visible = false
-            m.statusLabel.visible = true
-            m.statusLabel.text = "Loading next video..."
+        if m.folderMode
+            ' Keep the player visible on its final frame while Windows prepares
+            ' the next stream. Replacing its content does not relaunch the app.
+            showFolderTransition("Loading next video...")
         else
             showWaitingScreen()
         end if
