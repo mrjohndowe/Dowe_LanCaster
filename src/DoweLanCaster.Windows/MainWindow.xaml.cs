@@ -49,6 +49,8 @@ public partial class MainWindow : Window
     private bool _folderSawPlaying;
     private bool _folderAdvanceInProgress;
     private bool _folderReceiverLaunched;
+    private long _folderControlRevision;
+    private bool _linkReceiverLaunched;
     private SpeechRecognitionEngine? _voiceRecognizer;
     private bool _voiceListening;
     private string? _pcAudioMonitorUrl;
@@ -423,9 +425,21 @@ public partial class MainWindow : Window
             LinkStatusText.Text =
                 "Launching Dowe LanCaster on the Roku...";
 
-            await _rokuClient
-                .LaunchDoweLanCasterLiveAsync(
-                    streamUrl);
+            _urlServer.SetControlState(streamUrl);
+
+            if (!_linkReceiverLaunched)
+            {
+                var controlUrl =
+                    $"http://{ip}:{_urlServer.Port}/control";
+
+                await _rokuClient
+                    .LaunchDoweLanCasterLiveAsync(
+                        streamUrl,
+                        controlUrl);
+
+                _linkReceiverLaunched = true;
+                _folderReceiverLaunched = false;
+            }
 
             StopLinkButton.IsEnabled = true;
             StatusText.Text = "Link casting active.";
@@ -472,18 +486,7 @@ public partial class MainWindow : Window
     {
         StopLinkButton.IsEnabled = false;
 
-        if (sendHome && _rokuClient is not null)
-        {
-            try
-            {
-                await _rokuClient.SendKeyAsync("Home");
-            }
-            catch
-            {
-            }
-        }
-
-        await _urlServer.StopAsync();
+        _urlServer.SetControlState(null);
         await _urlCapture.StopAsync();
         LinkStreamUrlTextBox.Clear();
         await StopPcAudioMonitorAsync();
@@ -989,6 +992,9 @@ public partial class MainWindow : Window
             await _rokuClient
                 .LaunchDoweLanCasterLiveAsync(url);
 
+            _linkReceiverLaunched = false;
+            _folderReceiverLaunched = false;
+
             StopLiveButton.IsEnabled = true;
             StatusText.Text = "Live casting active.";
 
@@ -1032,12 +1038,6 @@ public partial class MainWindow : Window
     private async Task StopLiveInternalAsync(bool sendHome)
     {
         StopLiveButton.IsEnabled = false;
-
-        if (sendHome && _rokuClient is not null)
-        {
-            try { await _rokuClient.SendKeyAsync("Home"); }
-            catch { }
-        }
 
         await _liveServer.StopAsync();
         await _liveCapture.StopAsync();
@@ -1110,6 +1110,8 @@ public partial class MainWindow : Window
     {
         _rokuClient?.Dispose();
         _rokuClient = null;
+        _linkReceiverLaunched = false;
+        _folderReceiverLaunched = false;
         AppsListBox.ItemsSource = null;
         AppsGridListBox.ItemsSource = null;
 
@@ -1493,7 +1495,7 @@ public partial class MainWindow : Window
         RoutedEventArgs e)
     {
         await StopFolderInternalAsync(
-            sendHome: true);
+            sendHome: false);
 
         FolderNowPlayingText.Text =
             "Folder playback stopped.";
@@ -1606,7 +1608,8 @@ public partial class MainWindow : Window
                 $"?item={Guid.NewGuid():N}";
             SetPcAudioMonitorSource(streamUrl);
 
-            _folderServer.SetControlState(streamUrl);
+            _folderControlRevision =
+                _folderServer.SetControlState(streamUrl);
 
             if (launchReceiver)
             {
@@ -1619,6 +1622,7 @@ public partial class MainWindow : Window
                         controlUrl);
 
                 _folderReceiverLaunched = true;
+                _linkReceiverLaunched = false;
             }
 
             FolderNowPlayingText.Text =
@@ -1763,6 +1767,15 @@ public partial class MainWindow : Window
 
         try
         {
+            if (_folderServer.IsRevisionComplete(
+                    _folderControlRevision))
+            {
+                _folderPollTimer.Stop();
+                await AdvanceFolderAsync(
+                    manual: false);
+                return;
+            }
+
             var state =
                 await _rokuClient
                     .GetMediaPlayerStateAsync();
@@ -1808,23 +1821,8 @@ public partial class MainWindow : Window
     {
         _folderPollTimer.Stop();
         _folderSawPlaying = false;
-        _folderReceiverLaunched = false;
+        _folderControlRevision = 0;
         _folderServer.SetControlState(null);
-
-        if (sendHome &&
-            _rokuClient is not null)
-        {
-            try
-            {
-                await _rokuClient
-                    .SendKeyAsync("Home");
-            }
-            catch
-            {
-            }
-        }
-
-        await _folderServer.StopAsync();
         await _folderTranscoder.StopAsync();
         await StopPcAudioMonitorAsync();
 
@@ -1876,6 +1874,9 @@ public partial class MainWindow : Window
 
             await _rokuClient.LaunchDoweLanCasterAsync(streamUrl);
 
+            _linkReceiverLaunched = false;
+            _folderReceiverLaunched = false;
+
             CastStatusText.Text =
                 $"Casting {Path.GetFileName(_selectedFile)} to {_rokuClient.Device.Name}.";
 
@@ -1897,13 +1898,6 @@ public partial class MainWindow : Window
     private async void StopCastingButton_Click(object sender, RoutedEventArgs e)
     {
         StopCastingButton.IsEnabled = false;
-        try
-        {
-            if (_rokuClient is not null)
-                await _rokuClient.SendKeyAsync("Home");
-        }
-        catch { }
-
         await _mediaServer.StopAsync();
         StreamUrlTextBox.Clear();
         await StopPcAudioMonitorAsync();

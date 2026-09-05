@@ -14,6 +14,8 @@ sub init()
     m.controlUrl = ""
     m.currentStreamUrl = ""
     m.pendingStreamUrl = ""
+    m.controlRevision = 0
+    m.controlActive = false
     m.folderMode = false
     m.showingSplash = true
 
@@ -74,14 +76,29 @@ sub onFolderControlTimer()
 
     control = ParseJson(response)
 
-    if control = invalid or control.active <> true
+    if control = invalid
         return
     end if
+
+    if control.active <> true
+        if m.controlActive
+            m.controlActive = false
+            m.pendingStreamUrl = ""
+            m.currentStreamUrl = ""
+            showWaitingScreen()
+        end if
+        return
+    end if
+
+    m.controlActive = true
 
     if control.streamUrl <> invalid and control.streamUrl <> "" and control.streamUrl <> m.currentStreamUrl
         m.top.mediaType = control.mediaType
         m.pendingStreamUrl = control.streamUrl
         m.currentStreamUrl = control.streamUrl
+        if control.revision <> invalid
+            m.controlRevision = control.revision
+        end if
 
         if not m.showingSplash
             startPendingStream()
@@ -333,6 +350,7 @@ sub onPlayerStateChanged()
         ' through the control endpoint. Do not return to the launch/waiting
         ' flow between items; that makes the receiver look as if it restarted.
         if m.folderMode
+            reportStreamFinished()
             ' Keep the player visible on its final frame while Windows prepares
             ' the next stream. Replacing its content does not relaunch the app.
             showFolderTransition("Loading next video...")
@@ -340,4 +358,14 @@ sub onPlayerStateChanged()
             showWaitingScreen()
         end if
     end if
+end sub
+
+sub reportStreamFinished()
+    if m.controlUrl = invalid or m.controlUrl = "" or m.controlRevision <= 0
+        return
+    end if
+
+    transfer = CreateObject("roUrlTransfer")
+    transfer.SetUrl(m.controlUrl + "?completedRevision=" + m.controlRevision.ToStr())
+    transfer.GetToString()
 end sub

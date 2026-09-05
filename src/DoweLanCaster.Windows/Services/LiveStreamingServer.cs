@@ -11,6 +11,8 @@ public sealed class LiveStreamingServer : IAsyncDisposable
     private string _directory = "";
     private string? _controlStreamUrl;
     private string _controlMediaType = "hls";
+    private long _controlRevision;
+    private long _completedRevision;
 
     public int Port { get; private set; } = 8766;
     public event Action<string>? RequestLog;
@@ -43,12 +45,24 @@ public sealed class LiveStreamingServer : IAsyncDisposable
             return Results.Text("OK");
         });
 
-        app.MapGet("/control", () => Results.Json(new
+        app.MapGet("/control", (HttpContext context) =>
         {
-            active = !string.IsNullOrWhiteSpace(_controlStreamUrl),
-            streamUrl = _controlStreamUrl ?? "",
-            mediaType = _controlMediaType
-        }));
+            if (long.TryParse(
+                    context.Request.Query["completedRevision"],
+                    out var completedRevision) &&
+                completedRevision > 0)
+            {
+                Interlocked.Exchange(ref _completedRevision, completedRevision);
+            }
+
+            return Results.Json(new
+            {
+                active = !string.IsNullOrWhiteSpace(_controlStreamUrl),
+                streamUrl = _controlStreamUrl ?? "",
+                mediaType = _controlMediaType,
+                revision = Interlocked.Read(ref _controlRevision)
+            });
+        });
 
         app.MapGet("/live/{file}", async (string file, HttpContext context) =>
         {
@@ -102,11 +116,15 @@ public sealed class LiveStreamingServer : IAsyncDisposable
         _app = app;
     }
 
-    public void SetControlState(string? streamUrl, string mediaType = "hls")
+    public long SetControlState(string? streamUrl, string mediaType = "hls")
     {
         _controlStreamUrl = streamUrl;
         _controlMediaType = mediaType;
+        return Interlocked.Increment(ref _controlRevision);
     }
+
+    public bool IsRevisionComplete(long revision) =>
+        revision > 0 && Interlocked.Read(ref _completedRevision) >= revision;
 
     public async Task StopAsync(CancellationToken token = default)
     {
@@ -116,6 +134,7 @@ public sealed class LiveStreamingServer : IAsyncDisposable
         var app = _app;
         _app = null;
         _controlStreamUrl = null;
+        Interlocked.Exchange(ref _completedRevision, 0);
         _directory = "";
 
         try

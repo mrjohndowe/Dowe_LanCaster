@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       version:
-        description: Existing release tag to mark as supported, for example v0.9.5.31
+        description: Existing release tag to mark as supported, for example v0.9.5.33
         required: true
         type: string
   release:
@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Existing release tag to mark as supported, for example v0.9.5.31
+        description: Existing release tag to mark as supported, for example v0.9.5.33
         required: true
         type: string
 
@@ -49,7 +49,7 @@ jobs:
           }
 
           if ($version -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?$') {
-            throw "Invalid version '$version'. Use a release tag such as v0.9.5.31."
+            throw "Invalid version '$version'. Use a release tag such as v0.9.5.33."
           }
 
           "tag=$version" >> $env:GITHUB_OUTPUT
@@ -84,14 +84,14 @@ jobs:
             'Earlier versions'
           }
 
-          $replacement = @"
-$startMarker
-| Version                  | Supported |
-| ------------------------ | --------- |
-| $env:VERSION | Yes       |
-| $previousVersion and earlier | No        |
-$endMarker
-"@.Trim()
+          $replacement = @(
+            $startMarker
+            '| Version | Supported |'
+            '| --- | --- |'
+            "| $env:VERSION | Yes |"
+            "| $previousVersion and earlier | No |"
+            $endMarker
+          ) -join "`n"
 
           $afterMarker = $endIndex + $endMarker.Length
           $updated = $security.Substring(0, $startIndex) + $replacement + $security.Substring($afterMarker)

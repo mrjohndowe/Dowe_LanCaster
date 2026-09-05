@@ -21,6 +21,19 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.33] - 2026-09-04
+
+### Fixed
+
+* Advanced Folder Cast automatically when the Roku receiver reports that the
+  current video finished, without requiring Stop to be pressed first.
+* Reused the active Roku receiver when starting another Link Cast instead of
+  relaunching the Roku app for every link.
+* Kept the Dowe LanCaster Roku app open on its waiting screen when Link Cast,
+  Live Cast, File Cast, or Folder Cast is stopped from Windows.
+* Corrected the supported-security-version workflow syntax that prevented the
+  previous release workflow from starting.
+
 ## \[0.9.5.32] - 2026-09-04
 
 ### Added
