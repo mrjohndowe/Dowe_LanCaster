@@ -260,6 +260,61 @@
                                 </Grid>
                         </TabItem>
 
+                        <TabItem Header="TeraBox">
+                                <Grid Margin="16">
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <StackPanel>
+                                                <TextBlock Text="TeraBox File Browser" FontSize="24" FontWeight="Bold"/>
+                                                <TextBlock Text="Browse folders and files from your connected TeraBox account. Open folders with a double-click and select a video to cast it." Margin="0,6,0,12" Opacity="0.78" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <Grid Grid.Row="1" Margin="0,0,0,12">
+                                                <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="12"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Button x:Name="TeraBoxUpButton" Content="Up" Width="70" Height="38" Click="TeraBoxUpButton_Click"/>
+                                                <Button x:Name="TeraBoxRefreshButton" Grid.Column="1" Content="Refresh" Width="90" Height="38" Margin="8,0,0,0" Click="TeraBoxRefreshButton_Click"/>
+                                                <Button x:Name="TeraBoxOpenButton" Grid.Column="2" Content="Open Folder" Width="110" Height="38" Margin="8,0,0,0" Click="TeraBoxOpenButton_Click"/>
+                                                <StackPanel Grid.Column="4">
+                                                        <TextBlock x:Name="TeraBoxCurrentPathText" Text="/" FontFamily="Consolas" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock x:Name="TeraBoxLibraryStatusText" Text="Connect a TeraBox account in Settings." Opacity="0.78" TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                        </Grid>
+                                        <Border Grid.Row="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="10">
+                                                <ListBox x:Name="TeraBoxVideosListBox" ScrollViewer.HorizontalScrollBarVisibility="Disabled" MouseDoubleClick="TeraBoxVideosListBox_MouseDoubleClick" SelectionChanged="TeraBoxVideosListBox_SelectionChanged">
+                                                        <ListBox.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                        <UniformGrid Columns="5"/>
+                                                                </ItemsPanelTemplate>
+                                                        </ListBox.ItemsPanel>
+                                                        <ListBox.ItemTemplate>
+                                                                <DataTemplate>
+                                                                        <StackPanel Margin="8" HorizontalAlignment="Stretch">
+                                                                                <Border Height="110" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Background="{DynamicResource ControlBackgroundBrush}">
+                                                                                        <Image Source="{Binding ThumbnailUrl}" Stretch="UniformToFill"/>
+                                                                                </Border>
+                                                                                <TextBlock Text="{Binding Name}" TextAlignment="Center" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="40" Margin="0,7,0,0"/>
+                                                                                <TextBlock Text="{Binding TypeText}" TextAlignment="Center" Opacity="0.68" FontSize="11"/>
+                                                                        </StackPanel>
+                                                                </DataTemplate>
+                                                        </ListBox.ItemTemplate>
+                                                </ListBox>
+                                        </Border>
+                                        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,12,0,0">
+                                                <Button x:Name="TeraBoxCastButton" Content="Cast Selected Video" Width="170" Height="42" Click="TeraBoxCastButton_Click"/>
+                                                <Button x:Name="TeraBoxStopButton" Content="Stop TeraBox Cast" Width="160" Height="42" Margin="10,0,0,0" IsEnabled="False" Click="TeraBoxStopButton_Click"/>
+                                        </StackPanel>
+                                </Grid>
+                        </TabItem>
+
                         <TabItem Header="File Cast">
                                 <StackPanel Margin="16">
                                         <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
@@ -539,6 +594,47 @@
                                                                 <TextBlock Text="Windows default playback device" Margin="0,6,0,4"/>
                                                                 <TextBlock Text="Private Listening sends Roku audio to the Windows playback device marked as Default. Change that device in Windows Sound settings—for example, to switch between speakers and headphones." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,12"/>
                                                                 <Button Content="Open Windows Sound Settings" HorizontalAlignment="Left" Padding="14,6" Click="OpenWindowsSoundSettingsButton_Click"/>
+                                                        </StackPanel>
+                                                </Border>
+
+                                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+                                                        <StackPanel>
+                                                                <TextBlock Text="TeraBox Open Platform" FontSize="22" FontWeight="Bold" Margin="0,0,0,8"/>
+                                                                <TextBlock Text="Use application credentials issued by TeraBox. Dowe LanCaster never asks for or stores your TeraBox password. Credentials and authorization tokens are encrypted for this Windows account." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,14"/>
+                                                                <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                                <ColumnDefinition Width="18"/>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <StackPanel>
+                                                                                <TextBlock Text="Client ID" FontWeight="SemiBold"/>
+                                                                                <TextBox x:Name="TeraBoxClientIdTextBox" Height="34" Margin="0,6,0,12"/>
+                                                                                <TextBlock Text="Client secret" FontWeight="SemiBold"/>
+                                                                                <PasswordBox x:Name="TeraBoxClientSecretPasswordBox" Height="34" Margin="0,6,0,0"/>
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Column="2">
+                                                                                <TextBlock Text="Private secret" FontWeight="SemiBold"/>
+                                                                                <PasswordBox x:Name="TeraBoxPrivateSecretPasswordBox" Height="34" Margin="0,6,0,12"/>
+                                                                                <TextBlock Text="Authorization" FontWeight="SemiBold"/>
+                                                                                <TextBlock x:Name="TeraBoxConnectionStatusText" Text="Not connected" Margin="0,7,0,0" TextWrapping="Wrap"/>
+                                                                        </StackPanel>
+                                                                </Grid>
+                                                                <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                                                        <Button x:Name="TeraBoxConnectButton" Content="Connect TeraBox Account" Height="40" Padding="16,6" Click="TeraBoxConnectButton_Click"/>
+                                                                        <Button Content="Disconnect" Height="40" Padding="16,6" Margin="10,0,0,0" Click="TeraBoxDisconnectButton_Click"/>
+                                                                        <Button Content="Open TeraBox Developer Page" Height="40" Padding="16,6" Margin="10,0,0,0" Click="OpenTeraBoxDeveloperPageButton_Click"/>
+                                                                </StackPanel>
+                                                                <Border x:Name="TeraBoxAuthorizationPanel" Visibility="Collapsed" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,14,0,0">
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                                <Image x:Name="TeraBoxQrCodeImage" Width="190" Height="190" Stretch="Uniform"/>
+                                                                                <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+                                                                                        <TextBlock Text="Scan this QR code with the TeraBox mobile app" FontWeight="Bold" TextWrapping="Wrap"/>
+                                                                                        <TextBlock Text="Keep this window open while authorization completes." Margin="0,8,0,0" Opacity="0.78" TextWrapping="Wrap"/>
+                                                                                        <TextBlock x:Name="TeraBoxAuthorizationStatusText" Text="Waiting for authorization..." Margin="0,12,0,0" TextWrapping="Wrap"/>
+                                                                                </StackPanel>
+                                                                        </StackPanel>
+                                                                </Border>
                                                         </StackPanel>
                                                 </Border>
 

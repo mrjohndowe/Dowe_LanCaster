@@ -62,6 +62,9 @@ The selected theme is saved between launches.
 
 - Folder Cast
 - Link Cast
+- TeraBox Open Platform account connection
+- encrypted TeraBox credentials and OAuth tokens
+- TeraBox account folder/file browser and Roku video casting
 - direct media URL detection
 - yt-dlp webpage extraction
 - Live Cast
@@ -79,6 +82,7 @@ The selected theme is saved between launches.
 - 8765 File Cast
 - 8766 Live Cast
 - 8767 Link Cast
+- 8767 TeraBox Cast
 - 8768 Folder Cast
 
 ## Build

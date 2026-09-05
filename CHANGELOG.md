@@ -21,6 +21,23 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.34] - 2026-09-04
+
+### Added
+
+* Added official TeraBox Open Platform device-code authorization with a QR code
+  that is scanned in the TeraBox mobile app.
+* Added encrypted local storage for TeraBox application credentials, access
+  tokens, and refresh tokens.
+* Added a dedicated TeraBox file-browser tab with current-path display,
+  folder-first ordering, Up/Open Folder navigation, double-click navigation,
+  file sizes, thumbnails, and a five-column grid without horizontal scrolling.
+* Limited TeraBox casting controls to supported video-file selections while
+  keeping other account files visible and browsable.
+* Added casting for selected TeraBox account videos through Dowe LanCaster's
+  existing FFmpeg and persistent Roku receiver pipeline.
+* Added automatic TeraBox access-token refresh and account disconnection.
+
 ## [0.9.5.33] - 2026-09-04
 
 ### Fixed
