@@ -23,49 +23,85 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.31] - 2026-09-04
+
+### Changed
+
+- Replaced comparison-link placeholders with the actual changes for every documented release.
+- Updated GitHub releases to show commit-based change details instead of a comparison-link placeholder.
+- Updated the changelog workflow to create future entries from the release's real commit descriptions.
+
 ## [0.9.5.30] - 2026-09-04
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.29...v0.9.5.30
+### Fixed
+
+- Kept one Roku receiver session active between Folder Cast videos.
+- Kept the final video frame visible while the next item is prepared.
+- Skipped the Roku launch animation when Folder Cast supplies a control URL.
 
 ## [0.9.5.29] - 2026-09-03
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.28...v0.9.5.29
+### Fixed
+
+- Repaired Roku Private Listening audio playback and connection reporting.
+
+### Changed
+
+- Centralized encoder, frame-rate, bitrate, and audio defaults in Settings.
 
 ## [0.9.5.28] - 2026-09-03
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.27...v0.9.5.28
+### Added
+
+- Added Settings and formatted in-app Changelog tabs.
 
 ## [0.9.5.27] - 2026-09-03
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.26...v0.9.5.27
+### Added
+
+- Added real Roku Private Listening support using the authorized RPListening helper.
 
 ## [0.9.5.26] - 2026-09-03
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.25...v0.9.5.26
+### Fixed
+
+- Preserved the Remote tab layout while the remote is open in its pop-out window.
 
 ## [0.9.5.25] - 2026-09-03
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.24...v0.9.5.25
+### Fixed
+
+- Kept the Roku receiver open while advancing through Folder Cast videos.
 
 ## [0.9.5.24] - 2026-09-03
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.23...v0.9.5.24
+### Changed
+
+- Updated embedded and pop-out controls with Roku-style button shapes.
 
 ## [0.9.5.23] - 2026-09-03
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.21...v0.9.5.23
+### Changed
+
+- Matched the pop-out remote controls and layout to the embedded remote.
 
 ## [0.9.5.21] - 2026-09-02
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.20...v0.9.5.21
+### Changed
+
+- Made the Roku app launcher default to a six-column grid without horizontal scrolling.
 
 ## [0.9.5.20] - 2026-09-02
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.19...v0.9.5.20
+### Fixed
+
+- Restored the embedded remote automatically when the pop-out closes.
 
 ## [0.9.5.19] - 2026-09-02
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.18...v0.9.5.19
+### Fixed
+
+- Reopened Dowe LanCaster after an installed update completes.
 
 ## [0.9.5.18] - 2026-09-02
 
@@ -81,7 +117,6 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Removed the inactive in-app remote panel so the app no longer presents its
   cast-only PC audio monitor as Roku Private Listening.
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.17...v0.9.5.18
 
 ## [0.9.5.17] - 2026-09-02
 
@@ -90,7 +125,6 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Fixed the pop-out Remote window Windows build by explicitly using the WPF
   button type where Windows Forms is also available to the application.
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.16...v0.9.5.17
 
 ## [0.9.5.16] - 2026-09-02
 
@@ -99,7 +133,6 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Added a separate, resizable pop-out Roku Remote window with navigation,
   playback, power, volume buttons, and typed volume control.
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.15...v0.9.5.16
 
 ## [0.9.5.15] - 2026-09-02
 
@@ -114,7 +147,6 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Stopping a Link, Live, Folder, or File cast now stops local headphone
   playback as well.
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.14...v0.9.5.15
 
 ## [0.9.5.14] - 2026-08-30
 
@@ -125,7 +157,6 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Attached the Roku receiver ZIP as its own GitHub Release asset in future
   releases, as well as including it in the portable Windows ZIP.
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.13...v0.9.5.14
 
 ## [0.9.5.13] - 2026-08-30
 
@@ -137,47 +168,42 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Added public TeraBox video share links to Link Cast and a clear message when
   a share does not expose a directly playable public stream.
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.12...v0.9.5.13
 
 ## [0.9.5.12] - 2026-08-30
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.11...v0.9.5.12
+### Changed
+
+- Published the synchronized Windows, installer, and Roku version 0.9.5.12 packages.
 
 ## [0.9.5.10] - 2026-08-28
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.9...v0.9.5.10
+### Changed
+
+- Published the synchronized Windows, installer, and Roku version 0.9.5.10 packages.
 
 ## [0.9.5.9] - 2026-08-28
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.8...v0.9.5.9
 
 ## [0.9.5.8] - 2026-08-26
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.7...v0.9.5.8
 
 ## [0.9.5.7] - 2026-08-26
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.6...v0.9.5.7
 
 ## [0.9.5.6] - 2026-08-26
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.5...v0.9.5.6
 
 ## [0.9.5.5] - 2026-08-22
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.4...v0.9.5.5
 
 ## [0.9.5.4] - 2026-08-20
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.0...v0.9.5.4
 
 ## [0.9.0] - 2026-08-20
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.1...v0.9.0
 
 ## [0.9.1] - 2026-08-20
 
-**Full Changelog**: https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.8.0...v0.9.1
 
 ## [0.8.0] - 2026-08-19
 
