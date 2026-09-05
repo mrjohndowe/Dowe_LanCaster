@@ -214,6 +214,13 @@ jobs:
     with:
       version: ${{ needs.release.outputs.version }}
 
+  update-security-policy:
+    name: Update supported security version
+    needs: release
+    uses: ./.github/workflows/update-security.yml
+    with:
+      version: ${{ needs.release.outputs.version }}
+
   update-wiki:
     name: Update release wiki
     needs: release

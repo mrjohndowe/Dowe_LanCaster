@@ -23,6 +23,19 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 - Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.32] - 2026-09-04
+
+### Added
+
+- Added a GitHub Actions workflow that updates the supported-version table in
+  `SECURITY.md` whenever a release is published or manually selected.
+
+### Changed
+
+- Connected supported-version maintenance directly to the release workflow.
+- Serialized release metadata updates so changelog and security-policy commits
+  cannot race each other.
+
 ## [0.9.5.31] - 2026-09-04
 
 ### Changed

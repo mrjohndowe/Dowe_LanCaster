@@ -20,7 +20,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: changelog-${{ github.event.release.tag_name || inputs.version }}
+  group: release-metadata-${{ github.event.release.tag_name || inputs.version }}
   cancel-in-progress: false
 
 jobs:

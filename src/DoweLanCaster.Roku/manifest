@@ -1,7 +1,7 @@
 title=Dowe LanCaster
 major_version=0
 minor_version=9
-build_version=31
+build_version=32
 ui_resolutions=hd,fhd
 splash_screen_hd=pkg:/images/waiting-screen.png
 splash_screen_fhd=pkg:/images/waiting-screen.png

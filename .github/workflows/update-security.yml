@@ -1,0 +1,124 @@
+name: Update supported security version
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Existing release tag to mark as supported, for example v0.9.5.31
+        required: true
+        type: string
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Existing release tag to mark as supported, for example v0.9.5.31
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-metadata-${{ github.event.release.tag_name || inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  update-security-policy:
+    name: Update SECURITY.md
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out the default branch
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Determine and validate release version
+        id: version
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          $version = if (-not [string]::IsNullOrWhiteSpace($env:RELEASE_TAG)) {
+            $env:RELEASE_TAG
+          } else {
+            $env:REQUESTED_VERSION
+          }
+
+          if ($version -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?$') {
+            throw "Invalid version '$version'. Use a release tag such as v0.9.5.31."
+          }
+
+          "tag=$version" >> $env:GITHUB_OUTPUT
+          "number=$($version.Substring(1))" >> $env:GITHUB_OUTPUT
+
+      - name: Update supported versions table
+        id: security
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.number }}
+        run: |
+          $path = Join-Path $env:GITHUB_WORKSPACE 'SECURITY.md'
+          if (-not (Test-Path $path)) {
+            throw 'SECURITY.md was not found on the default branch.'
+          }
+
+          $startMarker = '<!-- supported-versions:start -->'
+          $endMarker = '<!-- supported-versions:end -->'
+          $security = Get-Content $path -Raw
+          $startIndex = $security.IndexOf($startMarker)
+          $endIndex = $security.IndexOf($endMarker)
+
+          if ($startIndex -lt 0 -or $endIndex -le $startIndex) {
+            throw 'SECURITY.md does not contain a valid supported-versions marker block.'
+          }
+
+          $versionParts = $env:VERSION.Split('.')
+          $previousPatch = [int]$versionParts[$versionParts.Length - 1] - 1
+          $previousVersion = if ($previousPatch -ge 0) {
+            ($versionParts[0..($versionParts.Length - 2)] + $previousPatch) -join '.'
+          } else {
+            'Earlier versions'
+          }
+
+          $replacement = @"
+$startMarker
+| Version                  | Supported |
+| ------------------------ | --------- |
+| $env:VERSION | Yes       |
+| $previousVersion and earlier | No        |
+$endMarker
+"@.Trim()
+
+          $afterMarker = $endIndex + $endMarker.Length
+          $updated = $security.Substring(0, $startIndex) + $replacement + $security.Substring($afterMarker)
+          $updated = $updated.TrimEnd() -replace "`r?`n", "`n"
+
+          if ($updated -eq ($security.TrimEnd() -replace "`r?`n", "`n")) {
+            Write-Host "SECURITY.md already marks $env:VERSION as supported."
+            "changed=false" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+
+          [System.IO.File]::WriteAllText($path, "$updated`n", [System.Text.UTF8Encoding]::new($false))
+          "changed=true" >> $env:GITHUB_OUTPUT
+
+      - name: Commit and push security policy
+        if: steps.security.outputs.changed == 'true'
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- SECURITY.md
+          git commit -m "Update supported security version for $env:VERSION"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $branch = git branch --show-current
+          git pull --rebase origin $branch
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push origin HEAD
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

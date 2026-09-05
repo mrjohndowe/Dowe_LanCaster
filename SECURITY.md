@@ -10,10 +10,14 @@ installer integrity, or unintended access to local files.
 Security fixes are provided for the latest released version. Older releases may
 not receive patches.
 
-| Version | Supported |
-| --- | --- |
-| 0.7.x | Yes |
-| 0.6.x and earlier | No |
+<!-- supported-versions:start -->
+| Version                  | Supported |
+| ------------------------ | --------- |
+| 0.9.5.31                 | Yes       |
+| 0.9.5.30 and earlier     | No        |
+<!-- supported-versions:end -->
+
+<br />
 
 Users should upgrade to the newest release before reporting a problem that may
 already have been corrected.
@@ -39,16 +43,16 @@ or other sensitive information. A maintainer can then arrange a private channel.
 
 A useful report contains as much of the following information as possible:
 
-- The affected Dowe LanCaster version and how it was installed.
-- The Windows and Roku models/versions involved.
-- The affected feature, such as Link Cast, Live Cast, File Cast, Folder Cast,
+* The affected Dowe LanCaster version and how it was installed.
+* The Windows and Roku models/versions involved.
+* The affected feature, such as Link Cast, Live Cast, File Cast, Folder Cast,
   Roku discovery, the remote control, the local streaming server, or the
   installer.
-- A clear description of the security impact and who could exploit it.
-- Reproduction steps or a minimal proof of concept.
-- Whether exploitation requires access to the same local network.
-- Relevant ports, requests, media types, filenames, or sanitized logs.
-- Any mitigations or suggested fixes you have identified.
+* A clear description of the security impact and who could exploit it.
+* Reproduction steps or a minimal proof of concept.
+* Whether exploitation requires access to the same local network.
+* Relevant ports, requests, media types, filenames, or sanitized logs.
+* Any mitigations or suggested fixes you have identified.
 
 Remove secrets and personal information from screenshots, recordings, logs, and
 sample files. Do not submit copyrighted media that you are not authorized to
@@ -72,19 +76,19 @@ reasonable remediation period before publishing technical details.
 
 Examples of issues that are generally in scope include:
 
-- Remote code execution or command/argument injection.
-- Unsafe handling of untrusted URLs, playlists, filenames, or media metadata.
-- Path traversal or unintended reading, writing, or disclosure of local files.
-- Local streaming servers being reachable beyond the intended private network.
-- Missing authorization that allows another LAN device to control casting or
+* Remote code execution or command/argument injection.
+* Unsafe handling of untrusted URLs, playlists, filenames, or media metadata.
+* Path traversal or unintended reading, writing, or disclosure of local files.
+* Local streaming servers being reachable beyond the intended private network.
+* Missing authorization that allows another LAN device to control casting or
   access streamed content unexpectedly.
-- Server-side request forgery or access to unintended local/network resources.
-- Installer, update, release-archive, or dependency-integrity weaknesses.
-- Exposure of credentials, tokens, private URLs, IP addresses, or sensitive
+* Server-side request forgery or access to unintended local/network resources.
+* Installer, update, release-archive, or dependency-integrity weaknesses.
+* Exposure of credentials, tokens, private URLs, IP addresses, or sensitive
   diagnostic information.
-- Vulnerabilities in the bundled Roku receiver or its communication with the
+* Vulnerabilities in the bundled Roku receiver or its communication with the
   Windows application.
-- Denial-of-service conditions that are reliable and have meaningful security
+* Denial-of-service conditions that are reliable and have meaningful security
   impact.
 
 The application may use or interact with FFmpeg, yt-dlp, .NET, Windows media
@@ -98,29 +102,29 @@ project when appropriate.
 The following are normally not treated as Dowe LanCaster security
 vulnerabilities unless they demonstrate additional concrete security impact:
 
-- A media site being unsupported, changing behavior, or blocking extraction.
-- DRM, paywall, subscription, authentication, or protected-playback bypass
+* A media site being unsupported, changing behavior, or blocking extraction.
+* DRM, paywall, subscription, authentication, or protected-playback bypass
   requests.
-- Problems that require an already fully compromised Windows account.
-- Self-XSS or actions that require a user to paste and execute arbitrary code.
-- Missing hardening recommendations without a demonstrated attack path.
-- Automated dependency or scanner output without a reproducible impact on the
+* Problems that require an already fully compromised Windows account.
+* Self-XSS or actions that require a user to paste and execute arbitrary code.
+* Missing hardening recommendations without a demonstrated attack path.
+* Automated dependency or scanner output without a reproducible impact on the
   application.
-- Denial of service that only affects the reporter's own session and is resolved
+* Denial of service that only affects the reporter's own session and is resolved
   by restarting the application.
-- Social engineering, phishing, or physical attacks.
+* Social engineering, phishing, or physical attacks.
 
 ## Testing guidelines
 
 Security research must use devices, accounts, networks, and media that you own
 or are explicitly authorized to test. Do not:
 
-- Access, modify, retain, or destroy another person's data.
-- Interrupt another person's Roku device, network, or streaming session.
-- Perform broad network scanning or high-volume traffic against systems you do
+* Access, modify, retain, or destroy another person's data.
+* Interrupt another person's Roku device, network, or streaming session.
+* Perform broad network scanning or high-volume traffic against systems you do
   not control.
-- Attempt to bypass DRM, paywalls, authentication, or service access controls.
-- Use a vulnerability for persistence, lateral movement, or data exfiltration
+* Attempt to bypass DRM, paywalls, authentication, or service access controls.
+* Use a vulnerability for persistence, lateral movement, or data exfiltration
   beyond the minimum evidence required to demonstrate the issue.
 
 Stop testing and report the issue if you encounter data belonging to another
