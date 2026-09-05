@@ -11,10 +11,10 @@ Security fixes are provided for the latest released version. Older releases may
 not receive patches.
 
 <!-- supported-versions:start -->
-| Version                  | Supported |
-| ------------------------ | --------- |
-| 0.9.5.31                 | Yes       |
-| 0.9.5.30 and earlier     | No        |
+| Version | Supported |
+| --- | --- |
+| 0.9.5.33 | Yes |
+| 0.9.5.32 and earlier | No |
 <!-- supported-versions:end -->
 
 <br />
