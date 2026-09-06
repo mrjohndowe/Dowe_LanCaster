@@ -78,6 +78,8 @@ public sealed class UrlStreamCaptureService : IAsyncDisposable
         psi.ArgumentList.Add("-reconnect_delay_max");
         psi.ArgumentList.Add("5");
 
+        AddHlsInputCompatibilityOptions(psi, media);
+
         psi.ArgumentList.Add("-i");
         psi.ArgumentList.Add(media.MediaUrl);
 
@@ -241,6 +243,25 @@ public sealed class UrlStreamCaptureService : IAsyncDisposable
 
         processStartInfo.ArgumentList.Add("-headers");
         processStartInfo.ArgumentList.Add(headerBuilder.ToString());
+    }
+
+    private static void AddHlsInputCompatibilityOptions(
+        ProcessStartInfo processStartInfo,
+        ExtractedMedia media)
+    {
+        var isHls =
+            media.Protocol.Contains("m3u8", StringComparison.OrdinalIgnoreCase) ||
+            media.MediaUrl.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) ||
+            media.MediaUrl.Contains("/share/streaming", StringComparison.OrdinalIgnoreCase);
+
+        if (!isHls)
+            return;
+
+        // TeraBox playlists can use signed segment URLs whose path does not end
+        // in a conventional media extension. FFmpeg's HLS demuxer otherwise
+        // rejects those authenticated segments before it attempts to read them.
+        processStartInfo.ArgumentList.Add("-allowed_extensions");
+        processStartInfo.ArgumentList.Add("ALL");
     }
 
     public async Task StopAsync()

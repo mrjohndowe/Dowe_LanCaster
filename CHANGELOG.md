@@ -21,6 +21,15 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.37] - 2026-09-06
+
+### Fixed
+
+* Allowed FFmpeg's HLS reader to open TeraBox signed video segments whose URL
+  paths do not use standard media-file extensions.
+* Prevented authenticated TeraBox casts from failing with FFmpeg's
+  `not in allowed_segment_extensions` and `Invalid data found` errors.
+
 ## [0.9.5.36] - 2026-09-05
 
 ### Fixed
