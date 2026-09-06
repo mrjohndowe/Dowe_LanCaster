@@ -8,9 +8,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>DoweLanCaster</AssemblyName>
     <RootNamespace>DoweLanCaster</RootNamespace>
-    <Version>0.9.5.34</Version>
-    <AssemblyVersion>0.9.5.34</AssemblyVersion>
-    <FileVersion>0.9.5.34</FileVersion>
+    <Version>0.9.5.35</Version>
+    <AssemblyVersion>0.9.5.35</AssemblyVersion>
+    <FileVersion>0.9.5.35</FileVersion>
     <StartupObject>DoweLanCaster.App</StartupObject>
     <AssemblyTitle>DoweLanCaster</AssemblyTitle>
     <ApplicationIcon>DoweLanCaster.ico</ApplicationIcon>
@@ -47,6 +47,7 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="3.1.2" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4191.47" />
     <PackageReference Include="NAudio" Version="2.3.0" />
     <PackageReference Include="System.Speech" Version="10.0.11" />
     <Resource Include="Resources\intro.png" />

@@ -21,6 +21,30 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.35] - 2026-09-05
+
+### Changed
+
+* Replaced the TeraBox developer-credential setup with the official TeraBox
+  website embedded directly in the dedicated TeraBox tab.
+* Allowed users to sign in normally and browse their own TeraBox files without
+  obtaining or entering a client ID, client secret, or private secret.
+* Kept the TeraBox browser session in Dowe LanCaster's local application-data
+  folder so users do not need to sign in every time the app opens.
+
+### Added
+
+* Detected authenticated TeraBox HLS and MP4 video requests after the user
+  starts playback in the embedded browser.
+* Passed the active TeraBox session cookies, browser user agent, and referring
+  page to FFmpeg when casting the detected video to Roku.
+* Added browser navigation, refresh, external-browser, and clear-session
+  controls to the TeraBox tab.
+
+### Removed
+
+* Removed TeraBox Open Platform credential and token storage from Settings.
+
 ## [0.9.5.34] - 2026-09-04
 
 ### Added

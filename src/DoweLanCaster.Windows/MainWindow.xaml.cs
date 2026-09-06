@@ -1,16 +1,17 @@
 using System.IO;
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Speech.Recognition;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using DoweLanCaster.Models;
 using DoweLanCaster.Services;
 using Microsoft.Win32;
+using Microsoft.Web.WebView2.Core;
 
 namespace DoweLanCaster;
 
@@ -34,8 +35,6 @@ public partial class MainWindow : Window
     private readonly FolderPlaylistService _folderPlaylistService = new();
     private readonly LocalFileHlsTranscoder _folderTranscoder = new();
     private readonly LiveStreamingServer _folderServer = new();
-    private readonly TeraBoxConnectionStore _teraBoxConnectionStore = new();
-    private readonly TeraBoxService _teraBoxService;
     private readonly DispatcherTimer _folderPollTimer = new()
     {
         Interval = TimeSpan.FromSeconds(2)
@@ -58,8 +57,9 @@ public partial class MainWindow : Window
     private bool _voiceListening;
     private string? _pcAudioMonitorUrl;
     private RemoteWindow? _remoteWindow;
-    private CancellationTokenSource? _teraBoxAuthorizationCancellation;
-    private string _teraBoxCurrentPath = "/";
+    private string? _teraBoxDetectedMediaUrl;
+    private string _teraBoxDetectedTitle = "TeraBox video";
+    private int _teraBoxDetectedMediaScore;
 
     private static readonly IReadOnlyDictionary<string, string> VoiceCommandMap =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -88,7 +88,6 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        _teraBoxService = new TeraBoxService(_teraBoxConnectionStore);
         InitializeComponent();
 
         CurrentVersionText.Text =
@@ -105,6 +104,7 @@ public partial class MainWindow : Window
             await InitializeFFmpegAsync();
             InitializeYtDlp();
             await RefreshAudioSourcesAsync();
+            await InitializeTeraBoxBrowserAsync();
             LoadChangelog();
 
             if (!string.IsNullOrWhiteSpace(_settings.LastFolderPath) &&
@@ -539,13 +539,6 @@ public partial class MainWindow : Window
         SettingsIncludeAudioCheckBox.IsChecked =
             _settings.IncludeSystemAudio;
 
-        TeraBoxClientIdTextBox.Text =
-            _teraBoxService.Credentials.ClientId;
-        TeraBoxClientSecretPasswordBox.Password =
-            _teraBoxService.Credentials.ClientSecret;
-        TeraBoxPrivateSecretPasswordBox.Password =
-            _teraBoxService.Credentials.PrivateSecret;
-        UpdateTeraBoxConnectionStatus();
     }
 
     private static void SelectComboItemByContent(
@@ -789,102 +782,142 @@ public partial class MainWindow : Window
         SettingsStatusText.Text = "Defaults saved. New casts will use them.";
     }
 
-    private async void TeraBoxConnectButton_Click(object sender, RoutedEventArgs e)
+    private async Task InitializeTeraBoxBrowserAsync()
     {
-        _teraBoxAuthorizationCancellation?.Cancel();
-        _teraBoxAuthorizationCancellation?.Dispose();
-        _teraBoxAuthorizationCancellation = new CancellationTokenSource();
-        var token = _teraBoxAuthorizationCancellation.Token;
-
-        var credentials = new TeraBoxCredentials
-        {
-            ClientId = TeraBoxClientIdTextBox.Text.Trim(),
-            ClientSecret = TeraBoxClientSecretPasswordBox.Password,
-            PrivateSecret = TeraBoxPrivateSecretPasswordBox.Password
-        };
-
-        TeraBoxConnectButton.IsEnabled = false;
-        TeraBoxAuthorizationPanel.Visibility = Visibility.Collapsed;
-
         try
         {
-            _teraBoxService.SaveCredentials(credentials);
-            TeraBoxConnectionStatusText.Text = "Requesting authorization...";
-            var deviceCode = await _teraBoxService.BeginAuthorizationAsync(token);
-            TeraBoxQrCodeImage.Source = DecodeTeraBoxQrCode(deviceCode.QrCodeDataUrl);
-            TeraBoxAuthorizationPanel.Visibility = Visibility.Visible;
-            TeraBoxAuthorizationStatusText.Text = "Waiting for authorization in the TeraBox mobile app...";
+            var profileFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "DoweLanCaster",
+                "TeraBoxBrowser");
+            Directory.CreateDirectory(profileFolder);
 
-            await _teraBoxService.CompleteAuthorizationAsync(deviceCode, token);
-            TeraBoxAuthorizationStatusText.Text = "Authorization complete.";
-            UpdateTeraBoxConnectionStatus();
-            await RefreshTeraBoxVideosAsync();
+            var environment = await CoreWebView2Environment.CreateAsync(
+                browserExecutableFolder: null,
+                userDataFolder: profileFolder);
+            await TeraBoxWebView.EnsureCoreWebView2Async(environment);
+
+            TeraBoxWebView.CoreWebView2.Settings.IsPasswordAutosaveEnabled = true;
+            TeraBoxWebView.CoreWebView2.WebResourceResponseReceived +=
+                TeraBoxWebView_WebResourceResponseReceived;
+            TeraBoxWebView.NavigationStarting += TeraBoxWebView_NavigationStarting;
+            TeraBoxWebView.NavigationCompleted += TeraBoxWebView_NavigationCompleted;
+            TeraBoxWebView.Source = new Uri("https://www.terabox.com/main?category=all");
         }
-        catch (OperationCanceledException)
+        catch (WebView2RuntimeNotFoundException)
         {
-            TeraBoxConnectionStatusText.Text = "Authorization cancelled.";
+            TeraBoxLibraryStatusText.Text =
+                "Microsoft Edge WebView2 Runtime is required. Install it, then restart Dowe LanCaster.";
         }
         catch (Exception ex)
         {
-            TeraBoxConnectionStatusText.Text = $"Connection failed: {ex.Message}";
-            TeraBoxAuthorizationStatusText.Text = ex.Message;
-        }
-        finally
-        {
-            TeraBoxConnectButton.IsEnabled = true;
+            TeraBoxLibraryStatusText.Text = $"Could not open TeraBox: {ex.Message}";
         }
     }
 
-    private void TeraBoxDisconnectButton_Click(object sender, RoutedEventArgs e)
+    private void TeraBoxWebView_NavigationStarting(
+        object? sender,
+        CoreWebView2NavigationStartingEventArgs e)
     {
-        _teraBoxAuthorizationCancellation?.Cancel();
-        _teraBoxService.Disconnect();
-        TeraBoxClientIdTextBox.Clear();
-        TeraBoxClientSecretPasswordBox.Clear();
-        TeraBoxPrivateSecretPasswordBox.Clear();
-        TeraBoxQrCodeImage.Source = null;
-        TeraBoxAuthorizationPanel.Visibility = Visibility.Collapsed;
-        TeraBoxVideosListBox.ItemsSource = null;
-        _teraBoxCurrentPath = "/";
-        TeraBoxCurrentPathText.Text = "/";
-        TeraBoxLibraryStatusText.Text = "Connect a TeraBox account in Settings.";
-        UpdateTeraBoxConnectionStatus();
+        _teraBoxDetectedMediaUrl = null;
+        _teraBoxDetectedMediaScore = 0;
+        TeraBoxCastButton.IsEnabled = false;
+        TeraBoxLibraryStatusText.Text = "Opening TeraBox...";
     }
 
-    private void OpenTeraBoxDeveloperPageButton_Click(object sender, RoutedEventArgs e)
+    private void TeraBoxWebView_NavigationCompleted(
+        object? sender,
+        CoreWebView2NavigationCompletedEventArgs e)
     {
-        Process.Start(new ProcessStartInfo(
-            "https://www.terabox.com/integrations/docs?lang=en")
+        TeraBoxLibraryStatusText.Text = e.IsSuccess
+            ? "Browse your TeraBox files and play a video to make it available for casting."
+            : $"TeraBox navigation failed: {e.WebErrorStatus}.";
+    }
+
+    private void TeraBoxWebView_WebResourceResponseReceived(
+        object? sender,
+        CoreWebView2WebResourceResponseReceivedEventArgs e)
+    {
+        var score = GetTeraBoxMediaScore(e.Request.Uri, e.Response.Headers);
+        if (score == 0 || score < _teraBoxDetectedMediaScore)
+            return;
+
+        Dispatcher.Invoke(() =>
         {
-            UseShellExecute = true
+            _teraBoxDetectedMediaUrl = e.Request.Uri;
+            _teraBoxDetectedMediaScore = score;
+            _teraBoxDetectedTitle = string.IsNullOrWhiteSpace(TeraBoxWebView.CoreWebView2?.DocumentTitle)
+                ? "TeraBox video"
+                : TeraBoxWebView.CoreWebView2.DocumentTitle;
+            TeraBoxCastButton.IsEnabled = true;
+            TeraBoxLibraryStatusText.Text =
+                $"Detected {_teraBoxDetectedTitle}. Select Cast Detected Video when ready.";
         });
     }
 
-    private async void TeraBoxRefreshButton_Click(object sender, RoutedEventArgs e) =>
-        await RefreshTeraBoxVideosAsync();
-
-    private async Task RefreshTeraBoxVideosAsync()
+    private static int GetTeraBoxMediaScore(
+        string requestUrl,
+        CoreWebView2HttpResponseHeaders headers)
     {
-        TeraBoxRefreshButton.IsEnabled = false;
+        if (!Uri.TryCreate(requestUrl, UriKind.Absolute, out var uri) ||
+            uri.Scheme != Uri.UriSchemeHttps)
+            return 0;
+
+        var host = uri.Host.ToLowerInvariant();
+        if (!host.Contains("terabox", StringComparison.Ordinal) &&
+            !host.Contains("1024tera", StringComparison.Ordinal) &&
+            !host.Contains("dubox", StringComparison.Ordinal))
+            return 0;
+
+        var contentType = "";
         try
         {
-            TeraBoxLibraryStatusText.Text = "Loading videos from TeraBox...";
-            var items = await _teraBoxService.GetDirectoryAsync(
-                _teraBoxCurrentPath);
-            TeraBoxVideosListBox.ItemsSource = items;
-            TeraBoxCurrentPathText.Text = _teraBoxCurrentPath;
-            TeraBoxLibraryStatusText.Text =
-                $"{items.Count} item{(items.Count == 1 ? "" : "s")}. Double-click a folder to open it.";
-            TeraBoxUpButton.IsEnabled = _teraBoxCurrentPath != "/";
+            contentType = headers.GetHeader("Content-Type");
         }
-        catch (Exception ex)
+        catch
         {
-            TeraBoxLibraryStatusText.Text = $"Could not load TeraBox videos: {ex.Message}";
+            // Some responses do not expose this header.
         }
-        finally
-        {
-            TeraBoxRefreshButton.IsEnabled = true;
-        }
+
+        var value = requestUrl.ToLowerInvariant();
+        if (value.Contains(".m3u8", StringComparison.Ordinal) ||
+            value.Contains("/share/streaming", StringComparison.Ordinal) ||
+            contentType.Contains("mpegurl", StringComparison.OrdinalIgnoreCase))
+            return 3;
+
+        if (value.Contains(".mp4", StringComparison.Ordinal) ||
+            contentType.StartsWith("video/mp4", StringComparison.OrdinalIgnoreCase))
+            return 2;
+
+        return 0;
+    }
+
+    private void TeraBoxBackButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (TeraBoxWebView.CanGoBack)
+            TeraBoxWebView.GoBack();
+    }
+
+    private void TeraBoxHomeButton_Click(object sender, RoutedEventArgs e) =>
+        TeraBoxWebView.Source = new Uri("https://www.terabox.com/main?category=all");
+
+    private void TeraBoxRefreshButton_Click(object sender, RoutedEventArgs e) =>
+        TeraBoxWebView.Reload();
+
+    private void TeraBoxOpenExternalButton_Click(object sender, RoutedEventArgs e)
+    {
+        var url = TeraBoxWebView.Source?.AbsoluteUri ?? "https://www.terabox.com/";
+        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+    }
+
+    private void TeraBoxClearSessionButton_Click(object sender, RoutedEventArgs e)
+    {
+        TeraBoxWebView.CoreWebView2?.CookieManager.DeleteAllCookies();
+        _teraBoxDetectedMediaUrl = null;
+        _teraBoxDetectedMediaScore = 0;
+        TeraBoxCastButton.IsEnabled = false;
+        TeraBoxLibraryStatusText.Text = "TeraBox session cleared.";
+        TeraBoxWebView.Source = new Uri("https://www.terabox.com/");
     }
 
     private async void TeraBoxCastButton_Click(object sender, RoutedEventArgs e)
@@ -895,17 +928,9 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (TeraBoxVideosListBox.SelectedItem is not TeraBoxFileItem video)
+        if (string.IsNullOrWhiteSpace(_teraBoxDetectedMediaUrl))
         {
-            TeraBoxLibraryStatusText.Text = "Select a TeraBox video first.";
-            return;
-        }
-
-        if (!TeraBoxService.IsPlayableVideo(video))
-        {
-            TeraBoxLibraryStatusText.Text = video.IsDirectory
-                ? "Open this folder to browse its contents."
-                : "This file is not a supported video.";
+            TeraBoxLibraryStatusText.Text = "Play a TeraBox video in the browser first.";
             return;
         }
 
@@ -919,15 +944,29 @@ public partial class MainWindow : Window
         try
         {
             await StopLinkInternalAsync(sendHome: false);
-            var sourceUrl = await _teraBoxService.GetStreamingUrlAsync(video.Path);
+            var cookies = await TeraBoxWebView.CoreWebView2.CookieManager
+                .GetCookiesAsync(_teraBoxDetectedMediaUrl);
+            var cookieHeader = string.Join("; ", cookies.Select(cookie =>
+                $"{cookie.Name}={cookie.Value}"));
+            var userAgentJson = await TeraBoxWebView.CoreWebView2
+                .ExecuteScriptAsync("navigator.userAgent");
+            var userAgent = JsonSerializer.Deserialize<string>(userAgentJson) ?? "";
+            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (!string.IsNullOrWhiteSpace(cookieHeader))
+                headers["Cookie"] = cookieHeader;
+            if (!string.IsNullOrWhiteSpace(userAgent))
+                headers["User-Agent"] = userAgent;
+            if (TeraBoxWebView.Source is not null)
+                headers["Referer"] = TeraBoxWebView.Source.AbsoluteUri;
+
             var media = new ExtractedMedia
             {
-                PageUrl = video.Path,
-                Title = video.Name,
-                MediaUrl = sourceUrl,
+                PageUrl = TeraBoxWebView.Source?.AbsoluteUri ?? "https://www.terabox.com/",
+                Title = _teraBoxDetectedTitle,
+                MediaUrl = _teraBoxDetectedMediaUrl,
                 Protocol = "m3u8",
                 Extension = "mp4",
-                ThumbnailUrl = video.ThumbnailUrl
+                HttpHeaders = headers
             };
 
             var friendlyEncoder = SettingsEncoderComboBox.SelectedItem?.ToString() ?? "CPU (libx264)";
@@ -935,7 +974,7 @@ public partial class MainWindow : Window
             var bitrateText = ((ComboBoxItem)SettingsBitrateComboBox.SelectedItem).Content.ToString()!;
             var bitrate = int.Parse(bitrateText.Split(' ')[0]);
 
-            TeraBoxLibraryStatusText.Text = $"Preparing {video.Name}...";
+            TeraBoxLibraryStatusText.Text = $"Preparing {_teraBoxDetectedTitle}...";
             await _urlCapture.StartAsync(_ffmpegPath, media, encoder, bitrate);
             await _urlServer.StartAsync(_urlCapture.OutputDirectory, port: 8767);
             var ip = NetworkHelper.GetBestLocalIPv4ForRemote(_rokuClient.Device.IpAddress)
@@ -953,7 +992,7 @@ public partial class MainWindow : Window
 
             SetPcAudioMonitorSource(streamUrl);
             TeraBoxStopButton.IsEnabled = true;
-            TeraBoxLibraryStatusText.Text = $"Streaming {video.Name} to {_rokuClient.Device.Name}.";
+            TeraBoxLibraryStatusText.Text = $"Streaming {_teraBoxDetectedTitle} to {_rokuClient.Device.Name}.";
             UpdateDiagnostics(hls: "TeraBox Cast running", streamUrl: streamUrl, message: TeraBoxLibraryStatusText.Text);
         }
         catch (Exception ex)
@@ -964,7 +1003,7 @@ public partial class MainWindow : Window
         }
         finally
         {
-            TeraBoxCastButton.IsEnabled = true;
+            TeraBoxCastButton.IsEnabled = !string.IsNullOrWhiteSpace(_teraBoxDetectedMediaUrl);
         }
     }
 
@@ -973,75 +1012,6 @@ public partial class MainWindow : Window
         await StopLinkInternalAsync(sendHome: false);
         TeraBoxStopButton.IsEnabled = false;
         TeraBoxLibraryStatusText.Text = "TeraBox casting stopped. The Roku receiver remains open.";
-    }
-
-    private void UpdateTeraBoxConnectionStatus()
-    {
-        TeraBoxConnectionStatusText.Text = _teraBoxService.IsConnected
-            ? "Connected. Open the TeraBox tab to load account videos."
-            : "Not connected";
-        TeraBoxRefreshButton.IsEnabled = _teraBoxService.IsConnected;
-        TeraBoxCastButton.IsEnabled =
-            _teraBoxService.IsConnected &&
-            TeraBoxVideosListBox.SelectedItem is TeraBoxFileItem item &&
-            TeraBoxService.IsPlayableVideo(item);
-    }
-
-    private async void TeraBoxOpenButton_Click(object sender, RoutedEventArgs e) =>
-        await OpenSelectedTeraBoxFolderAsync();
-
-    private async void TeraBoxVideosListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-    {
-        if (TeraBoxVideosListBox.SelectedItem is TeraBoxFileItem { IsDirectory: true })
-            await OpenSelectedTeraBoxFolderAsync();
-    }
-
-    private async Task OpenSelectedTeraBoxFolderAsync()
-    {
-        if (TeraBoxVideosListBox.SelectedItem is not TeraBoxFileItem item || !item.IsDirectory)
-        {
-            TeraBoxLibraryStatusText.Text = "Select a folder to open.";
-            return;
-        }
-
-        _teraBoxCurrentPath = string.IsNullOrWhiteSpace(item.Path) ? "/" : item.Path;
-        await RefreshTeraBoxVideosAsync();
-    }
-
-    private async void TeraBoxUpButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (_teraBoxCurrentPath == "/")
-            return;
-
-        var trimmed = _teraBoxCurrentPath.TrimEnd('/');
-        var slash = trimmed.LastIndexOf('/');
-        _teraBoxCurrentPath = slash <= 0 ? "/" : trimmed[..slash];
-        await RefreshTeraBoxVideosAsync();
-    }
-
-    private void TeraBoxVideosListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        var item = TeraBoxVideosListBox.SelectedItem as TeraBoxFileItem;
-        TeraBoxOpenButton.IsEnabled = item?.IsDirectory == true;
-        TeraBoxCastButton.IsEnabled =
-            _teraBoxService.IsConnected &&
-            item is not null &&
-            TeraBoxService.IsPlayableVideo(item);
-    }
-
-    private static BitmapImage DecodeTeraBoxQrCode(string dataUrl)
-    {
-        var comma = dataUrl.IndexOf(',');
-        var encoded = comma >= 0 ? dataUrl[(comma + 1)..] : dataUrl;
-        var bytes = Convert.FromBase64String(encoded);
-        using var stream = new MemoryStream(bytes);
-        var image = new BitmapImage();
-        image.BeginInit();
-        image.CacheOption = BitmapCacheOption.OnLoad;
-        image.StreamSource = stream;
-        image.EndInit();
-        image.Freeze();
-        return image;
     }
 
     private void OpenWindowsSoundSettingsButton_Click(
@@ -2089,9 +2059,6 @@ public partial class MainWindow : Window
         bool sendHome)
     {
         _folderPollTimer.Stop();
-        _teraBoxAuthorizationCancellation?.Cancel();
-        _teraBoxAuthorizationCancellation?.Dispose();
-        _teraBoxService.Dispose();
         _folderSawPlaying = false;
         _folderControlRevision = 0;
         _folderServer.SetControlState(null);
