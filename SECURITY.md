@@ -13,8 +13,8 @@ not receive patches.
 <!-- supported-versions:start -->
 | Version | Supported |
 | --- | --- |
-| 0.9.5.36 | Yes |
-| 0.9.5.35 and earlier | No |
+| 0.9.5.37 | Yes |
+| 0.9.5.36 and earlier | No |
 <!-- supported-versions:end -->
 
 <br />
