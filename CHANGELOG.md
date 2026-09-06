@@ -21,6 +21,15 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.36] - 2026-09-05
+
+### Fixed
+
+* Kept TeraBox video links that request a pop-up inside Dowe LanCaster's
+  embedded TeraBox tab instead of opening an unmonitored external window.
+* Preserved authenticated video-request detection when a TeraBox video opens
+  from a new-window link, allowing Cast Detected Video to recognize it.
+
 ## [0.9.5.35] - 2026-09-05
 
 ### Changed

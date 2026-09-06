@@ -800,6 +800,8 @@ public partial class MainWindow : Window
             TeraBoxWebView.CoreWebView2.Settings.IsPasswordAutosaveEnabled = true;
             TeraBoxWebView.CoreWebView2.WebResourceResponseReceived +=
                 TeraBoxWebView_WebResourceResponseReceived;
+            TeraBoxWebView.CoreWebView2.NewWindowRequested +=
+                TeraBoxWebView_NewWindowRequested;
             TeraBoxWebView.NavigationStarting += TeraBoxWebView_NavigationStarting;
             TeraBoxWebView.NavigationCompleted += TeraBoxWebView_NavigationCompleted;
             TeraBoxWebView.Source = new Uri("https://www.terabox.com/main?category=all");
@@ -813,6 +815,29 @@ public partial class MainWindow : Window
         {
             TeraBoxLibraryStatusText.Text = $"Could not open TeraBox: {ex.Message}";
         }
+    }
+
+    private void TeraBoxWebView_NewWindowRequested(
+        object? sender,
+        CoreWebView2NewWindowRequestedEventArgs e)
+    {
+        e.Handled = true;
+
+        if (!Uri.TryCreate(e.Uri, UriKind.Absolute, out var destination) ||
+            (destination.Scheme != Uri.UriSchemeHttps &&
+             destination.Scheme != Uri.UriSchemeHttp))
+        {
+            TeraBoxLibraryStatusText.Text =
+                "TeraBox requested an unsupported pop-up address.";
+            return;
+        }
+
+        Dispatcher.BeginInvoke(() =>
+        {
+            TeraBoxLibraryStatusText.Text =
+                "Opening the selected TeraBox video inside Dowe LanCaster...";
+            TeraBoxWebView.CoreWebView2.Navigate(destination.AbsoluteUri);
+        });
     }
 
     private void TeraBoxWebView_NavigationStarting(
