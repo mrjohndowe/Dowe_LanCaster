@@ -21,6 +21,18 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.41] - 2026-09-07
+
+### Fixed
+
+* Added a unique cache-busting query value to every Link Cast and TeraBox HLS
+  address sent to Roku, ensuring that a newly prepared video is recognized
+  even though it uses the same local server and playlist filename.
+* Updated the Roku receiver to start a stream when the Windows control revision
+  changes as well as when the URL changes.
+* Kept the Roku receiver open while reliably replacing its current media,
+  avoiding both ignored TeraBox casts and unnecessary channel relaunches.
+
 ## [0.9.5.40] - 2026-09-07
 
 ### Fixed

@@ -424,7 +424,8 @@ public partial class MainWindow : Window
                     "Could not determine the PC LAN IP.");
 
             var streamUrl =
-                $"http://{ip}:{_urlServer.Port}/live/index.m3u8";
+                $"http://{ip}:{_urlServer.Port}/live/index.m3u8" +
+                $"?cast={Guid.NewGuid():N}";
 
             LinkStreamUrlTextBox.Text =
                 streamUrl;
@@ -1076,7 +1077,9 @@ public partial class MainWindow : Window
             await _urlServer.StartAsync(_urlCapture.OutputDirectory, port: 8767);
             var ip = NetworkHelper.GetBestLocalIPv4ForRemote(_rokuClient.Device.IpAddress)
                 ?? throw new InvalidOperationException("Could not determine the PC LAN IP.");
-            var streamUrl = $"http://{ip}:{_urlServer.Port}/live/index.m3u8";
+            var streamUrl =
+                $"http://{ip}:{_urlServer.Port}/live/index.m3u8" +
+                $"?cast={Guid.NewGuid():N}";
             _urlServer.SetControlState(streamUrl);
 
             if (!_linkReceiverLaunched)

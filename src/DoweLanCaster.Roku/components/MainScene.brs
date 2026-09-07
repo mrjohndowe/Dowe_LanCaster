@@ -92,7 +92,10 @@ sub onFolderControlTimer()
 
     m.controlActive = true
 
-    if control.streamUrl <> invalid and control.streamUrl <> "" and control.streamUrl <> m.currentStreamUrl
+    urlChanged = control.streamUrl <> m.currentStreamUrl
+    revisionChanged = control.revision <> invalid and control.revision <> m.controlRevision
+
+    if control.streamUrl <> invalid and control.streamUrl <> "" and (urlChanged or revisionChanged)
         m.top.mediaType = control.mediaType
         m.pendingStreamUrl = control.streamUrl
         m.currentStreamUrl = control.streamUrl
