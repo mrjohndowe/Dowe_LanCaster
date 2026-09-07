@@ -21,6 +21,16 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.39] - 2026-09-07
+
+### Fixed
+
+* Added FFmpeg 9's separate `allowed_segment_extensions` override for TeraBox
+  HLS playlists whose signed segment URLs do not have conventional suffixes.
+* Disabled FFmpeg 9's strict HLS extension matching for authenticated TeraBox
+  streams, correcting the remaining `not in allowed_segment_extensions`
+  failure after the earlier general extension override.
+
 ## [0.9.5.38] - 2026-09-06
 
 ### Added

@@ -262,6 +262,10 @@ public sealed class UrlStreamCaptureService : IAsyncDisposable
         // rejects those authenticated segments before it attempts to read them.
         processStartInfo.ArgumentList.Add("-allowed_extensions");
         processStartInfo.ArgumentList.Add("ALL");
+        processStartInfo.ArgumentList.Add("-allowed_segment_extensions");
+        processStartInfo.ArgumentList.Add("ALL");
+        processStartInfo.ArgumentList.Add("-extension_picky");
+        processStartInfo.ArgumentList.Add("0");
     }
 
     public async Task StopAsync()
