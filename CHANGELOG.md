@@ -21,6 +21,17 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.42] - 2026-09-07
+
+### Fixed
+
+* Restored the Link Cast and TeraBox stream handoff behavior from version
+  0.9.5.40 after the 0.9.5.41 per-cast URL and control-revision changes caused
+  Roku playback to stop starting reliably.
+* Removed the per-cast query value from the local HLS address sent to Roku.
+* Restored the Roku receiver's previous URL-change check while retaining the
+  TeraBox authentication pop-up repair introduced in version 0.9.5.40.
+
 ## [0.9.5.41] - 2026-09-07
 
 ### Fixed
