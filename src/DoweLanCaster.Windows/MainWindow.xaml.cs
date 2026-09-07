@@ -12,6 +12,7 @@ using DoweLanCaster.Models;
 using DoweLanCaster.Services;
 using Microsoft.Win32;
 using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.Wpf;
 
 namespace DoweLanCaster;
 
@@ -60,6 +61,7 @@ public partial class MainWindow : Window
     private string? _teraBoxDetectedMediaUrl;
     private string _teraBoxDetectedTitle = "TeraBox video";
     private int _teraBoxDetectedMediaScore;
+    private CoreWebView2Environment? _teraBoxWebViewEnvironment;
 
     private static readonly IReadOnlyDictionary<string, string> VoiceCommandMap =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -792,10 +794,10 @@ public partial class MainWindow : Window
                 "TeraBoxBrowser");
             Directory.CreateDirectory(profileFolder);
 
-            var environment = await CoreWebView2Environment.CreateAsync(
+            _teraBoxWebViewEnvironment = await CoreWebView2Environment.CreateAsync(
                 browserExecutableFolder: null,
                 userDataFolder: profileFolder);
-            await TeraBoxWebView.EnsureCoreWebView2Async(environment);
+            await TeraBoxWebView.EnsureCoreWebView2Async(_teraBoxWebViewEnvironment);
 
             TeraBoxWebView.CoreWebView2.Settings.IsPasswordAutosaveEnabled = true;
             TeraBoxWebView.CoreWebView2.WebResourceResponseReceived +=
@@ -818,27 +820,87 @@ public partial class MainWindow : Window
         }
     }
 
-    private void TeraBoxWebView_NewWindowRequested(
+    private async void TeraBoxWebView_NewWindowRequested(
         object? sender,
         CoreWebView2NewWindowRequestedEventArgs e)
     {
-        e.Handled = true;
+        var deferral = e.GetDeferral();
 
-        if (!Uri.TryCreate(e.Uri, UriKind.Absolute, out var destination) ||
-            (destination.Scheme != Uri.UriSchemeHttps &&
-             destination.Scheme != Uri.UriSchemeHttp))
+        try
         {
-            TeraBoxLibraryStatusText.Text =
-                "TeraBox requested an unsupported pop-up address.";
-            return;
-        }
+            e.Handled = true;
 
-        Dispatcher.BeginInvoke(() =>
-        {
+            if (!Uri.TryCreate(e.Uri, UriKind.Absolute, out var destination) ||
+                (destination.Scheme != Uri.UriSchemeHttps &&
+                 destination.Scheme != Uri.UriSchemeHttp))
+            {
+                TeraBoxLibraryStatusText.Text =
+                    "TeraBox requested an unsupported pop-up address.";
+                return;
+            }
+
+            if (IsAuthenticationPopup(destination))
+            {
+                await OpenTeraBoxAuthenticationWindowAsync(e, destination);
+                return;
+            }
+
             TeraBoxLibraryStatusText.Text =
                 "Opening the selected TeraBox video inside Dowe LanCaster...";
             TeraBoxWebView.CoreWebView2.Navigate(destination.AbsoluteUri);
-        });
+        }
+        catch (Exception ex)
+        {
+            TeraBoxLibraryStatusText.Text =
+                $"Could not open the TeraBox sign-in window: {ex.Message}";
+        }
+        finally
+        {
+            deferral.Complete();
+        }
+    }
+
+    private static bool IsAuthenticationPopup(Uri destination)
+    {
+        var host = destination.Host;
+        return host.Equals("accounts.google.com", StringComparison.OrdinalIgnoreCase) ||
+               host.EndsWith(".accounts.google.com", StringComparison.OrdinalIgnoreCase) ||
+               host.Equals("appleid.apple.com", StringComparison.OrdinalIgnoreCase) ||
+               host.Equals("www.facebook.com", StringComparison.OrdinalIgnoreCase) ||
+               host.Equals("facebook.com", StringComparison.OrdinalIgnoreCase) ||
+               host.Equals("login.microsoftonline.com", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task OpenTeraBoxAuthenticationWindowAsync(
+        CoreWebView2NewWindowRequestedEventArgs request,
+        Uri destination)
+    {
+        if (_teraBoxWebViewEnvironment is null)
+            throw new InvalidOperationException("The TeraBox browser is not ready.");
+
+        var authenticationBrowser = new WebView2();
+        var authenticationWindow = new System.Windows.Window
+        {
+            Title = "Sign in to TeraBox",
+            Owner = this,
+            Width = 620,
+            Height = 760,
+            MinWidth = 480,
+            MinHeight = 600,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Content = authenticationBrowser
+        };
+
+        await authenticationBrowser.EnsureCoreWebView2Async(
+            _teraBoxWebViewEnvironment);
+        authenticationBrowser.CoreWebView2.WindowCloseRequested += (_, _) =>
+            authenticationWindow.Dispatcher.BeginInvoke(authenticationWindow.Close);
+        authenticationWindow.Closed += (_, _) => authenticationBrowser.Dispose();
+
+        request.NewWindow = authenticationBrowser.CoreWebView2;
+        authenticationWindow.Show();
+        TeraBoxLibraryStatusText.Text =
+            $"Complete sign-in in the {destination.Host} window. It will return to TeraBox when finished.";
     }
 
     private void TeraBoxWebView_NavigationStarting(

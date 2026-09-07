@@ -21,6 +21,19 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.40] - 2026-09-07
+
+### Fixed
+
+* Opened Google, Apple, Facebook, and Microsoft TeraBox authentication in a
+  dedicated WebView2 sign-in window that shares the main TeraBox session.
+* Preserved the OAuth opener and pop-up relationship required to return a
+  completed account sign-in to the embedded TeraBox browser.
+* Stopped treating authentication pop-ups as TeraBox video windows, which
+  caused the blank page demonstrated in the supplied screen recording.
+* Continued routing ordinary TeraBox video pop-ups into the monitored embedded
+  browser so Cast Current Video can detect their authenticated media requests.
+
 ## [0.9.5.39] - 2026-09-07
 
 ### Fixed
