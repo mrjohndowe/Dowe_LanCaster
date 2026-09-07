@@ -1,0 +1,48 @@
+[Script Info]
+Title: Dowe LanCaster - How It Works
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Brand,Segoe UI,26,&H00F0F8F4,&H000000FF,&H0016200D,&H00000000,-1,0,0,0,100,100,4,0,1,1,0,8,40,40,34,1
+Style: Kicker,Segoe UI Semibold,22,&H0051F4BB,&H000000FF,&H00071016,&H00000000,-1,0,0,0,100,100,3,0,1,1,0,5,70,70,0,1
+Style: Title,Segoe UI Semibold,55,&H00F0F8F4,&H000000FF,&H00071016,&H00000000,-1,0,0,0,100,100,-1,0,1,2,0,5,85,85,0,1
+Style: Body,Segoe UI,28,&H00AEBBB6,&H000000FF,&H00071016,&H00000000,0,0,0,0,100,100,0,0,1,1,0,5,140,140,0,1
+Style: Step,Segoe UI Semibold,30,&H00161B10,&H000000FF,&H0051F4BB,&H00000000,-1,0,0,0,100,100,0,0,3,0,0,5,510,510,0,1
+Style: Footer,Segoe UI,18,&H00788983,&H000000FF,&H00071016,&H00000000,0,0,0,0,100,100,1,0,1,1,0,2,40,40,32,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:35.00,Brand,,0,0,0,,DOWE {c&H0051F4BB&}LANCASTER
+Dialogue: 0,0:00:00.00,0:00:35.00,Footer,,0,0,0,,WINDOWS TO ROKU  •  LOCAL NETWORK STREAMING
+
+Dialogue: 0,0:00:00.20,0:00:05.80,Kicker,,0,0,175,,{\fad(500,500)}HOW IT WORKS
+Dialogue: 0,0:00:00.20,0:00:05.80,Title,,0,0,245,,{\fad(500,500)}Your media. Your screen.\N{c&H0051F4BB&}Your Roku.
+Dialogue: 0,0:00:00.20,0:00:05.80,Body,,0,0,390,,{\fad(500,500)}Dowe LanCaster turns videos, links, folders, and your desktop\Ninto a Roku-ready stream over your local network.
+
+Dialogue: 0,0:00:06.00,0:00:11.80,Step,,0,0,140,,{\fad(400,400)}1
+Dialogue: 0,0:00:06.00,0:00:11.80,Kicker,,0,0,210,,{\fad(400,400)}INSTALL THE RECEIVER
+Dialogue: 0,0:00:06.00,0:00:11.80,Title,,0,0,270,,{\fad(400,400)}Add Dowe LanCaster\Nto your Roku
+Dialogue: 0,0:00:06.00,0:00:11.80,Body,,0,0,420,,{\fad(400,400)}Use the included Roku ZIP and the simple sideloading instructions.\NYou only need to install the receiver once.
+
+Dialogue: 0,0:00:12.00,0:00:17.80,Step,,0,0,140,,{\fad(400,400)}2
+Dialogue: 0,0:00:12.00,0:00:17.80,Kicker,,0,0,210,,{\fad(400,400)}CHOOSE YOUR ROKU
+Dialogue: 0,0:00:12.00,0:00:17.80,Title,,0,0,270,,{\fad(400,400)}Scan automatically\Nor add its IP
+Dialogue: 0,0:00:12.00,0:00:17.80,Body,,0,0,420,,{\fad(400,400)}Dowe LanCaster finds Roku devices on the same network.\NSelect the TV where you want your media to play.
+
+Dialogue: 0,0:00:18.00,0:00:23.80,Step,,0,0,140,,{\fad(400,400)}3
+Dialogue: 0,0:00:18.00,0:00:23.80,Kicker,,0,0,210,,{\fad(400,400)}PICK WHAT TO CAST
+Dialogue: 0,0:00:18.00,0:00:23.80,Title,,0,0,270,,{\fad(400,400)}File  •  Folder  •  Link\NTeraBox  •  Live Desktop
+Dialogue: 0,0:00:18.00,0:00:23.80,Body,,0,0,435,,{\fad(400,400)}Choose a source, select your quality and encoder,\Nthen press Play or Start Cast.
+
+Dialogue: 0,0:00:24.00,0:00:29.80,Kicker,,0,0,195,,{\fad(400,400)}LANCASTER HANDLES THE REST
+Dialogue: 0,0:00:24.00,0:00:29.80,Title,,0,0,270,,{\fad(400,400)}Converted for Roku.\NStreamed locally.
+Dialogue: 0,0:00:24.00,0:00:29.80,Body,,0,0,420,,{\fad(400,400)}FFmpeg creates a compatible stream while Dowe LanCaster\Nkeeps playback and remote controls in one place.
+
+Dialogue: 0,0:00:30.00,0:00:34.80,Kicker,,0,0,205,,{\fad(400,500)}READY FOR THE BIG SCREEN?
+Dialogue: 0,0:00:30.00,0:00:34.80,Title,,0,0,280,,{\fad(400,500)}Download Dowe LanCaster
+Dialogue: 0,0:00:30.00,0:00:34.80,Body,,0,0,385,,{\fad(400,500)}Install on Windows, connect your Roku, and start casting.

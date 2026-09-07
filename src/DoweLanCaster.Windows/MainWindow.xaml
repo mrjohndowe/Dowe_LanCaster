@@ -289,7 +289,7 @@
                                                 <wv2:WebView2 x:Name="TeraBoxWebView"/>
                                         </Border>
                                         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0">
-                                                <Button x:Name="TeraBoxCastButton" Content="Cast Detected Video" Width="170" Height="42" IsEnabled="False" Click="TeraBoxCastButton_Click"/>
+                                                <Button x:Name="TeraBoxCastButton" Content="Cast Current Video" Width="170" Height="42" IsEnabled="False" Click="TeraBoxCastButton_Click"/>
                                                 <Button x:Name="TeraBoxStopButton" Content="Stop TeraBox Cast" Width="160" Height="42" Margin="10,0,0,0" IsEnabled="False" Click="TeraBoxStopButton_Click"/>
                                                 <TextBlock Text="Sign in normally, browse your files, and start a video. Dowe LanCaster will detect the authenticated stream." Margin="14,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" Opacity="0.78"/>
                                         </StackPanel>

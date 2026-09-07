@@ -110,7 +110,7 @@ $release = latestRelease();
                 <p class="hero-lede">Cast videos, complete folders, public media links, or your live Windows desktop straight to Roku—without sending your content through the cloud.</p>
                 <div class="hero-actions">
                     <a class="button button-primary" href="#download">Download v<?= htmlspecialchars($release['version']) ?><span aria-hidden="true">↓</span></a>
-                    <button class="button button-quiet" type="button" data-play-video><span class="play-icon" aria-hidden="true">▶</span> Watch the intro</button>
+                    <button class="button button-quiet" type="button" data-play-video><span class="play-icon" aria-hidden="true">▶</span> See how it works</button>
                 </div>
                 <div class="hero-meta">
                     <span>Windows 10/11</span>
@@ -124,13 +124,13 @@ $release = latestRelease();
                 <div class="signal-ring ring-two"></div>
                 <div class="device-card">
                     <div class="device-bar"><i></i><i></i><i></i><span>LIVE ON YOUR LAN</span></div>
-                    <video id="intro-video" controls preload="metadata" poster="../DoweLanCaster-intro-v0.7.0.png">
-                        <source src="../src/DoweLanCaster.Windows/Resources/intro.mp4" type="video/mp4">
+                    <video id="how-it-works-video" controls preload="metadata" poster="assets/how-it-works-poster.jpg" aria-label="How Dowe LanCaster works">
+                        <source src="assets/how-it-works.mp4" type="video/mp4">
                         Your browser does not support embedded MP4 video.
                     </video>
                     <div class="device-status">
-                        <div><small>NOW CASTING</small><strong>Dowe LanCaster</strong></div>
-                        <span class="live-pill"><i></i> Connected</span>
+                        <div><small>HOW IT WORKS</small><strong>Windows to Roku in three steps</strong></div>
+                        <span class="live-pill"><i></i> 35 seconds</span>
                     </div>
                 </div>
             </div>

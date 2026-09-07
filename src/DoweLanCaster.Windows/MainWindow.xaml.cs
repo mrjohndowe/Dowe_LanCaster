@@ -805,6 +805,7 @@ public partial class MainWindow : Window
             TeraBoxWebView.NavigationStarting += TeraBoxWebView_NavigationStarting;
             TeraBoxWebView.NavigationCompleted += TeraBoxWebView_NavigationCompleted;
             TeraBoxWebView.Source = new Uri("https://www.terabox.com/main?category=all");
+            TeraBoxCastButton.IsEnabled = true;
         }
         catch (WebView2RuntimeNotFoundException)
         {
@@ -846,7 +847,6 @@ public partial class MainWindow : Window
     {
         _teraBoxDetectedMediaUrl = null;
         _teraBoxDetectedMediaScore = 0;
-        TeraBoxCastButton.IsEnabled = false;
         TeraBoxLibraryStatusText.Text = "Opening TeraBox...";
     }
 
@@ -854,8 +854,9 @@ public partial class MainWindow : Window
         object? sender,
         CoreWebView2NavigationCompletedEventArgs e)
     {
+        TeraBoxCastButton.IsEnabled = e.IsSuccess;
         TeraBoxLibraryStatusText.Text = e.IsSuccess
-            ? "Browse your TeraBox files and play a video to make it available for casting."
+            ? "Browse your TeraBox files, start a video, then select Cast Current Video."
             : $"TeraBox navigation failed: {e.WebErrorStatus}.";
     }
 
@@ -876,7 +877,7 @@ public partial class MainWindow : Window
                 : TeraBoxWebView.CoreWebView2.DocumentTitle;
             TeraBoxCastButton.IsEnabled = true;
             TeraBoxLibraryStatusText.Text =
-                $"Detected {_teraBoxDetectedTitle}. Select Cast Detected Video when ready.";
+                $"Detected {_teraBoxDetectedTitle}. Select Cast Current Video when ready.";
         });
     }
 
@@ -953,19 +954,28 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_teraBoxDetectedMediaUrl))
+        TeraBoxCastButton.IsEnabled = false;
+        TeraBoxLibraryStatusText.Text = "Finding the current TeraBox video...";
+
+        var mediaUrl = _teraBoxDetectedMediaUrl ??
+            await TryGetTeraBoxMediaUrlFromPageAsync();
+        if (string.IsNullOrWhiteSpace(mediaUrl))
         {
-            TeraBoxLibraryStatusText.Text = "Play a TeraBox video in the browser first.";
+            TeraBoxLibraryStatusText.Text =
+                "No video stream is active. Start the video in TeraBox, then select Cast Current Video again.";
+            TeraBoxCastButton.IsEnabled = true;
             return;
         }
+
+        _teraBoxDetectedMediaUrl = mediaUrl;
 
         if (string.IsNullOrWhiteSpace(_ffmpegPath))
         {
             TeraBoxLibraryStatusText.Text = "FFmpeg was not found.";
+            TeraBoxCastButton.IsEnabled = true;
             return;
         }
 
-        TeraBoxCastButton.IsEnabled = false;
         try
         {
             await StopLinkInternalAsync(sendHome: false);
@@ -1029,6 +1039,48 @@ public partial class MainWindow : Window
         finally
         {
             TeraBoxCastButton.IsEnabled = !string.IsNullOrWhiteSpace(_teraBoxDetectedMediaUrl);
+        }
+    }
+
+    private async Task<string?> TryGetTeraBoxMediaUrlFromPageAsync()
+    {
+        if (TeraBoxWebView.CoreWebView2 is null)
+            return null;
+
+        const string script = """
+            (() => {
+                const isMedia = value =>
+                    typeof value === 'string' &&
+                    /^https?:/i.test(value) &&
+                    (value.includes('.m3u8') ||
+                     value.includes('/share/streaming') ||
+                     /\.mp4(?:$|[?#])/i.test(value));
+
+                const videos = Array.from(document.querySelectorAll('video'))
+                    .flatMap(video => [
+                        video.currentSrc,
+                        video.src,
+                        ...Array.from(video.querySelectorAll('source'))
+                            .map(source => source.src)
+                    ]);
+                const resources = performance.getEntriesByType('resource')
+                    .map(entry => entry.name)
+                    .reverse();
+                return [...videos, ...resources].find(isMedia) || null;
+            })();
+            """;
+
+        try
+        {
+            var result = await TeraBoxWebView.CoreWebView2.ExecuteScriptAsync(script);
+            if (string.Equals(result, "null", StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            return JsonSerializer.Deserialize<string>(result);
+        }
+        catch
+        {
+            return null;
         }
     }
 

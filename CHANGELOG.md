@@ -21,6 +21,29 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.38] - 2026-09-06
+
+### Added
+
+* Added a dedicated 35-second How It Works video to the website explaining
+  receiver installation, Roku selection, supported cast sources, and local
+  streaming.
+
+### Changed
+
+* Replaced the website's startup-intro video and broken repository-relative
+  media address with a self-contained website video and poster.
+* Changed the TeraBox action to Cast Current Video and kept it available after
+  the embedded browser is ready.
+
+### Fixed
+
+* Added an on-demand fallback that finds the current HTML video source or a
+  recent HLS/MP4 browser request when automatic TeraBox detection has not
+  enabled casting.
+* Added an explicit status message when no active TeraBox stream can be found
+  instead of leaving the cast button apparently unresponsive.
+
 ## [0.9.5.37] - 2026-09-06
 
 ### Fixed

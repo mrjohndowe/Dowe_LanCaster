@@ -1,6 +1,6 @@
 const navigation = document.querySelector('#site-nav');
 const navigationToggle = document.querySelector('.nav-toggle');
-const video = document.querySelector('#intro-video');
+const video = document.querySelector('#how-it-works-video');
 
 navigationToggle?.addEventListener('click', () => {
     const open = navigation?.classList.toggle('open') ?? false;
