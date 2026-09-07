@@ -35,3 +35,6 @@ logs/
 # OS junk
 Thumbs.db
 .DS_Store
+
+# ftp-sync credentials
+.vscode/ftp-sync.json
