@@ -891,16 +891,36 @@ public partial class MainWindow : Window
             Content = authenticationBrowser
         };
 
-        await authenticationBrowser.EnsureCoreWebView2Async(
-            _teraBoxWebViewEnvironment);
-        authenticationBrowser.CoreWebView2.WindowCloseRequested += (_, _) =>
-            authenticationWindow.Dispatcher.BeginInvoke(authenticationWindow.Close);
-        authenticationWindow.Closed += (_, _) => authenticationBrowser.Dispose();
-
-        request.NewWindow = authenticationBrowser.CoreWebView2;
         authenticationWindow.Show();
+        authenticationWindow.Activate();
         TeraBoxLibraryStatusText.Text =
-            $"Complete sign-in in the {destination.Host} window. It will return to TeraBox when finished.";
+            $"Opening the {destination.Host} sign-in window...";
+
+        try
+        {
+            // WPF WebView2 needs a loaded host window (and therefore a valid
+            // parent HWND) before EnsureCoreWebView2Async can finish. Keeping
+            // the window hidden here leaves the NewWindowRequested deferral
+            // pending indefinitely and makes the TeraBox page appear frozen.
+            await authenticationBrowser
+                .EnsureCoreWebView2Async(_teraBoxWebViewEnvironment)
+                .WaitAsync(TimeSpan.FromSeconds(20));
+
+            authenticationBrowser.CoreWebView2.WindowCloseRequested += (_, _) =>
+                authenticationWindow.Dispatcher.BeginInvoke(authenticationWindow.Close);
+            authenticationWindow.Closed += (_, _) => authenticationBrowser.Dispose();
+
+            request.NewWindow = authenticationBrowser.CoreWebView2;
+            authenticationBrowser.Focus();
+            TeraBoxLibraryStatusText.Text =
+                $"Complete sign-in in the {destination.Host} window. It will return to TeraBox when finished.";
+        }
+        catch
+        {
+            authenticationBrowser.Dispose();
+            authenticationWindow.Close();
+            throw;
+        }
     }
 
     private void TeraBoxWebView_NavigationStarting(

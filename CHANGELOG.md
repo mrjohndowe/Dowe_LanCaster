@@ -21,6 +21,18 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.43] - 2026-09-09
+
+### Fixed
+
+* Displayed the TeraBox authentication window before initializing its WebView2
+  control, ensuring that Google sign-in has a valid WPF host window instead of
+  leaving the original login request frozen.
+* Limited authentication WebView initialization to 20 seconds and now closes
+  the sign-in window with a visible error when initialization cannot complete.
+* Preserved the shared TeraBox browser environment so completed Google sign-in
+  sessions return to the embedded TeraBox tab.
+
 ## [0.9.5.42] - 2026-09-07
 
 ### Fixed
