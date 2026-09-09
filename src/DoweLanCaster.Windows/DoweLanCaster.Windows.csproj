@@ -8,9 +8,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>DoweLanCaster</AssemblyName>
     <RootNamespace>DoweLanCaster</RootNamespace>
-    <Version>0.9.5.43</Version>
-    <AssemblyVersion>0.9.5.43</AssemblyVersion>
-    <FileVersion>0.9.5.43</FileVersion>
+    <Version>0.9.5.44</Version>
+    <AssemblyVersion>0.9.5.44</AssemblyVersion>
+    <FileVersion>0.9.5.44</FileVersion>
     <StartupObject>DoweLanCaster.App</StartupObject>
     <AssemblyTitle>DoweLanCaster</AssemblyTitle>
     <ApplicationIcon>DoweLanCaster.ico</ApplicationIcon>

@@ -156,6 +156,15 @@ public partial class MainWindow : Window
                 UpdateDiagnostics();
             });
         };
+
+        _folderServer.RequestLog += line =>
+        {
+            Dispatcher.BeginInvoke(() =>
+            {
+                _diagnostics.LastHttpRequest = line;
+                UpdateDiagnostics();
+            });
+        };
     }
 
     private async Task InitializeFFmpegAsync()
@@ -1283,6 +1292,7 @@ public partial class MainWindow : Window
             $"yt-dlp: {_diagnostics.YtDlp}{Environment.NewLine}" +
             $"HLS: {_diagnostics.Hls}{Environment.NewLine}" +
             $"Stream: {_diagnostics.StreamUrl}{Environment.NewLine}" +
+            $"HTTP: {_diagnostics.LastHttpRequest}{Environment.NewLine}" +
             $"Last: {_diagnostics.LastMessage}";
     }
 

@@ -7,5 +7,6 @@ public sealed class DiagnosticState
     public string YtDlp { get; set; } = "Not checked";
     public string Hls { get; set; } = "Stopped";
     public string StreamUrl { get; set; } = "";
+    public string LastHttpRequest { get; set; } = "";
     public string LastMessage { get; set; } = "";
 }

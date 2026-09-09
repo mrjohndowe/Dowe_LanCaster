@@ -21,6 +21,20 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.44] - 2026-09-09
+
+### Fixed
+
+* Changed Folder Cast output to an explicit growing HLS EVENT playlist so Roku
+  continues requesting newly generated segments instead of stalling after the
+  initial playlist snapshot.
+* Added a six-segment, approximately 12-second startup buffer before launching
+  Folder Cast playback to prevent immediate rebuffering during encoder, disk,
+  or Wi-Fi slowdowns.
+* Made HLS segments visible only after FFmpeg finishes writing them and added
+  the latest Roku playlist or segment request to Diagnostics for clear 200/404
+  delivery evidence.
+
 ## [0.9.5.43] - 2026-09-09
 
 ### Fixed

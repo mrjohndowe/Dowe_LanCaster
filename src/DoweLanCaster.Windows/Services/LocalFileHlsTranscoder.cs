@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace DoweLanCaster.Services;
 
@@ -111,7 +112,8 @@ public sealed class LocalFileHlsTranscoder : IAsyncDisposable
             "-hls_segment_type", "mpegts",
             "-hls_time", "2",
             "-hls_list_size", "0",
-            "-hls_flags", "independent_segments",
+            "-hls_playlist_type", "event",
+            "-hls_flags", "independent_segments+temp_file",
             "-hls_segment_filename", segments,
             playlist);
 
@@ -142,8 +144,12 @@ public sealed class LocalFileHlsTranscoder : IAsyncDisposable
         process.BeginErrorReadLine();
         _process = process;
 
-        // Wait until the first playable segment appears.
-        for (var i = 0; i < 150; i++)
+        // Do not launch Roku with a one-segment playlist. Six complete
+        // two-second segments give the player enough headroom to absorb
+        // encoder, disk, or Wi-Fi jitter without immediately buffering.
+        const int minimumSegments = 6;
+
+        for (var i = 0; i < 600; i++)
         {
             token.ThrowIfCancellationRequested();
 
@@ -160,8 +166,17 @@ public sealed class LocalFileHlsTranscoder : IAsyncDisposable
             if (File.Exists(playlist))
             {
                 var text = await TryReadPlaylistAsync(playlist, token);
-                if (text.Contains("#EXTINF:", StringComparison.Ordinal))
+                var segmentCount = Regex.Matches(
+                    text,
+                    "#EXTINF:",
+                    RegexOptions.CultureInvariant).Count;
+
+                if (segmentCount >= minimumSegments ||
+                    (segmentCount > 0 &&
+                     text.Contains("#EXT-X-ENDLIST", StringComparison.Ordinal)))
+                {
                     return;
+                }
             }
 
             await Task.Delay(100, token);
@@ -172,7 +187,7 @@ public sealed class LocalFileHlsTranscoder : IAsyncDisposable
             timeoutDetails = string.Join(Environment.NewLine, _recentLog);
 
         throw new TimeoutException(
-            "FFmpeg did not create a playable folder-cast HLS playlist." +
+            "FFmpeg did not create a sufficiently buffered folder-cast HLS playlist." +
             Environment.NewLine +
             timeoutDetails);
     }
