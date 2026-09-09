@@ -49,7 +49,6 @@ public partial class MainWindow : Window
     private AppSettings _settings = new();
     private List<FolderMediaItem> _folderItems = new();
     private int _folderIndex = -1;
-    private bool _folderSawPlaying;
     private bool _folderAdvanceInProgress;
     private bool _folderReceiverLaunched;
     private long _folderControlRevision;
@@ -1961,8 +1960,6 @@ public partial class MainWindow : Window
             }
 
             _folderIndex = index;
-            _folderSawPlaying = false;
-
             FolderPlaylistListBox.SelectedItem =
                 item;
 
@@ -2179,26 +2176,6 @@ public partial class MainWindow : Window
                     _folderControlRevision))
             {
                 _folderPollTimer.Stop();
-                await AdvanceFolderAsync(
-                    manual: false);
-                return;
-            }
-
-            var state =
-                await _rokuClient
-                    .GetMediaPlayerStateAsync();
-
-            if (state.IsPlaying)
-            {
-                _folderSawPlaying = true;
-                return;
-            }
-
-            if (_folderSawPlaying &&
-                state.IsStopped)
-            {
-                _folderSawPlaying = false;
-                _folderPollTimer.Stop();
 
                 if (FolderAutoPlayCheckBox.IsChecked == true)
                 {
@@ -2216,7 +2193,16 @@ public partial class MainWindow : Window
                         streamUrl: "",
                         message: "Auto-play next is disabled.");
                 }
+
+                return;
             }
+
+            // The Roku ECP /query/media-player endpoint describes the global
+            // device player and can temporarily report stop/close while the
+            // SceneGraph video is buffering. Advancing on that state deletes
+            // the active HLS directory and turns the buffer event into a 404.
+            // Only the receiver's revision-specific completion callback above
+            // is authoritative for Folder Cast playback.
         }
         catch
         {
@@ -2228,7 +2214,6 @@ public partial class MainWindow : Window
         bool sendHome)
     {
         _folderPollTimer.Stop();
-        _folderSawPlaying = false;
         _folderControlRevision = 0;
         _folderServer.SetControlState(null);
         await _folderTranscoder.StopAsync();

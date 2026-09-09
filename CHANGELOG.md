@@ -21,6 +21,18 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.45] - 2026-09-09
+
+### Fixed
+
+* Stopped treating Roku's global media-player `stop` or `close` state as proof
+  that the active Folder Cast item finished, because Roku can report those
+  states temporarily while the SceneGraph video is buffering.
+* Kept the Folder Cast HLS playlist and segments available throughout buffering
+  instead of deleting them and returning `GET /live/index.m3u8 -> 404`.
+* Folder Cast now advances only after the Roku receiver reports completion for
+  the exact control revision that Windows is currently streaming.
+
 ## [0.9.5.44] - 2026-09-09
 
 ### Fixed
