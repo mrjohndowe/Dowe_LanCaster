@@ -14,4 +14,5 @@ public sealed class AppSettings
     public string FolderRepeatMode { get; set; } = "Off";
     public bool FolderAutoPlayNext { get; set; } = true;
     public bool UseDarkMode { get; set; }
+    public bool UseAirPlayHandoff { get; set; }
 }

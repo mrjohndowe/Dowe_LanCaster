@@ -64,6 +64,23 @@ public sealed class LiveStreamingServer : IAsyncDisposable
             });
         });
 
+        app.MapGet("/airplay", (HttpContext context) =>
+        {
+            if (string.IsNullOrWhiteSpace(_controlStreamUrl))
+                return Results.NotFound("No stream is currently prepared for AirPlay.");
+
+            RequestLog?.Invoke("GET /airplay -> 200");
+            return Results.Content(
+                AirPlayPage.Create(
+                    "Dowe LanCaster",
+                    _controlStreamUrl,
+                    _controlMediaType == "hls"
+                        ? "application/vnd.apple.mpegurl"
+                        : _controlMediaType,
+                    Interlocked.Read(ref _controlRevision)),
+                "text/html; charset=utf-8");
+        });
+
         app.MapGet("/live/{file}", async (string file, HttpContext context) =>
         {
             string safe = Path.GetFileName(file);

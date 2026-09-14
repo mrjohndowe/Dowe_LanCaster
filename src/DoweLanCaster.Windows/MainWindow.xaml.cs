@@ -438,13 +438,21 @@ public partial class MainWindow : Window
                 streamUrl;
             SetPcAudioMonitorSource(streamUrl);
 
-            LinkStatusText.Text =
-                "Launching Dowe LanCaster on the Roku...";
-
             _urlServer.SetControlState(streamUrl);
+            var airPlayPageUrl =
+                $"http://{ip}:{_urlServer.Port}/airplay";
 
-            if (!_linkReceiverLaunched)
+            if (UseAirPlayHandoff)
             {
+                SetAirPlayPage(airPlayPageUrl);
+                _linkReceiverLaunched = false;
+                _folderReceiverLaunched = false;
+            }
+            else if (!_linkReceiverLaunched)
+            {
+                LinkStatusText.Text =
+                    "Launching Dowe LanCaster on the Roku...";
+
                 var controlUrl =
                     $"http://{ip}:{_urlServer.Port}/control";
 
@@ -461,8 +469,9 @@ public partial class MainWindow : Window
             StatusText.Text = "Link casting active.";
 
             LinkStatusText.Text =
-                $"Streaming {_extractedMedia.Title} " +
-                $"to {_rokuClient.Device.Name}.";
+                UseAirPlayHandoff
+                    ? $"AirPlay-ready: {_extractedMedia.Title}. Open {airPlayPageUrl} on an Apple device."
+                    : $"Streaming {_extractedMedia.Title} to {_rokuClient.Device.Name}.";
 
             SaveCurrentSettings();
 
@@ -505,6 +514,7 @@ public partial class MainWindow : Window
         _urlServer.SetControlState(null);
         await _urlCapture.StopAsync();
         LinkStreamUrlTextBox.Clear();
+        ClearAirPlayPage();
         await StopPcAudioMonitorAsync();
 
         if (sendHome)
@@ -548,6 +558,9 @@ public partial class MainWindow : Window
 
         SettingsIncludeAudioCheckBox.IsChecked =
             _settings.IncludeSystemAudio;
+
+        AirPlayModeCheckBox.IsChecked =
+            _settings.UseAirPlayHandoff;
 
     }
 
@@ -713,7 +726,74 @@ public partial class MainWindow : Window
         _settings.UseDarkMode =
             DarkModeCheckBox.IsChecked == true;
 
+        _settings.UseAirPlayHandoff =
+            AirPlayModeCheckBox.IsChecked == true;
+
         _settingsService.Save(_settings);
+    }
+
+    private bool UseAirPlayHandoff =>
+        AirPlayModeCheckBox.IsChecked == true;
+
+    private void SetAirPlayPage(string pageUrl)
+    {
+        AirPlayPageUrlTextBox.Text = pageUrl;
+        AirPlayStatusText.Text =
+            "AirPlay stream prepared. Open this address on an iPhone, iPad, or Mac, tap Play, then select the Roku from the AirPlay menu.";
+    }
+
+    private void ClearAirPlayPage()
+    {
+        AirPlayPageUrlTextBox.Clear();
+        AirPlayStatusText.Text =
+            "Enable AirPlay handoff, then start a cast from its normal tab.";
+    }
+
+    private void AirPlayModeCheckBox_Changed(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (!IsLoaded)
+            return;
+
+        SaveCurrentSettings();
+        AirPlayStatusText.Text = UseAirPlayHandoff
+            ? "AirPlay handoff enabled. New casts will be prepared for an Apple device instead of launching the Roku receiver."
+            : "AirPlay handoff disabled. New casts will use the Dowe LanCaster Roku receiver.";
+    }
+
+    private void CopyAirPlayAddressButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        var url = AirPlayPageUrlTextBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            AirPlayStatusText.Text =
+                "Start a cast with AirPlay handoff enabled first.";
+            return;
+        }
+
+        System.Windows.Clipboard.SetText(url);
+        AirPlayStatusText.Text = "AirPlay address copied.";
+    }
+
+    private void OpenAirPlayPageButton_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        var url = AirPlayPageUrlTextBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            AirPlayStatusText.Text =
+                "Start a cast with AirPlay handoff enabled first.";
+            return;
+        }
+
+        Process.Start(new ProcessStartInfo(url)
+        {
+            UseShellExecute = true
+        });
     }
 
     private void LoadChangelog()
@@ -1106,8 +1186,15 @@ public partial class MainWindow : Window
                 ?? throw new InvalidOperationException("Could not determine the PC LAN IP.");
             var streamUrl = $"http://{ip}:{_urlServer.Port}/live/index.m3u8";
             _urlServer.SetControlState(streamUrl);
+            var airPlayPageUrl = $"http://{ip}:{_urlServer.Port}/airplay";
 
-            if (!_linkReceiverLaunched)
+            if (UseAirPlayHandoff)
+            {
+                SetAirPlayPage(airPlayPageUrl);
+                _linkReceiverLaunched = false;
+                _folderReceiverLaunched = false;
+            }
+            else if (!_linkReceiverLaunched)
             {
                 var controlUrl = $"http://{ip}:{_urlServer.Port}/control";
                 await _rokuClient.LaunchDoweLanCasterLiveAsync(streamUrl, controlUrl);
@@ -1117,7 +1204,9 @@ public partial class MainWindow : Window
 
             SetPcAudioMonitorSource(streamUrl);
             TeraBoxStopButton.IsEnabled = true;
-            TeraBoxLibraryStatusText.Text = $"Streaming {_teraBoxDetectedTitle} to {_rokuClient.Device.Name}.";
+            TeraBoxLibraryStatusText.Text = UseAirPlayHandoff
+                ? $"AirPlay-ready: {_teraBoxDetectedTitle}. Open {airPlayPageUrl} on an Apple device."
+                : $"Streaming {_teraBoxDetectedTitle} to {_rokuClient.Device.Name}.";
             UpdateDiagnostics(hls: "TeraBox Cast running", streamUrl: streamUrl, message: TeraBoxLibraryStatusText.Text);
         }
         catch (Exception ex)
@@ -1392,12 +1481,22 @@ public partial class MainWindow : Window
 
             LiveStreamUrlTextBox.Text = url;
             SetPcAudioMonitorSource(url);
+            _liveServer.SetControlState(url);
+            var airPlayPageUrl =
+                $"http://{ip}:{_liveServer.Port}/airplay";
 
-            LiveStatusText.Text =
-                "Launching Dowe LanCaster receiver...";
+            if (UseAirPlayHandoff)
+            {
+                SetAirPlayPage(airPlayPageUrl);
+            }
+            else
+            {
+                LiveStatusText.Text =
+                    "Launching Dowe LanCaster receiver...";
 
-            await _rokuClient
-                .LaunchDoweLanCasterLiveAsync(url);
+                await _rokuClient
+                    .LaunchDoweLanCasterLiveAsync(url);
+            }
 
             _linkReceiverLaunched = false;
             _folderReceiverLaunched = false;
@@ -1406,11 +1505,12 @@ public partial class MainWindow : Window
             StatusText.Text = "Live casting active.";
 
             LiveStatusText.Text =
-                $"Live casting {source.Name} at {fps} FPS " +
-                $"using {friendlyEncoder}" +
-                (string.IsNullOrWhiteSpace(audioName)
-                    ? " without audio."
-                    : " with PC audio.");
+                UseAirPlayHandoff
+                    ? $"AirPlay-ready Live Cast at {fps} FPS using {friendlyEncoder}. Open {airPlayPageUrl} on an Apple device."
+                    : $"Live casting {source.Name} at {fps} FPS using {friendlyEncoder}" +
+                      (string.IsNullOrWhiteSpace(audioName)
+                          ? " without audio."
+                          : " with PC audio.");
 
             SaveCurrentSettings();
 
@@ -1446,9 +1546,11 @@ public partial class MainWindow : Window
     {
         StopLiveButton.IsEnabled = false;
 
+        _liveServer.SetControlState(null);
         await _liveServer.StopAsync();
         await _liveCapture.StopAsync();
         LiveStreamUrlTextBox.Clear();
+        ClearAirPlayPage();
         await StopPcAudioMonitorAsync();
 
         if (sendHome)
@@ -1947,7 +2049,9 @@ public partial class MainWindow : Window
         {
             _folderPollTimer.Stop();
 
-            var launchReceiver = !_folderReceiverLaunched;
+            var launchReceiver =
+                !UseAirPlayHandoff &&
+                !_folderReceiverLaunched;
 
             if (launchReceiver)
             {
@@ -2016,6 +2120,16 @@ public partial class MainWindow : Window
             _folderControlRevision =
                 _folderServer.SetControlState(streamUrl);
 
+            var airPlayPageUrl =
+                $"http://{ip}:{_folderServer.Port}/airplay";
+
+            if (UseAirPlayHandoff)
+            {
+                SetAirPlayPage(airPlayPageUrl);
+                _folderReceiverLaunched = false;
+                _linkReceiverLaunched = false;
+            }
+
             if (launchReceiver)
             {
                 var controlUrl =
@@ -2031,7 +2145,9 @@ public partial class MainWindow : Window
             }
 
             FolderNowPlayingText.Text =
-                $"Now playing: {item.FileName}";
+                UseAirPlayHandoff
+                    ? $"AirPlay-ready: {item.FileName}. Open {airPlayPageUrl} on an Apple device."
+                    : $"Now playing: {item.FileName}";
 
             FolderStopButton.IsEnabled = true;
             FolderPreviousButton.IsEnabled =
@@ -2218,6 +2334,7 @@ public partial class MainWindow : Window
         _folderServer.SetControlState(null);
         await _folderTranscoder.StopAsync();
         await StopPcAudioMonitorAsync();
+        ClearAirPlayPage();
 
         FolderStopButton.IsEnabled = false;
     }
@@ -2264,14 +2381,21 @@ public partial class MainWindow : Window
             var streamUrl = $"http://{ip}:{_mediaServer.Port}/media";
             StreamUrlTextBox.Text = streamUrl;
             SetPcAudioMonitorSource(streamUrl);
+            var airPlayPageUrl =
+                $"http://{ip}:{_mediaServer.Port}/airplay";
 
-            await _rokuClient.LaunchDoweLanCasterAsync(streamUrl);
+            if (UseAirPlayHandoff)
+                SetAirPlayPage(airPlayPageUrl);
+            else
+                await _rokuClient.LaunchDoweLanCasterAsync(streamUrl);
 
             _linkReceiverLaunched = false;
             _folderReceiverLaunched = false;
 
             CastStatusText.Text =
-                $"Casting {Path.GetFileName(_selectedFile)} to {_rokuClient.Device.Name}.";
+                UseAirPlayHandoff
+                    ? $"AirPlay-ready: {Path.GetFileName(_selectedFile)}. Open {airPlayPageUrl} on an Apple device."
+                    : $"Casting {Path.GetFileName(_selectedFile)} to {_rokuClient.Device.Name}.";
 
             StopCastingButton.IsEnabled = true;
             StatusText.Text = "File casting active.";
@@ -2294,6 +2418,7 @@ public partial class MainWindow : Window
         await _mediaServer.StopAsync();
         StreamUrlTextBox.Clear();
         await StopPcAudioMonitorAsync();
+        ClearAirPlayPage();
         CastStatusText.Text = "Casting stopped.";
         StatusText.Text = "Ready.";
     }

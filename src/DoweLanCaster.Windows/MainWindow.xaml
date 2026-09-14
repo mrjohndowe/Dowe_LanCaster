@@ -529,6 +529,38 @@
                         </TabItem>
 
 
+                        <TabItem Header="AirPlay">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <StackPanel Margin="16">
+                                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+                                                        <StackPanel>
+                                                                <TextBlock Text="Apple AirPlay Handoff" FontSize="24" FontWeight="Bold" Margin="0,0,0,8"/>
+                                                                <TextBlock Text="Prepare Link, Live, Folder, TeraBox, or File Cast for AirPlay without launching the Dowe LanCaster Roku receiver." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,14"/>
+                                                                <CheckBox x:Name="AirPlayModeCheckBox" Content="Use AirPlay handoff for new casts" FontWeight="SemiBold" Margin="0,0,0,12" Checked="AirPlayModeCheckBox_Changed" Unchecked="AirPlayModeCheckBox_Changed"/>
+                                                                <TextBlock Text="Current AirPlay page" FontWeight="SemiBold"/>
+                                                                <TextBox x:Name="AirPlayPageUrlTextBox" IsReadOnly="True" Height="34" Margin="0,6,0,10"/>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                        <Button Content="Copy AirPlay Address" Padding="16,7" Click="CopyAirPlayAddressButton_Click"/>
+                                                                        <Button Content="Test Page on This PC" Padding="16,7" Margin="10,0,0,0" Click="OpenAirPlayPageButton_Click"/>
+                                                                </StackPanel>
+                                                                <TextBlock x:Name="AirPlayStatusText" Text="Enable AirPlay handoff, then start a cast from its normal tab." TextWrapping="Wrap" Margin="0,14,0,0"/>
+                                                        </StackPanel>
+                                                </Border>
+
+                                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18">
+                                                        <StackPanel>
+                                                                <TextBlock Text="How to send it to Roku" FontSize="20" FontWeight="Bold" Margin="0,0,0,8"/>
+                                                                <TextBlock Text="1. On the Roku, turn on Settings > Apple AirPlay and HomeKit > AirPlay." TextWrapping="Wrap" Margin="0,3"/>
+                                                                <TextBlock Text="2. Connect the iPhone, iPad, or Mac to the same network as this PC and Roku." TextWrapping="Wrap" Margin="0,3"/>
+                                                                <TextBlock Text="3. Open the Current AirPlay page on that Apple device." TextWrapping="Wrap" Margin="0,3"/>
+                                                                <TextBlock Text="4. Tap Play, tap the AirPlay icon, and select the Roku." TextWrapping="Wrap" Margin="0,3"/>
+                                                                <TextBlock Text="Windows does not provide an official AirPlay sender. The Apple device performs the secure AirPlay handoff; Dowe LanCaster continues hosting and converting the media." TextWrapping="Wrap" Opacity="0.72" Margin="0,12,0,0"/>
+                                                        </StackPanel>
+                                                </Border>
+                                        </StackPanel>
+                                </ScrollViewer>
+                        </TabItem>
+
                         <TabItem Header="Settings">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                                         <StackPanel Margin="16">

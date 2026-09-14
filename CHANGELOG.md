@@ -21,6 +21,29 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.47] - 2026-09-14
+
+### Added
+
+* Added an AirPlay tab and an optional AirPlay handoff mode for Link, Live,
+  Folder, TeraBox, and File Cast.
+* Added a LAN playback page with an Apple AirPlay-enabled video element. Open
+  its address on an iPhone, iPad, or Mac, start playback, and select a
+  compatible Roku from Apple's AirPlay menu.
+* Added controls to copy the current AirPlay address and test the playback page
+  in the PC's default browser.
+
+### Changed
+
+* AirPlay mode prepares the stream without launching or restarting the custom
+  Dowe LanCaster Roku receiver. Receiver mode remains the default and continues
+  to support the complete built-in Roku experience.
+* Folder Cast's AirPlay page reports video completion to Windows so automatic
+  playlist advancement can continue while the page remains open.
+* Added clear in-app setup instructions and the supported-device boundary:
+  Roku officially accepts AirPlay from an iPhone, iPad, or Mac, so the Apple
+  device performs the secure handoff while Dowe LanCaster hosts the stream.
+
 ## [0.9.5.46] - 2026-09-13
 
 ### Fixed

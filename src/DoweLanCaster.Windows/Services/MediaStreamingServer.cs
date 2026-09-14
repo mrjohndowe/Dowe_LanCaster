@@ -29,6 +29,19 @@ public sealed class MediaStreamingServer : IAsyncDisposable
         app.MapGet("/", () => Results.Json(new { app = "Dowe LanCaster", status = "ready", stream = "/media" }));
         app.MapGet("/health", () => Results.Text("OK"));
 
+        app.MapGet("/airplay", () =>
+        {
+            if (_filePath is null || !File.Exists(_filePath))
+                return Results.NotFound("No media file is currently prepared for AirPlay.");
+
+            return Results.Content(
+                AirPlayPage.Create(
+                    Path.GetFileName(_filePath),
+                    "/media",
+                    GetContentType(Path.GetExtension(_filePath))),
+                "text/html; charset=utf-8");
+        });
+
         app.MapMethods("/media", new[] { "GET", "HEAD" }, async context =>
         {
             if (_filePath is null || !File.Exists(_filePath))
