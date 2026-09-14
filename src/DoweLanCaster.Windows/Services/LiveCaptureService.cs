@@ -166,7 +166,7 @@ public sealed class LiveCaptureService : IAsyncDisposable
             {
                 _recentLog.Enqueue(e.Data);
 
-                while (_recentLog.Count > 20)
+                while (_recentLog.Count > 200)
                     _recentLog.Dequeue();
             }
 
@@ -175,6 +175,11 @@ public sealed class LiveCaptureService : IAsyncDisposable
 
         if (!p.Start())
             throw new InvalidOperationException("FFmpeg could not be started.");
+
+        LogLine?.Invoke(
+            $"Live Cast input: {source.Name}; encoder: {encoder}; " +
+            $"audio: {(string.IsNullOrWhiteSpace(audioDevice) ? "off" : audioDevice)}; " +
+            $"{fps} FPS; {bitrateKbps} kbps.");
 
         p.BeginErrorReadLine();
         _process = p;

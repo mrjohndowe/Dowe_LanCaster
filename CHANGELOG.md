@@ -21,6 +21,20 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.46] - 2026-09-13
+
+### Fixed
+
+* Live Cast now tests each hardware encoder by actually encoding a frame before
+  displaying it in Settings. This prevents FFmpeg builds that list Intel Quick
+  Sync, NVIDIA NVENC, or AMD AMF without usable hardware support from being
+  selected and then failing when a cast starts.
+* Removed encoder choices that the streaming pipeline did not implement and
+  previously mislabeled as active while silently using CPU encoding.
+* Expanded the retained FFmpeg diagnostics and added the selected video source,
+  encoder, audio source, frame rate, and bitrate to the Live Cast log so input
+  and encoder failures no longer collapse into an unhelpful final I/O error.
+
 ## [0.9.5.45] - 2026-09-09
 
 ### Fixed
