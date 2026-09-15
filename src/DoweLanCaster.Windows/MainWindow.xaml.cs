@@ -106,6 +106,15 @@ public partial class MainWindow : Window
             Dispatcher.BeginInvoke(() =>
                 UpdateDiagnostics(message: $"Private Listening: {line}"));
 
+        _privateListening.AudioReceived += () =>
+            Dispatcher.BeginInvoke(() =>
+            {
+                HeadphoneStatusText.Text =
+                    "Roku audio is being received and playing through the Windows default output.";
+                UpdateDiagnostics(
+                    message: "Private Listening: Roku audio packets are arriving at this PC.");
+            });
+
         Loaded += async (_, _) =>
         {
             LoadSavedSettings();
@@ -2530,11 +2539,8 @@ public partial class MainWindow : Window
         }
 
         _remoteWindow = new RemoteWindow(
-            _rokuClient.Device.Name,
-            SendRemoteKeyAsync,
-            SetRokuVolumeAsync,
+            _rokuClient.Device,
             TogglePrivateListeningAsync,
-            SendTextToRokuAsync,
             ToggleVoiceControlFromRemote)
         {
             Owner = this
@@ -2619,7 +2625,7 @@ public partial class MainWindow : Window
         HeadphoneStatusText.Text = "Connecting Roku audio to this PC...";
         await _privateListening.StartAsync(_rokuClient.Device.IpAddress);
         HeadphoneModeButton.Content = "🎧  Stop Roku Private Listening";
-        return "Private Listening is connected. Start or resume a video on the Roku; its audio will play through the Windows default output.";
+        return "Private Listening is connected and waiting for Roku audio. Start or resume a video; the status will confirm when audio packets arrive.";
     }
 
     private void SetPcAudioMonitorSource(string streamUrl)

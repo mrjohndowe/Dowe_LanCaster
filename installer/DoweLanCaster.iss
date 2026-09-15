@@ -1,5 +1,5 @@
 #ifndef MyAppVersion
-  #define MyAppVersion "0.9.5.49"
+  #define MyAppVersion "0.9.5.50"
 #endif
 
 #define MyAppName "Dowe LanCaster"
@@ -55,7 +55,11 @@ Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""Dowe LanCaster Roku Private Listening"" dir=in action=allow protocol=UDP localport=6970 remoteip=localsubnet profile=private"; Flags: runhidden waituntilterminated
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall
+
+[UninstallRun]
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""Dowe LanCaster Roku Private Listening"""; Flags: runhidden waituntilterminated
 
 [Code]
 var

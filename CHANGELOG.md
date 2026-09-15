@@ -21,6 +21,23 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.50] - 2026-09-15
+
+### Fixed
+
+* Gave the pop-out remote its own Roku client bound to the device selected when
+  the window opens. Direction, playback, volume, text, Home, Back, Replay, and
+  Power controls no longer depend on the embedded remote's mutable connection.
+* Added a Windows Firewall installer rule for Roku Private Listening UDP audio
+  on port 6970. The rule is limited to the Private network profile and local
+  subnet, and is removed when Dowe LanCaster is uninstalled.
+* Added a separate Private Listening audio-received signal. Connected now means
+  the Roku authorized the audio output, while the interface and Diagnostics
+  confirm separately when the first Roku audio packet actually reaches the PC.
+* Changed the connected status to say it is waiting for Roku audio until a
+  playing video produces packets, avoiding another false audible-success
+  message.
+
 ## [0.9.5.49] - 2026-09-15
 
 ### Fixed

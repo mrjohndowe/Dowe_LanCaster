@@ -1,30 +1,25 @@
 using System.Windows;
 using System.Windows.Controls;
+using DoweLanCaster.Models;
+using DoweLanCaster.Services;
 
 namespace DoweLanCaster;
 
 public partial class RemoteWindow : Window
 {
-    private readonly Func<string, Task> _sendKeyAsync;
-    private readonly Func<int, Task> _setVolumeAsync;
+    private readonly RokuClient _rokuClient;
     private readonly Func<Task<string>> _togglePrivateListeningAsync;
-    private readonly Func<string, Task> _sendTextAsync;
     private readonly Func<string> _toggleVoiceControl;
 
     public RemoteWindow(
-        string deviceName,
-        Func<string, Task> sendKeyAsync,
-        Func<int, Task> setVolumeAsync,
+        RokuDevice device,
         Func<Task<string>> togglePrivateListeningAsync,
-        Func<string, Task> sendTextAsync,
         Func<string> toggleVoiceControl)
     {
         InitializeComponent();
-        DeviceText.Text = deviceName;
-        _sendKeyAsync = sendKeyAsync;
-        _setVolumeAsync = setVolumeAsync;
+        DeviceText.Text = device.Name;
+        _rokuClient = new RokuClient(device);
         _togglePrivateListeningAsync = togglePrivateListeningAsync;
-        _sendTextAsync = sendTextAsync;
         _toggleVoiceControl = toggleVoiceControl;
     }
 
@@ -35,7 +30,7 @@ public partial class RemoteWindow : Window
 
         try
         {
-            await _sendKeyAsync(key);
+            await _rokuClient.SendKeyAsync(key);
             StatusText.Text = $"Sent: {key}";
         }
         catch (Exception ex)
@@ -56,7 +51,7 @@ public partial class RemoteWindow : Window
         try
         {
             StatusText.Text = $"Setting Roku volume to {level}...";
-            await _setVolumeAsync(level);
+            await _rokuClient.SetVolumeAsync(level);
             StatusText.Text = $"Roku volume set to {level}.";
         }
         catch (Exception ex)
@@ -90,7 +85,7 @@ public partial class RemoteWindow : Window
 
         try
         {
-            await _sendTextAsync(RokuTextInput.Text);
+            await _rokuClient.SendTextAsync(RokuTextInput.Text);
             RokuTextInput.Clear();
             StatusText.Text = "Text sent.";
         }
@@ -107,5 +102,11 @@ public partial class RemoteWindow : Window
             ? "🎤  Start Voice Control"
             : "🎤  Stop Voice Control";
         StatusText.Text = status;
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _rokuClient.Dispose();
+        base.OnClosed(e);
     }
 }

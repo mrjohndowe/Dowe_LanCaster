@@ -11,6 +11,7 @@ public sealed class RokuPrivateListeningService : IAsyncDisposable
 
     public bool IsRunning => _process is { HasExited: false };
     public event Action<string>? LogLine;
+    public event Action? AudioReceived;
 
     public async Task StartAsync(string rokuIpAddress)
     {
@@ -64,6 +65,9 @@ public sealed class RokuPrivateListeningService : IAsyncDisposable
 
             if (string.Equals(eventArgs.Data, "PRIVATE_LISTENING_CONNECTED", StringComparison.Ordinal))
                 connection.TrySetResult();
+
+            if (string.Equals(eventArgs.Data, "PRIVATE_LISTENING_AUDIO_RECEIVED", StringComparison.Ordinal))
+                AudioReceived?.Invoke();
         };
         _process.ErrorDataReceived += (_, eventArgs) =>
         {
