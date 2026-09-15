@@ -21,6 +21,37 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.48] - 2026-09-14
+
+### Added
+
+* Added direct AirPlay pairing in the AirPlay tab. The app discovers the
+  selected Roku, asks it to display a PIN, accepts that PIN in Dowe LanCaster,
+  and saves the resulting AirPlay credentials in the current Windows user's
+  local application data.
+* Added a private, per-user AirPlay runtime so direct AirPlay support can be
+  installed and updated without placing credentials or generated files in the
+  Dowe LanCaster installation directory.
+* Added direct paired-AirPlay delivery for Link, Live, Folder, TeraBox, and
+  File Cast, while retaining the Apple-device playback page as a fallback.
+
+### Fixed
+
+* Private Listening now verifies that `ffplay.exe` is available before
+  connecting and reports helper errors in Diagnostics instead of claiming
+  audio is playing when the helper could not start.
+* Failed and timed-out Private Listening and AirPlay helper processes are now
+  stopped so a stale process cannot leave later attempts stuck on Connecting
+  or holding the listening port.
+* Private Listening now explains that Roku playback must be active before
+  audio can be heard through the Windows default output.
+
+### Notes
+
+* Investigated the ESP32 Roku Private Listening project. It was not bundled
+  because the repository distributes precompiled firmware, requires separate
+  ESP32 hardware, and does not declare a software license.
+
 ## [0.9.5.47] - 2026-09-14
 
 ### Added

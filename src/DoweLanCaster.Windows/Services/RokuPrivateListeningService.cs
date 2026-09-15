@@ -10,6 +10,7 @@ public sealed class RokuPrivateListeningService : IAsyncDisposable
     private Process? _process;
 
     public bool IsRunning => _process is { HasExited: false };
+    public event Action<string>? LogLine;
 
     public async Task StartAsync(string rokuIpAddress)
     {
@@ -27,6 +28,12 @@ public sealed class RokuPrivateListeningService : IAsyncDisposable
             throw new FileNotFoundException("The Private Listening helper was not installed.", jarPath);
 
         var ffmpegDirectory = Path.Combine(AppContext.BaseDirectory, "tools", "ffmpeg");
+        var ffplayPath = Path.Combine(ffmpegDirectory, "ffplay.exe");
+        if (!File.Exists(ffplayPath))
+            throw new FileNotFoundException(
+                "The Private Listening audio player was not installed.",
+                ffplayPath);
+
         var startInfo = new ProcessStartInfo
         {
             FileName = javaPath,
@@ -52,13 +59,27 @@ public sealed class RokuPrivateListeningService : IAsyncDisposable
         _process.EnableRaisingEvents = true;
         _process.OutputDataReceived += (_, eventArgs) =>
         {
+            if (!string.IsNullOrWhiteSpace(eventArgs.Data))
+                LogLine?.Invoke(eventArgs.Data);
+
             if (string.Equals(eventArgs.Data, "PRIVATE_LISTENING_CONNECTED", StringComparison.Ordinal))
                 connection.TrySetResult();
         };
         _process.ErrorDataReceived += (_, eventArgs) =>
         {
+            if (!string.IsNullOrWhiteSpace(eventArgs.Data))
+                LogLine?.Invoke(eventArgs.Data);
+
             if (eventArgs.Data?.StartsWith("PRIVATE_LISTENING_FAILED:", StringComparison.Ordinal) == true)
                 connection.TrySetException(new InvalidOperationException(eventArgs.Data));
+
+            if (eventArgs.Data?.Contains("Cannot run program \"ffplay\"", StringComparison.OrdinalIgnoreCase) == true)
+                connection.TrySetException(new InvalidOperationException(
+                    "The Roku connected, but the Private Listening audio player could not start."));
+
+            if (eventArgs.Data?.Contains("Address already in use", StringComparison.OrdinalIgnoreCase) == true)
+                connection.TrySetException(new InvalidOperationException(
+                    "Another Private Listening session is already using the Roku audio port. Close the older session and try again."));
         };
         _process.Exited += (_, _) => connection.TrySetException(
             new InvalidOperationException("Private Listening stopped before Roku audio connected."));
@@ -72,7 +93,20 @@ public sealed class RokuPrivateListeningService : IAsyncDisposable
                 "Roku did not confirm Private Listening within 12 seconds.");
         }
 
-        await connection.Task;
+        try
+        {
+            await connection.Task;
+
+            await Task.Delay(500);
+            if (_process is null || _process.HasExited)
+                throw new InvalidOperationException(
+                    "Private Listening connected, but its audio session stopped immediately.");
+        }
+        catch
+        {
+            await StopAsync();
+            throw;
+        }
     }
 
     public async Task StopAsync()

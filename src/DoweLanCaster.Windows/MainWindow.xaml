@@ -535,15 +535,22 @@
                                                 <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
                                                         <StackPanel>
                                                                 <TextBlock Text="Apple AirPlay Handoff" FontSize="24" FontWeight="Bold" Margin="0,0,0,8"/>
-                                                                <TextBlock Text="Prepare Link, Live, Folder, TeraBox, or File Cast for AirPlay without launching the Dowe LanCaster Roku receiver." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,14"/>
-                                                                <CheckBox x:Name="AirPlayModeCheckBox" Content="Use AirPlay handoff for new casts" FontWeight="SemiBold" Margin="0,0,0,12" Checked="AirPlayModeCheckBox_Changed" Unchecked="AirPlayModeCheckBox_Changed"/>
+                                                                <TextBlock Text="Pair the selected Roku, then send Link, Live, Folder, TeraBox, or File Cast directly with AirPlay without launching the Dowe LanCaster Roku receiver." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,14"/>
+                                                                <CheckBox x:Name="AirPlayModeCheckBox" Content="Use paired AirPlay for new casts" FontWeight="SemiBold" Margin="0,0,0,12" Checked="AirPlayModeCheckBox_Changed" Unchecked="AirPlayModeCheckBox_Changed"/>
+                                                                <TextBlock Text="Direct Roku pairing" FontWeight="SemiBold"/>
+                                                                <TextBlock Text="Pair once to let Dowe LanCaster send prepared streams directly to this Roku. Pairing information is saved for the current Windows user." TextWrapping="Wrap" Opacity="0.75" Margin="0,5,0,10"/>
+                                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                                                        <Button x:Name="StartAirPlayPairingButton" Content="1. Show PIN on Roku" Padding="16,7" Click="StartAirPlayPairingButton_Click"/>
+                                                                        <PasswordBox x:Name="AirPlayPinBox" Width="120" Height="34" Margin="10,0,0,0" MaxLength="8" VerticalContentAlignment="Center"/>
+                                                                        <Button x:Name="SaveAirPlayPinButton" Content="2. Save PIN" Padding="16,7" Margin="10,0,0,0" IsEnabled="False" Click="SaveAirPlayPinButton_Click"/>
+                                                                </StackPanel>
                                                                 <TextBlock Text="Current AirPlay page" FontWeight="SemiBold"/>
                                                                 <TextBox x:Name="AirPlayPageUrlTextBox" IsReadOnly="True" Height="34" Margin="0,6,0,10"/>
                                                                 <StackPanel Orientation="Horizontal">
                                                                         <Button Content="Copy AirPlay Address" Padding="16,7" Click="CopyAirPlayAddressButton_Click"/>
                                                                         <Button Content="Test Page on This PC" Padding="16,7" Margin="10,0,0,0" Click="OpenAirPlayPageButton_Click"/>
                                                                 </StackPanel>
-                                                                <TextBlock x:Name="AirPlayStatusText" Text="Enable AirPlay handoff, then start a cast from its normal tab." TextWrapping="Wrap" Margin="0,14,0,0"/>
+                                                                <TextBlock x:Name="AirPlayStatusText" Text="Pair the Roku for direct AirPlay, or use the playback page from an Apple device as a fallback." TextWrapping="Wrap" Margin="0,14,0,0"/>
                                                         </StackPanel>
                                                 </Border>
 
@@ -551,10 +558,10 @@
                                                         <StackPanel>
                                                                 <TextBlock Text="How to send it to Roku" FontSize="20" FontWeight="Bold" Margin="0,0,0,8"/>
                                                                 <TextBlock Text="1. On the Roku, turn on Settings > Apple AirPlay and HomeKit > AirPlay." TextWrapping="Wrap" Margin="0,3"/>
-                                                                <TextBlock Text="2. Connect the iPhone, iPad, or Mac to the same network as this PC and Roku." TextWrapping="Wrap" Margin="0,3"/>
-                                                                <TextBlock Text="3. Open the Current AirPlay page on that Apple device." TextWrapping="Wrap" Margin="0,3"/>
-                                                                <TextBlock Text="4. Tap Play, tap the AirPlay icon, and select the Roku." TextWrapping="Wrap" Margin="0,3"/>
-                                                                <TextBlock Text="Windows does not provide an official AirPlay sender. The Apple device performs the secure AirPlay handoff; Dowe LanCaster continues hosting and converting the media." TextWrapping="Wrap" Opacity="0.72" Margin="0,12,0,0"/>
+                                                                <TextBlock Text="2. Select Show PIN on Roku, enter the newly displayed PIN, and select Save PIN." TextWrapping="Wrap" Margin="0,3"/>
+                                                                <TextBlock Text="3. Enable paired AirPlay and start a cast from its normal tab." TextWrapping="Wrap" Margin="0,3"/>
+                                                                <TextBlock Text="4. If direct playback is unavailable, open the Current AirPlay page on an iPhone, iPad, or Mac as a fallback." TextWrapping="Wrap" Margin="0,3"/>
+                                                                <TextBlock Text="The first pairing installs an isolated AirPlay runtime under the current Windows user and saves the Roku pairing information there for later casts." TextWrapping="Wrap" Opacity="0.72" Margin="0,12,0,0"/>
                                                         </StackPanel>
                                                 </Border>
                                         </StackPanel>

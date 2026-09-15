@@ -8,9 +8,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>DoweLanCaster</AssemblyName>
     <RootNamespace>DoweLanCaster</RootNamespace>
-    <Version>0.9.5.47</Version>
-    <AssemblyVersion>0.9.5.47</AssemblyVersion>
-    <FileVersion>0.9.5.47</FileVersion>
+    <Version>0.9.5.48</Version>
+    <AssemblyVersion>0.9.5.48</AssemblyVersion>
+    <FileVersion>0.9.5.48</FileVersion>
     <StartupObject>DoweLanCaster.App</StartupObject>
     <AssemblyTitle>DoweLanCaster</AssemblyTitle>
     <ApplicationIcon>DoweLanCaster.ico</ApplicationIcon>
@@ -25,7 +25,7 @@
     <RepositoryUrl>https://github.com/mrjohndowe/Dowe_LanCaster.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>roku; streaming; casting; media; hls; ffmpeg; remote-control; windows; wpf;</PackageTags>
-    <PackageReleaseNotes>Dowe LanCaster v0.9.5.47 adds an optional Apple AirPlay handoff page for Link, Live, Folder, TeraBox, and File Cast while preserving the Dowe Roku receiver as the default.</PackageReleaseNotes>
+    <PackageReleaseNotes>Dowe LanCaster v0.9.5.48 adds direct AirPlay PIN pairing with saved per-user credentials and improves Private Listening setup, diagnostics, and failed-process cleanup.</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
