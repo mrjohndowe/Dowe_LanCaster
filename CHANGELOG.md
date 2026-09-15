@@ -21,6 +21,29 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.49] - 2026-09-15
+
+### Fixed
+
+* Restored Roku Private Listening audio with FFmpeg 9 by allowing its local
+  `fd` protocol when `ffplay` reads the SDP description from standard input.
+* Rebuilt the authorized RPListening helper so it reports a connection only
+  after the Roku accepts its audio-output request and the Windows audio player
+  remains running.
+* Forwarded `ffplay` errors into Dowe LanCaster Diagnostics and report a failed
+  audio-player startup instead of leaving the interface on Connecting or
+  falsely claiming audio is playing.
+* Changed dependency setup to reuse the bundled yt-dlp executable
+  instead of invoking its GitHub-backed self-updater during every CI build.
+  Fresh downloads now use retries and a temporary file, preventing GitHub API
+  rate limiting from breaking otherwise healthy release builds.
+
+### Notes
+
+* The ESP32 private-listening project was used as protocol research, but its
+  compiled firmware was not bundled because it requires separate ESP32
+  hardware and the repository provides no source-code license.
+
 ## [0.9.5.48] - 2026-09-14
 
 ### Added

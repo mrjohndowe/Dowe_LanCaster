@@ -8,9 +8,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>DoweLanCaster</AssemblyName>
     <RootNamespace>DoweLanCaster</RootNamespace>
-    <Version>0.9.5.48</Version>
-    <AssemblyVersion>0.9.5.48</AssemblyVersion>
-    <FileVersion>0.9.5.48</FileVersion>
+    <Version>0.9.5.49</Version>
+    <AssemblyVersion>0.9.5.49</AssemblyVersion>
+    <FileVersion>0.9.5.49</FileVersion>
     <StartupObject>DoweLanCaster.App</StartupObject>
     <AssemblyTitle>DoweLanCaster</AssemblyTitle>
     <ApplicationIcon>DoweLanCaster.ico</ApplicationIcon>
@@ -25,7 +25,7 @@
     <RepositoryUrl>https://github.com/mrjohndowe/Dowe_LanCaster.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>roku; streaming; casting; media; hls; ffmpeg; remote-control; windows; wpf;</PackageTags>
-    <PackageReleaseNotes>Dowe LanCaster v0.9.5.48 adds direct AirPlay PIN pairing with saved per-user credentials and improves Private Listening setup, diagnostics, and failed-process cleanup.</PackageReleaseNotes>
+    <PackageReleaseNotes>Dowe LanCaster v0.9.5.49 restores Roku Private Listening audio with FFmpeg 9, verifies the decoder before reporting success, and prevents CI rate limits from breaking bundled yt-dlp setup.</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
