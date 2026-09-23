@@ -108,7 +108,7 @@ public sealed class LiveCaptureService : IAsyncDisposable
         string videoEncoding = encoder switch
         {
             "h264_nvenc" =>
-                $"-c:v h264_nvenc -preset p3 -tune ll -rc cbr " +
+                $"-c:v libx264 -preset veryfast -pix_fmt yuv420p " +
                 $"-profile:v high -level:v 4.1 " +
                 $"-b:v {rate} -maxrate {rate} -bufsize {buffer}",
 
