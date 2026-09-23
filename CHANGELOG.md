@@ -21,6 +21,14 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.52] - 2026-09-23
+
+### Fixed
+
+- Added a visible **Choose Roku with AirPlay** button to the Apple-device handoff page instead of relying on Safari to expose an AirPlay icon in its native video controls.
+- Added clear AirPlay availability, unsupported-browser, and picker error messages.
+- Improved the AirPlay button's mobile layout, keyboard focus, icon, and text contrast.
+
 ## [0.9.5.51] - 2026-09-23
 
 ### Fixed
