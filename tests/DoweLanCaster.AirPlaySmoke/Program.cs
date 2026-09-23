@@ -2,15 +2,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using DoweLanCaster.Services;
 
-if (args.Length == 2 && args[0] == "--pairing-probe")
-{
-    await using var sender = new AirPlaySenderService();
-    sender.StatusChanged += status => Console.WriteLine($"AirPlay: {status}");
-    var identifier = await sender.StartPairingAsync(args[1]);
-    Console.WriteLine($"AirPlay pairing prompt reached for {args[1]} ({identifier}); no PIN or credentials were saved.");
-    return;
-}
-
 if (args.Length != 1 || !File.Exists(args[0]))
     throw new ArgumentException("Pass one existing media file to the AirPlay smoke test.");
 

@@ -21,6 +21,33 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.51] - 2026-09-23
+
+### Fixed
+
+* Removed the nonfunctional direct Windows-to-Roku AirPlay video path. Both
+  pyatv 0.16.1 and current pyatv 0.18.0 authenticated successfully but the Onn
+  Roku TV rejected the required RTSP commands with `501 Not Implemented` and
+  rejected the actual `/play` request with `404` without requesting the video.
+* Stopped treating pyatv's process exit code as playback success. pyatv printed
+  a full playback exception while returning exit code zero, which caused Dowe
+  LanCaster to claim that a stream was sent even though Roku remained idle.
+* Reworked the AirPlay tab into an accurate Apple-device handoff workflow.
+  Dowe LanCaster hosts the prepared video page; an iPhone, iPad, or Mac opens
+  it and performs the supported AirPlay handoff to Roku.
+* Clarified that the previously saved PIN was valid: authenticated device-info
+  and playback-state requests succeeded. The failure was Roku's unsupported
+  direct video-sender commands, not an incorrect PIN.
+
+### Changed
+
+* Windows users who want direct PC-to-Roku playback should leave AirPlay
+  handoff disabled and use the Dowe LanCaster Roku receiver. AirPlay handoff
+  mode now prepares and reports the Apple-device page instead of falsely
+  reporting direct Roku playback.
+* Removed the unused pyatv runtime installer and pairing controls from the
+  Windows application and removed pyatv from the third-party notices.
+
 ## [0.9.5.50] - 2026-09-15
 
 ### Fixed
