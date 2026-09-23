@@ -40,14 +40,48 @@ public sealed class RokuClient : IDisposable
                 nameof(level),
                 "Volume must be between 0 and 100.");
 
-        // Roku ECP provides relative volume keys but no current-volume query or
-        // absolute-volume endpoint. Resetting to the minimum first makes the
-        // requested value predictable on compatible Roku TV audio controls.
-        for (var i = 0; i < 100; i++)
-            await SendKeyAsync("VolumeDown", cancellationToken);
+        var current = await GetAudioDeviceStateAsync(cancellationToken);
+        if (current.Volume is null)
+            throw new InvalidOperationException("The Roku did not report its current volume.");
 
-        for (var i = 0; i < level; i++)
-            await SendKeyAsync("VolumeUp", cancellationToken);
+        var key = level < current.Volume ? "VolumeDown" : "VolumeUp";
+        for (var i = 0; i < Math.Abs(level - current.Volume.Value); i++)
+            await SendKeyAsync(key, cancellationToken);
+    }
+
+    public async Task<RokuAudioDeviceState> GetAudioDeviceStateAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var xml = await _httpClient.GetStringAsync(
+            $"http://{Device.IpAddress}:8060/query/audio-device",
+            cancellationToken);
+        return ParseAudioDeviceState(xml);
+    }
+
+    public static RokuAudioDeviceState ParseAudioDeviceState(string xml)
+    {
+        var doc = XDocument.Parse(xml);
+        var global = doc.Descendants("global").FirstOrDefault();
+        var volumeText = global?.Element("volume")?.Value
+            ?? global?.Attribute("volume")?.Value;
+        var mutedText = global?.Element("muted")?.Value
+            ?? global?.Attribute("muted")?.Value;
+        var destinations = doc.Descendants()
+            .Where(element => string.Equals(element.Name.LocalName, "destination", StringComparison.OrdinalIgnoreCase))
+            .Select(element => element.Attribute("name")?.Value ?? element.Value)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        int? volume = int.TryParse(volumeText, out var parsedVolume) ? parsedVolume : null;
+        bool? muted = mutedText?.Trim().ToLowerInvariant() switch
+        {
+            "true" or "1" => true,
+            "false" or "0" => false,
+            _ => null
+        };
+        return new RokuAudioDeviceState(volume, muted, destinations);
     }
 
     public async Task SendTextAsync(

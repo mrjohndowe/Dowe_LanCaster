@@ -30,6 +30,7 @@ public partial class MainWindow : Window
     private readonly AudioBackendService _audioBackendService = new();
     private readonly PcAudioMonitorService _pcAudioMonitor = new();
     private readonly RokuPrivateListeningService _privateListening = new();
+    private readonly PlaybackEndpointService _playbackEndpointService = new();
     private readonly SettingsService _settingsService = new();
     private readonly UpdateService _updateService = new();
     private readonly DiagnosticState _diagnostics = new();
@@ -61,6 +62,7 @@ public partial class MainWindow : Window
     private string _teraBoxDetectedTitle = "TeraBox video";
     private int _teraBoxDetectedMediaScore;
     private CoreWebView2Environment? _teraBoxWebViewEnvironment;
+    private RokuAudioDeviceState? _rokuAudioState;
 
     private static readonly IReadOnlyDictionary<string, string> VoiceCommandMap =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -105,10 +107,24 @@ public partial class MainWindow : Window
         _privateListening.AudioReceived += () =>
             Dispatcher.BeginInvoke(() =>
             {
+                var output = _privateListening.PlaybackEndpoint;
                 HeadphoneStatusText.Text =
-                    "Roku audio is being received and playing through the Windows default output.";
+                    $"Roku audio is being received and playing through {output}.";
                 UpdateDiagnostics(
-                    message: "Private Listening: Roku audio packets are arriving at this PC.");
+                    message: $"Private Listening: Roku audio packets are arriving and were sent to {output}.");
+            });
+        _privateListening.StateChanged += () =>
+            Dispatcher.BeginInvoke(() =>
+            {
+                var active = _privateListening.IsRunning ||
+                    _privateListening.LifecycleState is "Starting" or "Stopping";
+                HeadphoneModeButton.Content = active
+                    ? "🎧  Stop Roku Private Listening"
+                    : "🎧  Start Roku Private Listening";
+                _remoteWindow?.ApplyPrivateListeningState(active, _privateListening.LifecycleState);
+                if (!active && _privateListening.LifecycleState == "Stopped")
+                    HeadphoneStatusText.Text = "Private Listening is off. Java and FFplay were released.";
+                UpdateDiagnostics();
             });
 
         Loaded += async (_, _) =>
@@ -118,6 +134,7 @@ public partial class MainWindow : Window
             await InitializeFFmpegAsync();
             InitializeYtDlp();
             await RefreshAudioSourcesAsync();
+            RefreshPlaybackEndpoints();
             await InitializeTeraBoxBrowserAsync();
             LoadChangelog();
 
@@ -577,6 +594,26 @@ public partial class MainWindow : Window
 
     }
 
+    private void RefreshPlaybackEndpoints()
+    {
+        try
+        {
+            var endpoints = _playbackEndpointService.GetActiveEndpoints();
+            PrivateListeningSpeakerComboBox.ItemsSource = endpoints;
+            PrivateListeningSpeakerComboBox.SelectedItem = endpoints.FirstOrDefault(endpoint =>
+                string.Equals(endpoint.Id, _settings.PrivateListeningSpeakerId, StringComparison.OrdinalIgnoreCase))
+                ?? endpoints.FirstOrDefault(endpoint => endpoint.IsDefault)
+                ?? endpoints.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            SettingsStatusText.Text = $"Could not enumerate speakers: {ex.Message}";
+        }
+    }
+
+    private void RefreshPlaybackEndpointsButton_Click(object sender, RoutedEventArgs e) =>
+        RefreshPlaybackEndpoints();
+
     private static void SelectComboItemByContent(
         System.Windows.Controls.ComboBox combo,
         string desired)
@@ -696,6 +733,14 @@ public partial class MainWindow : Window
 
         _settings.IncludeSystemAudio =
             SettingsIncludeAudioCheckBox.IsChecked == true;
+
+        if (PrivateListeningSpeakerComboBox.SelectedItem is PlaybackEndpoint endpoint)
+        {
+            _settings.PrivateListeningSpeakerId = endpoint.Id;
+            _settings.PrivateListeningSpeaker = endpoint.IsDefault
+                ? "Windows default playback device"
+                : endpoint.Name;
+        }
 
         if (SettingsFpsComboBox.SelectedItem is ComboBoxItem fpsItem &&
             int.TryParse(
@@ -1387,7 +1432,7 @@ public partial class MainWindow : Window
         if (message is not null)
             _diagnostics.LastMessage = message;
 
-        DiagnosticsTextBox.Text =
+        var summary =
             $"Roku: {_diagnostics.Roku}{Environment.NewLine}" +
             $"FFmpeg: {_diagnostics.Ffmpeg}{Environment.NewLine}" +
             $"yt-dlp: {_diagnostics.YtDlp}{Environment.NewLine}" +
@@ -1395,7 +1440,31 @@ public partial class MainWindow : Window
             $"Stream: {_diagnostics.StreamUrl}{Environment.NewLine}" +
             $"HTTP: {_diagnostics.LastHttpRequest}{Environment.NewLine}" +
             $"Last: {_diagnostics.LastMessage}";
+
+        if (VerboseDiagnosticsCheckBox.IsChecked == true)
+        {
+            var audio = _rokuAudioState;
+            var verbose = new StringBuilder()
+                .AppendLine().AppendLine()
+                .AppendLine("--- Verbose runtime details ---")
+                .AppendLine($"Timestamp: {DateTime.Now:O}")
+                .AppendLine($"Private Listening state: {_privateListening.LifecycleState}")
+                .AppendLine($"Helper PID/alive: {_privateListening.HelperProcessId?.ToString() ?? "none"} / {_privateListening.IsRunning}")
+                .AppendLine($"Connected: {_privateListening.IsConnected}")
+                .AppendLine($"Audio packets received: {_privateListening.HasReceivedAudio}")
+                .AppendLine($"Playback endpoint: {_privateListening.PlaybackEndpoint}")
+                .AppendLine($"Roku volume/muted: {audio?.Volume?.ToString() ?? "unknown"} / {audio?.IsMuted?.ToString() ?? "unknown"}")
+                .AppendLine($"Roku audio destinations: {(audio is null || audio.Destinations.Count == 0 ? "not reported" : string.Join(", ", audio.Destinations))}")
+                .AppendLine("Recent Private Listening log (newest last):");
+            foreach (var line in _privateListening.RecentLog) verbose.AppendLine(line);
+            summary += verbose.ToString();
+        }
+
+        DiagnosticsTextBox.Text = summary;
     }
+
+    private void VerboseDiagnosticsCheckBox_Changed(object sender, RoutedEventArgs e) =>
+        UpdateDiagnostics();
 
     private void RefreshCaptureSources()
     {
@@ -1664,6 +1733,8 @@ public partial class MainWindow : Window
 
         UpdateDiagnostics(
             message: $"Connected to Roku {device.IpAddress}.");
+
+        await RefreshRokuVolumeAsync();
 
         await LoadAppsAsync();
     }
@@ -2446,6 +2517,11 @@ public partial class MainWindow : Window
         try
         {
             await SendRemoteKeyAsync(key);
+            if (key is "VolumeUp" or "VolumeDown" or "VolumeMute")
+            {
+                await Task.Delay(250);
+                await RefreshRokuVolumeAsync();
+            }
             StatusText.Text = $"Sent: {key}";
         }
         catch (Exception ex)
@@ -2475,6 +2551,8 @@ public partial class MainWindow : Window
         {
             Owner = this
         };
+        _remoteWindow.VolumeStateChanged += state => ApplyRokuAudioState(state);
+        if (_rokuAudioState is not null) _remoteWindow.ApplyAudioState(_rokuAudioState);
         EmbeddedRemoteViewbox.Visibility = Visibility.Collapsed;
         PopoutRemotePlaceholder.Visibility = Visibility.Visible;
         _remoteWindow.Closed += (_, _) =>
@@ -2500,6 +2578,28 @@ public partial class MainWindow : Window
                 new InvalidOperationException("Select a Roku device first."));
     }
 
+    private async Task RefreshRokuVolumeAsync()
+    {
+        if (_rokuClient is null) return;
+        try
+        {
+            ApplyRokuAudioState(await _rokuClient.GetAudioDeviceStateAsync());
+        }
+        catch (Exception ex)
+        {
+            UpdateDiagnostics(message: $"Roku audio-device query failed: {ex.Message}");
+        }
+    }
+
+    private void ApplyRokuAudioState(RokuAudioDeviceState state)
+    {
+        _rokuAudioState = state;
+        if (state.Volume is int volume)
+            VolumeLevelTextBox.Text = volume.ToString();
+        _remoteWindow?.ApplyAudioState(state);
+        UpdateDiagnostics();
+    }
+
     private async void SetVolumeButton_Click(object sender, RoutedEventArgs e)
     {
         if (_rokuClient is null)
@@ -2519,7 +2619,9 @@ public partial class MainWindow : Window
         {
             StatusText.Text = $"Setting Roku volume to {level}...";
             await SetRokuVolumeAsync(level);
-            StatusText.Text = $"Roku volume set to {level}.";
+            await Task.Delay(250);
+            await RefreshRokuVolumeAsync();
+            StatusText.Text = $"Roku volume is {_rokuAudioState?.Volume?.ToString() ?? "unknown"}.";
         }
         catch (Exception ex)
         {
@@ -2545,15 +2647,20 @@ public partial class MainWindow : Window
         if (_rokuClient is null)
             throw new InvalidOperationException("Select a Roku device first.");
 
-        if (_privateListening.IsRunning)
+        if (_privateListening.IsRunning ||
+            !string.Equals(_privateListening.LifecycleState, "Stopped", StringComparison.Ordinal))
         {
             await _privateListening.StopAsync();
             HeadphoneModeButton.Content = "🎧  Start Roku Private Listening";
+            HeadphoneStatusText.Text = "Private Listening is off. Java and FFplay were released.";
             return "Private Listening is off.";
         }
 
         HeadphoneStatusText.Text = "Connecting Roku audio to this PC...";
-        await _privateListening.StartAsync(_rokuClient.Device.IpAddress);
+        var endpoint = PrivateListeningSpeakerComboBox.SelectedItem as PlaybackEndpoint;
+        await _privateListening.StartAsync(
+            _rokuClient.Device.IpAddress,
+            endpoint is null || endpoint.IsDefault ? null : endpoint.Name);
         HeadphoneModeButton.Content = "🎧  Stop Roku Private Listening";
         return "Private Listening is connected and waiting for Roku audio. Start or resume a video; the status will confirm when audio packets arrive.";
     }
@@ -2976,12 +3083,12 @@ public partial class MainWindow : Window
         }
 
         _folderPollTimer.Stop();
+        await _privateListening.DisposeAsync();
         await _folderServer.DisposeAsync();
         await _folderTranscoder.DisposeAsync();
         await _urlServer.DisposeAsync();
         await _urlCapture.DisposeAsync();
         await _pcAudioMonitor.DisposeAsync();
-        await _privateListening.DisposeAsync();
         await _liveServer.DisposeAsync();
         await _liveCapture.DisposeAsync();
         await _mediaServer.DisposeAsync();

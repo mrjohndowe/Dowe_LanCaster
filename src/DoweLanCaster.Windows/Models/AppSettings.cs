@@ -9,6 +9,7 @@ public sealed class AppSettings
     public string? PreferredAudioSource { get; set; }
     public bool IncludeSystemAudio { get; set; } = true;
     public string PrivateListeningSpeaker { get; set; } = "Windows default playback device";
+    public string? PrivateListeningSpeakerId { get; set; }
     public string? LastFolderPath { get; set; }
     public bool FolderIncludeSubfolders { get; set; } = true;
     public string FolderRepeatMode { get; set; } = "Off";

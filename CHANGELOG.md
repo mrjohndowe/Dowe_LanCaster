@@ -21,6 +21,21 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 * Link Cast does not bypass DRM, authentication, paywalls, or access controls.
 
+## [0.9.5.53] - 2026-09-23
+
+### Added
+
+- Added a **Verbose diagnostics** option that shows the Private Listening lifecycle, helper process, selected playback endpoint, actual Roku volume and mute state, audio destinations, and recent helper output.
+- Added a selectable Private Listening speaker list populated from active Windows playback devices.
+
+### Fixed
+
+- Private Listening now records its helper process, recovers orphaned Java and FFplay process trees, and releases the session before other services when Dowe LanCaster closes.
+- Stop Private Listening now performs a graceful Roku disconnect, flushes the stop command, forcibly terminates a helper that does not exit, clears its tracking record, and resets the connection and audio state.
+- Private Listening status now distinguishes Roku authorization from real incoming audio and identifies the Windows speaker receiving that audio.
+- Embedded and pop-out remote volume fields now read the Roku's current `/query/audio-device` value after connecting, setting a number, pressing Volume Up or Down, and toggling Mute.
+- Absolute volume changes now move from the Roku's reported level instead of sending 100 unnecessary Volume Down commands first.
+
 ## [0.9.5.52] - 2026-09-23
 
 ### Fixed

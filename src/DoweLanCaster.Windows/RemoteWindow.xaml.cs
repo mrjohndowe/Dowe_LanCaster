@@ -10,6 +10,7 @@ public partial class RemoteWindow : Window
     private readonly RokuClient _rokuClient;
     private readonly Func<Task<string>> _togglePrivateListeningAsync;
     private readonly Func<string> _toggleVoiceControl;
+    public event Action<RokuAudioDeviceState>? VolumeStateChanged;
 
     public RemoteWindow(
         RokuDevice device,
@@ -21,6 +22,7 @@ public partial class RemoteWindow : Window
         _rokuClient = new RokuClient(device);
         _togglePrivateListeningAsync = togglePrivateListeningAsync;
         _toggleVoiceControl = toggleVoiceControl;
+        Loaded += async (_, _) => await RefreshAudioStateAsync();
     }
 
     private async void RemoteButton_Click(object sender, RoutedEventArgs e)
@@ -31,6 +33,11 @@ public partial class RemoteWindow : Window
         try
         {
             await _rokuClient.SendKeyAsync(key);
+            if (key is "VolumeUp" or "VolumeDown" or "VolumeMute")
+            {
+                await Task.Delay(250);
+                await RefreshAudioStateAsync();
+            }
             StatusText.Text = $"Sent: {key}";
         }
         catch (Exception ex)
@@ -52,7 +59,9 @@ public partial class RemoteWindow : Window
         {
             StatusText.Text = $"Setting Roku volume to {level}...";
             await _rokuClient.SetVolumeAsync(level);
-            StatusText.Text = $"Roku volume set to {level}.";
+            await Task.Delay(250);
+            await RefreshAudioStateAsync();
+            StatusText.Text = $"Roku volume is {VolumeTextBox.Text}.";
         }
         catch (Exception ex)
         {
@@ -102,6 +111,36 @@ public partial class RemoteWindow : Window
             ? "🎤  Start Voice Control"
             : "🎤  Stop Voice Control";
         StatusText.Text = status;
+    }
+
+    private async Task RefreshAudioStateAsync()
+    {
+        try
+        {
+            var state = await _rokuClient.GetAudioDeviceStateAsync();
+            ApplyAudioState(state);
+            VolumeStateChanged?.Invoke(state);
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Could not read Roku volume: {ex.Message}";
+        }
+    }
+
+    public void ApplyAudioState(RokuAudioDeviceState state)
+    {
+        if (state.Volume is int volume)
+            VolumeTextBox.Text = volume.ToString();
+    }
+
+    public void ApplyPrivateListeningState(bool active, string status)
+    {
+        PrivateListeningButton.Content = active
+            ? "🎧  Stop Roku Private Listening"
+            : "🎧  Start Roku Private Listening";
+        StatusText.Text = status == "Stopped"
+            ? "Private Listening is off. Java and FFplay were released."
+            : $"Private Listening: {status}.";
     }
 
     protected override void OnClosed(EventArgs e)

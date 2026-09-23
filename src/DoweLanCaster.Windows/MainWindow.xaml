@@ -604,9 +604,12 @@
                                                         <StackPanel>
                                                                 <TextBlock Text="Roku Private Listening" FontSize="22" FontWeight="Bold" Margin="0,0,0,8"/>
                                                                 <TextBlock Text="Listening speaker" FontWeight="SemiBold"/>
-                                                                <TextBlock Text="Windows default playback device" Margin="0,6,0,4"/>
-                                                                <TextBlock Text="Private Listening sends Roku audio to the Windows playback device marked as Default. Change that device in Windows Sound settings—for example, to switch between speakers and headphones." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,12"/>
-                                                                <Button Content="Open Windows Sound Settings" HorizontalAlignment="Left" Padding="14,6" Click="OpenWindowsSoundSettingsButton_Click"/>
+                                                                <ComboBox x:Name="PrivateListeningSpeakerComboBox" Height="34" Margin="0,6,0,8"/>
+                                                                <TextBlock Text="Windows Default is the most reliable option. Named endpoints are passed to FFplay through its SDL/WASAPI device hint; availability depends on the bundled FFplay build." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,12"/>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                        <Button Content="Refresh Speakers" Padding="14,6" Margin="0,0,8,0" Click="RefreshPlaybackEndpointsButton_Click"/>
+                                                                        <Button Content="Open Windows Sound Settings" Padding="14,6" Click="OpenWindowsSoundSettingsButton_Click"/>
+                                                                </StackPanel>
                                                         </StackPanel>
                                                 </Border>
 
@@ -638,7 +641,11 @@
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="*"/>
                                         </Grid.RowDefinitions>
-                                        <TextBlock Text="Dowe LanCaster Diagnostics" FontSize="24" FontWeight="Bold" Margin="0,0,0,12"/>
+                                        <Grid Margin="0,0,0,12">
+                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                <TextBlock Text="Dowe LanCaster Diagnostics" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                <CheckBox x:Name="VerboseDiagnosticsCheckBox" Grid.Column="1" Content="Verbose diagnostics" VerticalAlignment="Center" Margin="16,0,0,0" Checked="VerboseDiagnosticsCheckBox_Changed" Unchecked="VerboseDiagnosticsCheckBox_Changed"/>
+                                        </Grid>
                                         <TextBox x:Name="DiagnosticsTextBox" Grid.Row="1" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontFamily="Consolas" Text="Diagnostics will appear here."/>
                                 </Grid>
                         </TabItem>
