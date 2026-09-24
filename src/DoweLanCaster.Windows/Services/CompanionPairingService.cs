@@ -1,0 +1,141 @@
+using System.Net;
+using System.Security.Cryptography;
+using System.Text.Json;
+using DoweLanCaster.Companion.Contracts;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+
+namespace DoweLanCaster.Services;
+
+public sealed class CompanionPairingService : IAsyncDisposable
+{
+    private readonly object _gate = new();
+    private WebApplication? _app;
+    private CancellationTokenSource? _lifetime;
+    private string? _pairingCode;
+    private DateTimeOffset _pairingExpiresAt;
+    private readonly string _serverId = Guid.NewGuid().ToString("N");
+
+    public int Port { get; private set; } = CompanionProtocol.DefaultPort;
+    public bool IsRunning => _app is not null;
+    public string ServerId => _serverId;
+    public string? PairingCode => _pairingCode;
+    public DateTimeOffset PairingExpiresAt => _pairingExpiresAt;
+    public event Action<string>? LogLine;
+
+    public void RegeneratePairingCode()
+    {
+        lock (_gate)
+        {
+            RotatePairingCode();
+        }
+    }
+
+    public async Task StartAsync(int port = CompanionProtocol.DefaultPort)
+    {
+        lock (_gate)
+        {
+            if (_app is not null)
+                return;
+            Port = port;
+            _lifetime = new CancellationTokenSource();
+            RotatePairingCode();
+        }
+
+        var builder = WebApplication.CreateSlimBuilder();
+        builder.WebHost.UseUrls($"http://0.0.0.0:{Port}");
+        var app = builder.Build();
+
+        app.MapGet("/api/v1/health", () => Results.Ok(new
+        {
+            protocolVersion = CompanionProtocol.Version,
+            service = "Dowe LanCaster Companion",
+            serverId = _serverId,
+            port = Port
+        }));
+
+        app.MapGet("/api/v1/pairing/info", () => Results.Ok(new
+        {
+            protocolVersion = CompanionProtocol.Version,
+            serverId = _serverId,
+            port = Port,
+            pairingCode = _pairingCode,
+            expiresAt = _pairingExpiresAt
+        }));
+
+        app.MapPost("/api/v1/pairing/approve", async (HttpRequest request) =>
+        {
+            var payload = await JsonSerializer.DeserializeAsync<PairingApproval>(request.Body);
+            if (payload is null || string.IsNullOrWhiteSpace(payload.Code) ||
+                !string.Equals(payload.Code.Trim(), _pairingCode, StringComparison.Ordinal))
+            {
+                LogLine?.Invoke("Rejected companion pairing attempt: invalid code.");
+                return Results.BadRequest(new { error = "invalid_pairing_code" });
+            }
+
+            if (DateTimeOffset.UtcNow > _pairingExpiresAt)
+            {
+                LogLine?.Invoke("Rejected companion pairing attempt: code expired.");
+                return Results.BadRequest(new { error = "pairing_code_expired" });
+            }
+
+            var deviceId = string.IsNullOrWhiteSpace(payload.DeviceId)
+                ? Guid.NewGuid().ToString("N")
+                : payload.DeviceId.Trim();
+            RotatePairingCode();
+            LogLine?.Invoke($"Android companion paired: {deviceId}.");
+            return Results.Ok(new
+            {
+                protocolVersion = CompanionProtocol.Version,
+                serverId = _serverId,
+                deviceId,
+                message = "Pairing accepted."
+            });
+        });
+
+        app.Lifetime.ApplicationStarted.Register(() =>
+            LogLine?.Invoke($"Companion pairing service listening on port {Port}."));
+
+        lock (_gate)
+        {
+            _app = app;
+        }
+
+        await app.StartAsync(_lifetime!.Token);
+    }
+
+    public async Task StopAsync()
+    {
+        WebApplication? app;
+        CancellationTokenSource? lifetime;
+        lock (_gate)
+        {
+            app = _app;
+            lifetime = _lifetime;
+            _app = null;
+            _lifetime = null;
+            _pairingCode = null;
+        }
+
+        if (app is not null)
+            await app.StopAsync();
+        if (lifetime is not null)
+            lifetime.Dispose();
+        if (app is not null)
+            await app.DisposeAsync();
+    }
+
+    private void RotatePairingCode()
+    {
+        Span<byte> random = stackalloc byte[4];
+        RandomNumberGenerator.Fill(random);
+        var number = BitConverter.ToUInt32(random) % 1_000_000;
+        _pairingCode = number.ToString("D6");
+        _pairingExpiresAt = DateTimeOffset.UtcNow.Add(CompanionProtocol.PairingLifetime);
+    }
+
+    public async ValueTask DisposeAsync() => await StopAsync();
+
+    private sealed record PairingApproval(string? Code, string? DeviceId);
+}

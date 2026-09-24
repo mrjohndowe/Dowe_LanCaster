@@ -32,6 +32,7 @@ public partial class MainWindow : Window
     private readonly RokuPrivateListeningService _privateListening = new();
     private readonly PlaybackEndpointService _playbackEndpointService = new();
     private readonly SettingsService _settingsService = new();
+    private readonly CompanionPairingService _companionPairingService = new();
     private readonly UpdateService _updateService = new();
     private readonly DiagnosticState _diagnostics = new();
     private readonly FolderPlaylistService _folderPlaylistService = new();
@@ -100,6 +101,13 @@ public partial class MainWindow : Window
 
         _folderPollTimer.Tick += FolderPollTimer_Tick;
 
+        _companionPairingService.LogLine += message =>
+            Dispatcher.BeginInvoke(() =>
+            {
+                UpdateDiagnostics(message: $"Companion: {message}");
+                UpdateCompanionStatus();
+            });
+
         _privateListening.LogLine += line =>
             Dispatcher.BeginInvoke(() =>
                 UpdateDiagnostics(message: $"Private Listening: {line}"));
@@ -137,6 +145,7 @@ public partial class MainWindow : Window
             RefreshPlaybackEndpoints();
             await InitializeTeraBoxBrowserAsync();
             LoadChangelog();
+            await StartCompanionServiceAsync();
 
             if (!string.IsNullOrWhiteSpace(_settings.LastFolderPath) &&
                 Directory.Exists(_settings.LastFolderPath))
@@ -592,6 +601,75 @@ public partial class MainWindow : Window
         AirPlayModeCheckBox.IsChecked =
             _settings.UseAirPlayHandoff;
 
+    }
+
+    private async Task StartCompanionServiceAsync()
+    {
+        try
+        {
+            await _companionPairingService.StartAsync();
+            UpdateCompanionStatus();
+        }
+        catch (Exception ex)
+        {
+            CompanionStatusText.Text = $"Companion service could not start: {ex.Message}";
+            CompanionEndpointText.Text = "Choose Start Companion Service after closing any other program using port 8770.";
+            UpdateDiagnostics(message: $"Companion service failed: {ex.Message}");
+        }
+    }
+
+    private void UpdateCompanionStatus()
+    {
+        if (!_companionPairingService.IsRunning)
+        {
+            CompanionStatusText.Text = "Companion service is stopped.";
+            CompanionPairingCodeText.Text = "------";
+            CompanionEndpointText.Text = string.Empty;
+            return;
+        }
+
+        CompanionPairingCodeText.Text = _companionPairingService.PairingCode ?? "------";
+        CompanionStatusText.Text = $"Waiting for Android pairing until {_companionPairingService.PairingExpiresAt.LocalDateTime:t}.";
+        CompanionEndpointText.Text = $"{GetLocalLanAddress()}:{_companionPairingService.Port}";
+    }
+
+    private string GetLocalLanAddress()
+    {
+        try
+        {
+            using var socket = new System.Net.Sockets.Socket(
+                System.Net.Sockets.AddressFamily.InterNetwork,
+                System.Net.Sockets.SocketType.Dgram,
+                System.Net.Sockets.ProtocolType.Udp);
+            socket.Connect("8.8.8.8", 65530);
+            return ((System.Net.IPEndPoint)socket.LocalEndPoint!).Address.ToString();
+        }
+        catch
+        {
+            return "<PC LAN IP>";
+        }
+    }
+
+    private async void StartCompanionServiceButton_Click(object sender, RoutedEventArgs e)
+    {
+        await StartCompanionServiceAsync();
+    }
+
+    private async void StopCompanionServiceButton_Click(object sender, RoutedEventArgs e)
+    {
+        await _companionPairingService.StopAsync();
+        UpdateCompanionStatus();
+    }
+
+    private void GenerateCompanionCodeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_companionPairingService.IsRunning)
+        {
+            CompanionStatusText.Text = "Start the companion service before generating a pairing code.";
+            return;
+        }
+        _companionPairingService.RegeneratePairingCode();
+        UpdateCompanionStatus();
     }
 
     private void RefreshPlaybackEndpoints()
@@ -3083,6 +3161,7 @@ public partial class MainWindow : Window
         }
 
         _folderPollTimer.Stop();
+        await _companionPairingService.DisposeAsync();
         await _privateListening.DisposeAsync();
         await _folderServer.DisposeAsync();
         await _folderTranscoder.DisposeAsync();

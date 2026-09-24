@@ -613,6 +613,39 @@
                                                         </StackPanel>
                                                 </Border>
 
+                                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+                                                        <StackPanel>
+                                                                <TextBlock Text="Android Companion" FontSize="22" FontWeight="Bold" Margin="0,0,0,8"/>
+                                                                <TextBlock Text="Pair the Dowe LanCaster Android companion on your private network. The pairing code is one-time and expires after two minutes." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,12"/>
+                                                                <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                                <ColumnDefinition Width="28"/>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <StackPanel>
+                                                                                <TextBlock Text="Pairing code" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                                                        <TextBlock x:Name="CompanionPairingCodeText" Text="------" FontSize="24" FontWeight="Bold" Margin="0,0,18,0"/>
+                                                                                        <Button Content="New Code" Padding="14,6" Click="GenerateCompanionCodeButton_Click"/>
+                                                                                </StackPanel>
+                                                                                <TextBlock x:Name="CompanionStatusText" Text="Companion service is starting..." Margin="0,12,0,0" TextWrapping="Wrap"/>
+                                                                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                                                                        <Button Content="Start Companion Service" Padding="14,6" Margin="0,0,8,0" Click="StartCompanionServiceButton_Click"/>
+                                                                                        <Button Content="Stop Companion Service" Padding="14,6" Click="StopCompanionServiceButton_Click"/>
+                                                                                </StackPanel>
+                                                                        </StackPanel>
+                                                                        <Border Grid.Column="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16" MinHeight="118">
+                                                                                <StackPanel VerticalAlignment="Center">
+                                                                                        <TextBlock Text="PC endpoint" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                                                                        <TextBlock x:Name="CompanionEndpointText" Text="" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                                                                                        <TextBlock Text="Enter this IP and port in the Android app" TextWrapping="Wrap" TextAlignment="Center" Opacity="0.78" Margin="0,8,0,0"/>
+                                                                                </StackPanel>
+                                                                        </Border>
+                                                                </Grid>
+                                                        </StackPanel>
+                                                </Border>
+
                                                 <StackPanel Orientation="Horizontal">
                                                         <Button Content="Save and Apply Defaults" Height="42" Padding="18,6" Click="SaveAndApplySettingsButton_Click"/>
                                                         <TextBlock x:Name="SettingsStatusText" VerticalAlignment="Center" Margin="12,0,0,0" Opacity="0.78"/>
