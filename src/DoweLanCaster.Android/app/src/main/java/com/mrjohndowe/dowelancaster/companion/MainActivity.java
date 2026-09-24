@@ -218,7 +218,7 @@ public final class MainActivity extends Activity {
                 if (section.equals("Remote")) {
                     showRemoteScreen(page);
                 } else {
-                    Toast.makeText(this, section + " selected on the PC.", Toast.LENGTH_SHORT).show();
+                    showSectionScreen(page, section);
                 }
             });
             page.addView(sectionButton, margins(MATCH, dp(52), 0, 0, 0, 8));
@@ -269,25 +269,95 @@ public final class MainActivity extends Activity {
             }
             page.addView(line, margins(MATCH, dp(58), 0, 0, 0, 6));
         }
+
+        EditText textInput = input("Type text for the Roku");
+        page.addView(textInput, margins(MATCH, dp(54), 0, 14, 0, 8));
+        Button sendText = new Button(this);
+        sendText.setText("Send Text to Roku");
+        sendText.setAllCaps(false);
+        sendText.setOnClickListener(view -> sendValueCommand("remote-text", "value", textInput.getText().toString()));
+        page.addView(sendText, margins(MATCH, dp(52), 0, 0, 0, 8));
+
+        EditText volumeInput = input("Roku volume 0-100");
+        volumeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        page.addView(volumeInput, margins(MATCH, dp(54), 0, 8, 0, 8));
+        Button setVolume = new Button(this);
+        setVolume.setText("Set Roku Volume");
+        setVolume.setAllCaps(false);
+        setVolume.setOnClickListener(view -> sendValueCommand("set-volume", "value", volumeInput.getText().toString()));
+        page.addView(setVolume, margins(MATCH, dp(52), 0, 0, 0, 8));
         Button back = new Button(this);
         back.setText("Back to Companion Sections");
         back.setOnClickListener(view -> showConnectedScreen(page));
         page.addView(back, margins(MATCH, dp(52), 0, 16, 0, 0));
     }
 
+    private void showSectionScreen(LinearLayout page, String section) {
+        page.removeAllViews();
+        TextView title = text(section, 26, R.color.text_primary);
+        title.setGravity(Gravity.CENTER_HORIZONTAL);
+        page.addView(title, margins(MATCH, WRAP, 0, 18, 0, 12));
+
+        TextView state = text("Loading the live PC tab information...", 16, R.color.text_secondary);
+        state.setGravity(Gravity.CENTER_HORIZONTAL);
+        state.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
+        page.addView(state, margins(MATCH, WRAP, 0, 0, 0, 24));
+
+        TextView information = text("This tab is active on the PC. Its controls will stay synchronized with the PC companion service.", 16, R.color.text_secondary);
+        information.setGravity(Gravity.CENTER_HORIZONTAL);
+        information.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
+        page.addView(information, margins(MATCH, WRAP, 0, 0, 0, 24));
+
+        Button back = new Button(this);
+        back.setText("Back to Companion Sections");
+        back.setAllCaps(false);
+        back.setOnClickListener(view -> showConnectedScreen(page));
+        page.addView(back, margins(MATCH, dp(52), 0, 0, 0, 0));
+
+        loadTabState(section, state);
+    }
+
+    private void loadTabState(String requestedTab, TextView state) {
+        if (discoveredEndpoint == null) return;
+        networkExecutor.execute(() -> {
+            String message;
+            try {
+                HttpURLConnection connection = (HttpURLConnection)
+                        URI.create("http://" + discoveredEndpoint + "/api/v1/state").toURL().openConnection();
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(5000);
+                java.io.InputStream input = connection.getInputStream();
+                String json = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+                JSONObject snapshot = new JSONObject(json);
+                message = "PC active tab: " + snapshot.optString("activeTab", requestedTab)
+                        + "\n\nCompanion service connected on port "
+                        + snapshot.optInt("servicePort", 8770) + ".";
+                connection.disconnect();
+            } catch (Exception exception) {
+                message = "The PC tab was selected, but its current state could not be loaded.";
+            }
+            String finalMessage = message;
+            mainHandler.post(() -> state.setText(finalMessage));
+        });
+    }
+
     private void sendRemoteKey(String key) {
+        sendValueCommand("remote-key", "key", key);
+    }
+
+    private void sendValueCommand(String command, String field, String value) {
         if (discoveredEndpoint == null) return;
         networkExecutor.execute(() -> {
             try {
                 HttpURLConnection connection = (HttpURLConnection)
-                        URI.create("http://" + discoveredEndpoint + "/api/v1/commands/remote-key").toURL().openConnection();
+                        URI.create("http://" + discoveredEndpoint + "/api/v1/commands/" + command).toURL().openConnection();
                 connection.setRequestMethod("POST");
                 connection.setConnectTimeout(5000);
                 connection.setReadTimeout(5000);
                 connection.setDoOutput(true);
                 connection.setRequestProperty("Content-Type", "application/json");
                 JSONObject payload = new JSONObject();
-                payload.put("key", key);
+                payload.put(field, value);
                 try (OutputStream output = connection.getOutputStream()) {
                     output.write(payload.toString().getBytes(StandardCharsets.UTF_8));
                 }

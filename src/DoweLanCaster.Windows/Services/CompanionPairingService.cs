@@ -20,6 +20,7 @@ public sealed class CompanionPairingService : IAsyncDisposable
     private string? _pairingCode;
     private DateTimeOffset _pairingExpiresAt;
     private readonly string _serverId = Guid.NewGuid().ToString("N");
+    private string _activeTab = "Settings";
 
     public int Port { get; private set; } = CompanionProtocol.DefaultPort;
     public bool IsRunning => _app is not null;
@@ -58,6 +59,15 @@ public sealed class CompanionPairingService : IAsyncDisposable
             service = "Dowe LanCaster Companion",
             serverId = _serverId,
             port = Port
+        }));
+
+        app.MapGet("/api/v1/state", () => Results.Ok(new
+        {
+            protocolVersion = CompanionProtocol.Version,
+            serverId = _serverId,
+            activeTab = _activeTab,
+            companionConnected = true,
+            servicePort = Port
         }));
 
         app.MapGet("/api/v1/pairing/info", () => Results.Ok(new
@@ -110,6 +120,7 @@ public sealed class CompanionPairingService : IAsyncDisposable
                 new JsonSerializerOptions(JsonSerializerDefaults.Web) { PropertyNameCaseInsensitive = true });
             if (command is null || string.IsNullOrWhiteSpace(command.Tab))
                 return Results.BadRequest(new { error = "invalid_tab" });
+            _activeTab = command.Tab.Trim();
             CommandReceived?.Invoke("SelectTab", command.Tab.Trim());
             LogLine?.Invoke($"Android companion selected the {command.Tab} tab.");
             return Results.Ok(new { success = true, tab = command.Tab.Trim() });
@@ -122,6 +133,26 @@ public sealed class CompanionPairingService : IAsyncDisposable
             if (command is null || string.IsNullOrWhiteSpace(command.Key))
                 return Results.BadRequest(new { error = "invalid_key" });
             CommandReceived?.Invoke("RemoteKey", command.Key.Trim());
+            return Results.Ok(new { success = true });
+        });
+
+        app.MapPost("/api/v1/commands/remote-text", async (HttpRequest request) =>
+        {
+            var command = await JsonSerializer.DeserializeAsync<CompanionCommand>(request.Body,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web) { PropertyNameCaseInsensitive = true });
+            if (command is null || string.IsNullOrWhiteSpace(command.Value))
+                return Results.BadRequest(new { error = "invalid_text" });
+            CommandReceived?.Invoke("RemoteText", command.Value);
+            return Results.Ok(new { success = true });
+        });
+
+        app.MapPost("/api/v1/commands/set-volume", async (HttpRequest request) =>
+        {
+            var command = await JsonSerializer.DeserializeAsync<CompanionCommand>(request.Body,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web) { PropertyNameCaseInsensitive = true });
+            if (command is null || string.IsNullOrWhiteSpace(command.Value))
+                return Results.BadRequest(new { error = "invalid_volume" });
+            CommandReceived?.Invoke("SetVolume", command.Value);
             return Results.Ok(new { success = true });
         });
 
@@ -210,5 +241,5 @@ public sealed class CompanionPairingService : IAsyncDisposable
     public async ValueTask DisposeAsync() => await StopAsync();
 
     private sealed record PairingApproval(string? Code, string? DeviceId);
-    private sealed record CompanionCommand(string? Tab, string? Key, string? DeviceId);
+    private sealed record CompanionCommand(string? Tab, string? Key, string? Value, string? DeviceId);
 }

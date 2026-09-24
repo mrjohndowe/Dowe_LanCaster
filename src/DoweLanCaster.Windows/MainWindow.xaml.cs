@@ -114,6 +114,10 @@ public partial class MainWindow : Window
                     SelectCompanionTab(value);
                 else if (command == "RemoteKey")
                     await SendRemoteKeyAsync(value);
+                else if (command == "RemoteText")
+                    await (_rokuClient?.SendTextAsync(value) ?? Task.CompletedTask);
+                else if (command == "SetVolume" && int.TryParse(value, out var level))
+                    await SetRokuVolumeAsync(level);
             });
 
         _privateListening.LogLine += line =>
