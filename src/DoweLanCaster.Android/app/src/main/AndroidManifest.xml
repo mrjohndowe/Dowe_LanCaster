@@ -5,12 +5,15 @@
 
     <application
         android:allowBackup="false"
+        android:icon="@drawable/dowelancaster_icon"
         android:label="Dowe LanCaster Companion"
+        android:roundIcon="@drawable/dowelancaster_icon"
         android:supportsRtl="true"
         android:theme="@style/Theme.DoweLanCaster">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.DoweLanCaster.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -18,4 +21,3 @@
         </activity>
     </application>
 </manifest>
-

@@ -8,6 +8,7 @@ import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -18,11 +19,18 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTheme(R.style.Theme_DoweLanCaster);
 
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
         page.setPadding(dp(24), dp(32), dp(24), dp(24));
         page.setBackgroundColor(color(R.color.background));
+
+        ImageView logo = new ImageView(this);
+        logo.setImageResource(R.drawable.dowelancaster_icon);
+        logo.setContentDescription("Dowe LanCaster logo");
+        logo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        page.addView(logo, margins(MATCH, dp(112), 0, 0, 0, 12));
 
         TextView title = text("Dowe LanCaster", 28, R.color.text_primary);
         title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
@@ -95,4 +103,3 @@ public final class MainActivity extends Activity {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 }
-
