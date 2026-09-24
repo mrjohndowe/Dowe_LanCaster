@@ -118,6 +118,12 @@ public partial class MainWindow : Window
                     await (_rokuClient?.SendTextAsync(value) ?? Task.CompletedTask);
                 else if (command == "SetVolume" && int.TryParse(value, out var level))
                     await SetRokuVolumeAsync(level);
+                else if (command == "TabAction")
+                {
+                    var parts = value.Split('|', 3);
+                    if (parts.Length >= 2)
+                        await HandleCompanionTabActionAsync(parts[0], parts[1], parts.Length == 3 ? parts[2] : string.Empty);
+                }
             });
 
         _privateListening.LogLine += line =>
@@ -651,6 +657,41 @@ public partial class MainWindow : Window
             string.Equals(item.Header?.ToString(), tabName, StringComparison.OrdinalIgnoreCase));
         if (tab is not null)
             MainTabs.SelectedItem = tab;
+    }
+
+    private async Task HandleCompanionTabActionAsync(string tab, string action, string value)
+    {
+        SelectCompanionTab(tab);
+        if (tab.Equals("Link Cast", StringComparison.OrdinalIgnoreCase))
+        {
+            if (action.Equals("set-url", StringComparison.OrdinalIgnoreCase))
+                LinkUrlTextBox.Text = value;
+            else if (action.Equals("analyze", StringComparison.OrdinalIgnoreCase))
+                AnalyzeLinkButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            else if (action.Equals("stream", StringComparison.OrdinalIgnoreCase))
+                StreamLinkButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            else if (action.Equals("stop", StringComparison.OrdinalIgnoreCase))
+                StopLinkButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        }
+        else if (tab.Equals("Live Cast", StringComparison.OrdinalIgnoreCase))
+        {
+            if (action.Equals("start", StringComparison.OrdinalIgnoreCase))
+                StartLiveButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            else if (action.Equals("stop", StringComparison.OrdinalIgnoreCase))
+                StopLiveButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        }
+        else if (tab.Equals("Folder Cast", StringComparison.OrdinalIgnoreCase))
+        {
+            if (action.Equals("play", StringComparison.OrdinalIgnoreCase))
+                FolderPlayButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            else if (action.Equals("previous", StringComparison.OrdinalIgnoreCase))
+                FolderPreviousButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            else if (action.Equals("next", StringComparison.OrdinalIgnoreCase))
+                FolderNextButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            else if (action.Equals("stop", StringComparison.OrdinalIgnoreCase))
+                FolderStopButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        }
+        await Task.CompletedTask;
     }
 
     private string GetLocalLanAddress()

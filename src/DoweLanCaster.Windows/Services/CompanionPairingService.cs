@@ -157,6 +157,16 @@ public sealed class CompanionPairingService : IAsyncDisposable
             return Results.Ok(new { success = true });
         });
 
+        app.MapPost("/api/v1/commands/tab-action", async (HttpRequest request) =>
+        {
+            var command = await JsonSerializer.DeserializeAsync<TabActionCommand>(request.Body,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web) { PropertyNameCaseInsensitive = true });
+            if (command is null || string.IsNullOrWhiteSpace(command.Tab) || string.IsNullOrWhiteSpace(command.Action))
+                return Results.BadRequest(new { error = "invalid_tab_action" });
+            CommandReceived?.Invoke("TabAction", $"{command.Tab.Trim()}|{command.Action.Trim()}|{command.Value ?? string.Empty}");
+            return Results.Ok(new { success = true, tab = command.Tab.Trim(), action = command.Action.Trim() });
+        });
+
         app.Lifetime.ApplicationStarted.Register(() =>
             LogLine?.Invoke($"Companion pairing service listening on port {Port}."));
 
@@ -255,4 +265,5 @@ public sealed class CompanionPairingService : IAsyncDisposable
 
     private sealed record PairingApproval(string? Code, string? DeviceId);
     private sealed record CompanionCommand(string? Tab, string? Key, string? Value, string? DeviceId);
+    private sealed record TabActionCommand(string? Tab, string? Action, string? Value, string? DeviceId);
 }

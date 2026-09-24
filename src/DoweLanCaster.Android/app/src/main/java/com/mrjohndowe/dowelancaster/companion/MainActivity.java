@@ -389,27 +389,66 @@ public final class MainActivity extends Activity {
 
     private void showSectionScreen(LinearLayout page, String section) {
         page.removeAllViews();
-        TextView title = text(section, 26, R.color.text_primary);
+        TextView title = text(section, 24, R.color.text_primary);
         title.setGravity(Gravity.CENTER_HORIZONTAL);
         page.addView(title, margins(MATCH, WRAP, 0, 18, 0, 12));
 
-        TextView state = text("Loading the live PC tab information...", 16, R.color.text_secondary);
-        state.setGravity(Gravity.CENTER_HORIZONTAL);
-        state.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
-        page.addView(state, margins(MATCH, WRAP, 0, 0, 0, 24));
-
-        TextView information = text("This tab is active on the PC. Its controls will stay synchronized with the PC companion service.", 16, R.color.text_secondary);
-        information.setGravity(Gravity.CENTER_HORIZONTAL);
-        information.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
-        page.addView(information, margins(MATCH, WRAP, 0, 0, 0, 24));
+        if (section.equals("Link Cast")) {
+            EditText url = input("Paste a media link");
+            page.addView(url, margins(MATCH, dp(48), 0, 0, 0, 8));
+            Button setUrl = remoteButton("Use Link", "set-url", R.color.surface);
+            setUrl.setOnClickListener(view -> sendTabAction(section, "set-url", url.getText().toString()));
+            page.addView(setUrl, margins(MATCH, dp(42), 0, 0, 0, 8));
+            page.addView(actionButton(section, "Analyze Link", "analyze", R.color.accent), margins(MATCH, dp(42), 0, 0, 0, 8));
+            page.addView(actionButton(section, "Stream to Roku", "stream", R.color.accent), margins(MATCH, dp(42), 0, 0, 0, 8));
+            page.addView(actionButton(section, "Stop Link Stream", "stop", R.color.surface), margins(MATCH, dp(42), 0, 0, 0, 8));
+        } else if (section.equals("Live Cast")) {
+            page.addView(actionButton(section, "Start Live Cast", "start", R.color.accent), margins(MATCH, dp(46), 0, 0, 0, 8));
+            page.addView(actionButton(section, "Stop Live Cast", "stop", R.color.surface), margins(MATCH, dp(46), 0, 0, 0, 8));
+        } else if (section.equals("Folder Cast")) {
+            page.addView(actionButton(section, "Previous", "previous", R.color.surface), margins(MATCH, dp(42), 0, 0, 0, 8));
+            page.addView(actionButton(section, "Play", "play", R.color.accent), margins(MATCH, dp(42), 0, 0, 0, 8));
+            page.addView(actionButton(section, "Next", "next", R.color.surface), margins(MATCH, dp(42), 0, 0, 0, 8));
+            page.addView(actionButton(section, "Stop", "stop", R.color.surface), margins(MATCH, dp(42), 0, 0, 0, 8));
+        } else {
+            TextView status = text("This tab is selected on the PC. Its controls are being synchronized through the companion connection.", 15, R.color.text_secondary);
+            status.setGravity(Gravity.CENTER_HORIZONTAL);
+            status.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
+            page.addView(status, margins(MATCH, WRAP, 0, 0, 0, 24));
+        }
 
         Button back = new Button(this);
         back.setText("Back to Companion Sections");
         back.setAllCaps(false);
         back.setOnClickListener(view -> showConnectedScreen(page));
         page.addView(back, margins(MATCH, dp(52), 0, 0, 0, 0));
+    }
 
-        loadTabState(section, state);
+    private Button actionButton(String tab, String label, String action, int tint) {
+        Button button = remoteButton(label, "tab-action", tint);
+        button.setOnClickListener(view -> sendTabAction(tab, action, ""));
+        return button;
+    }
+
+    private void sendTabAction(String tab, String action, String value) {
+        if (discoveredEndpoint == null) return;
+        networkExecutor.execute(() -> {
+            try {
+                HttpURLConnection connection = (HttpURLConnection) URI.create("http://" + discoveredEndpoint + "/api/v1/commands/tab-action").toURL().openConnection();
+                connection.setRequestMethod("POST");
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(5000);
+                connection.setDoOutput(true);
+                connection.setRequestProperty("Content-Type", "application/json");
+                JSONObject payload = new JSONObject();
+                payload.put("tab", tab);
+                payload.put("action", action);
+                payload.put("value", value);
+                try (OutputStream output = connection.getOutputStream()) { output.write(payload.toString().getBytes(StandardCharsets.UTF_8)); }
+                connection.getResponseCode();
+                connection.disconnect();
+            } catch (Exception ignored) { }
+        });
     }
 
     private void loadTabState(String requestedTab, TextView state) {
