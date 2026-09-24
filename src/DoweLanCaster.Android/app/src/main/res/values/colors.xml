@@ -4,7 +4,7 @@
     <color name="surface">#222936</color>
     <color name="outline">#3B4658</color>
     <color name="accent">#00AEEF</color>
+    <color name="power">#A94B55</color>
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#B8C1CF</color>
 </resources>
-

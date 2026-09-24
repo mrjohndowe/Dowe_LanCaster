@@ -66,6 +66,7 @@ public sealed class CompanionPairingService : IAsyncDisposable
             protocolVersion = CompanionProtocol.Version,
             serverId = _serverId,
             activeTab = _activeTab,
+            tabInfo = GetTabInfo(_activeTab),
             companionConnected = true,
             servicePort = Port
         }));
@@ -167,6 +168,18 @@ public sealed class CompanionPairingService : IAsyncDisposable
         await app.StartAsync(_lifetime!.Token);
         StartDiscoveryResponder(_lifetime.Token);
     }
+
+    private static object GetTabInfo(string tab) => tab switch
+    {
+        "Remote" => new { title = "Roku Remote", description = "Control navigation, playback, volume, power, text input, and private listening.", controls = new[] { "Home", "Back", "Replay", "Power", "D-pad", "Play/Pause", "Volume", "Keyboard text" } },
+        "Link Cast" => new { title = "Link Cast", description = "Paste a media link, choose the encoder and quality, then cast it to the selected Roku.", controls = new[] { "Media link", "Analyze", "Encoder", "Video bitrate", "Start cast", "Stop cast" } },
+        "Live Cast" => new { title = "Live Cast", description = "Stream the selected desktop, window, screen, and PC audio source to Roku.", controls = new[] { "Capture source", "PC audio", "Encoder", "Frame rate", "Video bitrate", "Start live cast", "Stop live cast" } },
+        "Folder Cast" => new { title = "Folder Cast", description = "Play a folder playlist on Roku with next, previous, pause, and stop controls.", controls = new[] { "Folder playlist", "Play", "Previous", "Next", "Stop" } },
+        "TeraBox" => new { title = "TeraBox", description = "Browse TeraBox in the embedded browser and cast a detected video to Roku.", controls = new[] { "Browser", "Back", "Home", "Refresh", "Cast detected video", "Stop cast" } },
+        "Settings" => new { title = "Settings", description = "Manage encoder, audio, playback, AirPlay, companion, and application preferences.", controls = new[] { "Encoder", "Audio source", "Playback", "AirPlay", "Companion", "Save settings" } },
+        "Diagnostics" => new { title = "Diagnostics", description = "Inspect Roku connectivity, streaming endpoints, FFmpeg, audio, and verbose logs.", controls = new[] { "Roku status", "FFmpeg status", "Audio status", "Verbose diagnostics", "Refresh" } },
+        _ => new { title = tab, description = "This Dowe LanCaster tab is selected on the PC.", controls = Array.Empty<string>() }
+    };
 
     public async Task StopAsync()
     {

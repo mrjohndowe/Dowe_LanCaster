@@ -15,6 +15,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.content.res.ColorStateList;
 
 import org.json.JSONObject;
 
@@ -288,43 +289,73 @@ public final class MainActivity extends Activity {
 
     private void showRemoteScreen(LinearLayout page) {
         page.removeAllViews();
-        TextView title = text("Dowe LanCaster Remote", 24, R.color.text_primary);
+        page.setPadding(dp(18), dp(18), dp(18), dp(18));
+        ImageView logo = new ImageView(this);
+        logo.setImageResource(R.drawable.dowelancaster_icon);
+        logo.setContentDescription("Dowe LanCaster logo");
+        logo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        page.addView(logo, margins(MATCH, dp(42), 0, 0, 0, 4));
+
+        TextView title = text("DOWE LANCASTER", 11, R.color.accent);
         title.setGravity(Gravity.CENTER_HORIZONTAL);
-        page.addView(title, margins(MATCH, WRAP, 0, 16, 0, 20));
-        String[][] rows = {{"Home", "Back"}, {"Up", "Select", "Down"}, {"Left", "Right"}, {"Rev", "Play", "Fwd"}, {"VolumeDown", "Mute", "VolumeUp"}, {"Power"}};
+        title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
+        page.addView(title, margins(MATCH, WRAP, 0, 0, 0, 8));
+
+        LinearLayout top = new LinearLayout(this);
+        top.setGravity(Gravity.CENTER);
+        top.addView(remoteButton("↩ Back", "Back", R.color.surface), new LinearLayout.LayoutParams(0, dp(42), 1));
+        top.addView(remoteButton("⌂ Home", "Home", R.color.accent), new LinearLayout.LayoutParams(0, dp(42), 1));
+        top.addView(remoteButton("⟳ Replay", "Replay", R.color.surface), new LinearLayout.LayoutParams(0, dp(42), 1));
+        top.addView(remoteButton("⏻ Power", "Power", R.color.power), new LinearLayout.LayoutParams(0, dp(42), 1));
+        page.addView(top, margins(MATCH, dp(48), 0, 0, 0, 12));
+
+        String[][] rows = {{"▲|Up"}, {"◀|Left", "OK|Select", "▶|Right"}, {"▼|Down"}, {"▣|Rev", "▶|Play", "▣|Fwd"}, {"Vol -|VolumeDown", "Mute|Mute", "Vol +|VolumeUp"}};
         for (String[] row : rows) {
             LinearLayout line = new LinearLayout(this);
             line.setGravity(Gravity.CENTER);
-            for (String key : row) {
-                Button button = new Button(this);
-                button.setText(key.equals("Select") ? "OK" : key);
-                button.setAllCaps(false);
-                button.setOnClickListener(view -> sendRemoteKey(key));
-                line.addView(button, new LinearLayout.LayoutParams(0, dp(54), 1));
+            for (String item : row) {
+                String[] parts = item.split("\\|", 2);
+                String label = parts[0];
+                String key = parts[1];
+                Button button = remoteButton(label, key, key.equals("Select") ? R.color.accent : R.color.surface);
+                LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(0, dp(46), 1);
+                buttonParams.setMargins(dp(3), dp(3), dp(3), dp(3));
+                line.addView(button, buttonParams);
             }
-            page.addView(line, margins(MATCH, dp(58), 0, 0, 0, 6));
+            page.addView(line, margins(MATCH, dp(52), 0, 0, 0, 0));
         }
-
-        EditText textInput = input("Type text for the Roku");
-        page.addView(textInput, margins(MATCH, dp(54), 0, 14, 0, 8));
-        Button sendText = new Button(this);
-        sendText.setText("Send Text to Roku");
-        sendText.setAllCaps(false);
-        sendText.setOnClickListener(view -> sendValueCommand("remote-text", "value", textInput.getText().toString()));
-        page.addView(sendText, margins(MATCH, dp(52), 0, 0, 0, 8));
 
         EditText volumeInput = input("Roku volume 0-100");
         volumeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
-        page.addView(volumeInput, margins(MATCH, dp(54), 0, 8, 0, 8));
-        Button setVolume = new Button(this);
-        setVolume.setText("Set Roku Volume");
-        setVolume.setAllCaps(false);
+        page.addView(volumeInput, margins(MATCH, dp(44), 0, 8, 0, 6));
+        Button setVolume = remoteButton("Set Volume", "set-volume", R.color.accent);
         setVolume.setOnClickListener(view -> sendValueCommand("set-volume", "value", volumeInput.getText().toString()));
-        page.addView(setVolume, margins(MATCH, dp(52), 0, 0, 0, 8));
-        Button back = new Button(this);
-        back.setText("Back to Companion Sections");
+        page.addView(setVolume, margins(MATCH, dp(42), 0, 0, 0, 8));
+
+        EditText textInput = input("Type or dictate text to your Roku...");
+        page.addView(textInput, margins(MATCH, dp(48), 0, 8, 0, 6));
+        Button sendText = remoteButton("Send Text to Roku", "remote-text", R.color.accent);
+        sendText.setOnClickListener(view -> sendValueCommand("remote-text", "value", textInput.getText().toString()));
+        page.addView(sendText, margins(MATCH, dp(42), 0, 0, 0, 8));
+
+        Button back = remoteButton("Back to Companion Sections", "back", R.color.surface);
         back.setOnClickListener(view -> showConnectedScreen(page));
-        page.addView(back, margins(MATCH, dp(52), 0, 16, 0, 0));
+        page.addView(back, margins(MATCH, dp(42), 0, 10, 0, 0));
+    }
+
+    private Button remoteButton(String label, String key, int tintResource) {
+        Button button = new Button(this);
+        button.setText(label);
+        button.setAllCaps(false);
+        button.setTextSize(12);
+        button.setTextColor(Color.WHITE);
+        button.setMinHeight(0);
+        button.setPadding(dp(4), 0, dp(4), 0);
+        button.setBackgroundTintList(ColorStateList.valueOf(color(tintResource)));
+        if (!key.equals("set-volume") && !key.equals("remote-text") && !key.equals("back")) {
+            button.setOnClickListener(view -> sendRemoteKey(key));
+        }
+        return button;
     }
 
     private void showSectionScreen(LinearLayout page, String section) {
@@ -364,8 +395,21 @@ public final class MainActivity extends Activity {
                 java.io.InputStream input = connection.getInputStream();
                 String json = new String(input.readAllBytes(), StandardCharsets.UTF_8);
                 JSONObject snapshot = new JSONObject(json);
+                JSONObject tabInfo = snapshot.optJSONObject("tabInfo");
+                StringBuilder details = new StringBuilder();
+                if (tabInfo != null) {
+                    details.append(tabInfo.optString("title", requestedTab)).append("\n\n")
+                            .append(tabInfo.optString("description", "")).append("\n\nControls available:\n");
+                    org.json.JSONArray controls = tabInfo.optJSONArray("controls");
+                    if (controls != null) {
+                        for (int index = 0; index < controls.length(); index++) {
+                            details.append("• ").append(controls.optString(index)).append("\n");
+                        }
+                    }
+                }
                 message = "PC active tab: " + snapshot.optString("activeTab", requestedTab)
-                        + "\n\nCompanion service connected on port "
+                        + "\n\n" + details
+                        + "\nCompanion service connected on port "
                         + snapshot.optInt("servicePort", 8770) + ".";
                 connection.disconnect();
             } catch (Exception exception) {
