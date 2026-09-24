@@ -41,6 +41,41 @@ public final class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setTheme(R.style.Theme_DoweLanCaster);
 
+        showIntroSplash();
+    }
+
+    private void showIntroSplash() {
+        LinearLayout splash = new LinearLayout(this);
+        splash.setOrientation(LinearLayout.VERTICAL);
+        splash.setGravity(Gravity.CENTER);
+        splash.setPadding(dp(32), dp(32), dp(32), dp(32));
+        splash.setBackgroundColor(color(R.color.background));
+
+        ImageView logo = new ImageView(this);
+        logo.setImageResource(R.drawable.dowelancaster_icon);
+        logo.setContentDescription("Dowe LanCaster logo");
+        logo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        splash.addView(logo, margins(MATCH, dp(190), 0, 0, 0, 20));
+
+        TextView title = text("Dowe LanCaster", 30, R.color.text_primary);
+        title.setGravity(Gravity.CENTER_HORIZONTAL);
+        title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
+        splash.addView(title, margins(MATCH, WRAP, 0, 0, 0, 8));
+
+        TextView subtitle = text("Android Companion", 18, R.color.accent);
+        subtitle.setGravity(Gravity.CENTER_HORIZONTAL);
+        splash.addView(subtitle, margins(MATCH, WRAP, 0, 0, 0, 12));
+
+        TextView loading = text("Starting companion...", 14, R.color.text_secondary);
+        loading.setGravity(Gravity.CENTER_HORIZONTAL);
+        splash.addView(loading, margins(MATCH, WRAP, 0, 0, 0, 0));
+
+        setContentView(splash);
+        mainHandler.postDelayed(this::showPairingScreen, 1400);
+    }
+
+    private void showPairingScreen() {
+
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
         page.setPadding(dp(24), dp(32), dp(24), dp(24));
