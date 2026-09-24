@@ -9,6 +9,7 @@
         android:label="Dowe LanCaster Companion"
         android:roundIcon="@drawable/dowelancaster_icon"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.DoweLanCaster">
         <activity
             android:name=".MainActivity"
