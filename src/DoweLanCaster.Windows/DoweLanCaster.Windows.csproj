@@ -8,9 +8,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>DoweLanCaster</AssemblyName>
     <RootNamespace>DoweLanCaster</RootNamespace>
-    <Version>0.9.5.61</Version>
-    <AssemblyVersion>0.9.5.61</AssemblyVersion>
-    <FileVersion>0.9.5.61</FileVersion>
+    <Version>0.9.5.62</Version>
+    <AssemblyVersion>0.9.5.62</AssemblyVersion>
+    <FileVersion>0.9.5.62</FileVersion>
     <StartupObject>DoweLanCaster.App</StartupObject>
     <AssemblyTitle>DoweLanCaster</AssemblyTitle>
     <ApplicationIcon>DoweLanCaster.ico</ApplicationIcon>
@@ -25,7 +25,7 @@
     <RepositoryUrl>https://github.com/mrjohndowe/Dowe_LanCaster.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>roku; streaming; casting; media; hls; ffmpeg; remote-control; windows; wpf;</PackageTags>
-    <PackageReleaseNotes>Dowe LanCaster v0.9.5.61 adds per-tab information and available-control details to the Android companion.</PackageReleaseNotes>
+    <PackageReleaseNotes>Dowe LanCaster v0.9.5.62 aligns the Android remote with the PC remote layout and visible controls.</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>

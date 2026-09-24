@@ -300,6 +300,9 @@ public final class MainActivity extends Activity {
         title.setGravity(Gravity.CENTER_HORIZONTAL);
         title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
         page.addView(title, margins(MATCH, WRAP, 0, 0, 0, 8));
+        TextView remoteLabel = text("ROKU REMOTE", 8, R.color.text_secondary);
+        remoteLabel.setGravity(Gravity.CENTER_HORIZONTAL);
+        page.addView(remoteLabel, margins(MATCH, WRAP, 0, 0, 0, 8));
 
         LinearLayout top = new LinearLayout(this);
         top.setGravity(Gravity.CENTER);
@@ -332,6 +335,22 @@ public final class MainActivity extends Activity {
         setVolume.setOnClickListener(view -> sendValueCommand("set-volume", "value", volumeInput.getText().toString()));
         page.addView(setVolume, margins(MATCH, dp(42), 0, 0, 0, 8));
 
+        Button privateListening = remoteButton("♬ Start Roku Private Listening", "PrivateListening", R.color.surface);
+        privateListening.setOnClickListener(view -> sendRemoteKey("PrivateListening"));
+        page.addView(privateListening, margins(MATCH, dp(40), 0, 0, 0, 4));
+        TextView privateHint = text("Private listening status is shown on the PC remote.", 8, R.color.text_secondary);
+        privateHint.setGravity(Gravity.CENTER_HORIZONTAL);
+        page.addView(privateHint, margins(MATCH, WRAP, 0, 0, 0, 6));
+
+        Button voice = remoteButton("♩ Start Voice Control", "VoiceControl", R.color.accent);
+        voice.setOnClickListener(view -> sendRemoteKey("VoiceControl"));
+        page.addView(voice, margins(MATCH, dp(40), 0, 0, 0, 4));
+        TextView voiceHint = text("Voice control is off", 8, R.color.text_secondary);
+        voiceHint.setGravity(Gravity.CENTER_HORIZONTAL);
+        page.addView(voiceHint, margins(MATCH, WRAP, 0, 0, 0, 6));
+
+        TextView keyboardLabel = text("Keyboard Text", 12, R.color.text_primary);
+        page.addView(keyboardLabel, margins(MATCH, WRAP, 0, 4, 0, 2));
         EditText textInput = input("Type or dictate text to your Roku...");
         page.addView(textInput, margins(MATCH, dp(48), 0, 8, 0, 6));
         Button sendText = remoteButton("Send Text to Roku", "remote-text", R.color.accent);
