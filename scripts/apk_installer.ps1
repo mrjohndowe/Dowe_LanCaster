@@ -23,6 +23,7 @@ param(
     [switch]$Clean
 )
 
+clear
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
