@@ -86,7 +86,7 @@ public final class MainActivity extends Activity {
         status.setGravity(Gravity.CENTER_HORIZONTAL);
         page.addView(status, margins(MATCH, WRAP, 0, 0, 0, 0));
 
-        pair.setOnClickListener(view -> pairWithPc(code.getText().toString(), pair, status));
+        pair.setOnClickListener(view -> pairWithPc(page, code.getText().toString(), pair, status));
 
         setContentView(page);
         discoverPc(discovery, status, pair);
@@ -129,7 +129,7 @@ public final class MainActivity extends Activity {
         });
     }
 
-    private void pairWithPc(String codeText, Button pairButton, TextView status) {
+    private void pairWithPc(LinearLayout page, String codeText, Button pairButton, TextView status) {
         String endpoint = discoveredEndpoint;
         String pairingCode = codeText.trim();
         if (endpoint == null || pairingCode.length() != 6) {
@@ -141,6 +141,7 @@ public final class MainActivity extends Activity {
         status.setText("Connecting to the PC companion service...");
         networkExecutor.execute(() -> {
             String result;
+            boolean paired = false;
             try {
                 SharedPreferences preferences = getSharedPreferences("companion", MODE_PRIVATE);
                 String deviceId = preferences.getString("device_id", null);
@@ -165,6 +166,7 @@ public final class MainActivity extends Activity {
                 }
 
                 int responseCode = connection.getResponseCode();
+                paired = responseCode >= 200 && responseCode < 300;
                 result = responseCode >= 200 && responseCode < 300
                         ? "Paired with Dowe LanCaster on the PC."
                         : "The PC rejected the pairing code (HTTP " + responseCode + ").";
@@ -174,12 +176,51 @@ public final class MainActivity extends Activity {
             }
 
             String finalResult = result;
+            boolean accepted = paired;
             mainHandler.post(() -> {
+                if (accepted) {
+                    showConnectedScreen(page);
+                    return;
+                }
                 status.setText(finalResult);
                 pairButton.setEnabled(true);
                 Toast.makeText(this, finalResult, Toast.LENGTH_SHORT).show();
             });
         });
+    }
+
+    private void showConnectedScreen(LinearLayout page) {
+        page.removeAllViews();
+
+        ImageView logo = new ImageView(this);
+        logo.setImageResource(R.drawable.dowelancaster_icon);
+        logo.setContentDescription("Dowe LanCaster logo");
+        logo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        page.addView(logo, margins(MATCH, dp(96), 0, 0, 0, 12));
+
+        TextView title = text("Connected to Dowe LanCaster", 24, R.color.text_primary);
+        title.setGravity(Gravity.CENTER_HORIZONTAL);
+        title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
+        page.addView(title, margins(MATCH, WRAP, 0, 0, 0, 8));
+
+        TextView subtitle = text("Choose a section to control on the PC.", 16, R.color.text_secondary);
+        subtitle.setGravity(Gravity.CENTER_HORIZONTAL);
+        page.addView(subtitle, margins(MATCH, WRAP, 0, 0, 0, 24));
+
+        String[] sections = {"Remote", "Link Cast", "Live Cast", "Folder Cast", "TeraBox", "Settings", "Diagnostics"};
+        for (String section : sections) {
+            Button sectionButton = new Button(this);
+            sectionButton.setText(section);
+            sectionButton.setAllCaps(false);
+            sectionButton.setTextSize(16);
+            sectionButton.setOnClickListener(view ->
+                    Toast.makeText(this, section + " controls are ready for the next companion command update.", Toast.LENGTH_SHORT).show());
+            page.addView(sectionButton, margins(MATCH, dp(52), 0, 0, 0, 8));
+        }
+
+        TextView connected = text("Secure pairing accepted for this phone.", 14, R.color.text_secondary);
+        connected.setGravity(Gravity.CENTER_HORIZONTAL);
+        page.addView(connected, margins(MATCH, WRAP, 0, 16, 0, 0));
     }
 
     @Override
