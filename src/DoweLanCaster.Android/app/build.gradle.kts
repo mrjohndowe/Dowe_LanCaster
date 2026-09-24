@@ -10,8 +10,8 @@ android {
         applicationId = "com.mrjohndowe.dowelancaster.companion"
         minSdk = 26
         targetSdk = 37
-        versionCode = 65
-        versionName = "0.9.5.65"
+        versionCode = 67
+        versionName = "0.9.5.67"
     }
 
     buildTypes {

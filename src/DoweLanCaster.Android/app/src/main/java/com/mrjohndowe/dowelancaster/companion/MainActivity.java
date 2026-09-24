@@ -105,16 +105,15 @@ public final class MainActivity extends Activity {
         discovery.setGravity(Gravity.CENTER_HORIZONTAL);
         page.addView(discovery, margins(MATCH, WRAP, 0, 0, 0, 12));
 
+        EditText endpoint = input("PC IP:PORT (example: 10.0.0.45:8770)");
+        page.addView(endpoint, margins(MATCH, dp(48), 0, 0, 0, 12));
+
         EditText code = input("One-time pairing code");
         code.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
         page.addView(code, margins(MATCH, dp(54), 0, 0, 0, 16));
 
-        Button pair = new Button(this);
-        pair.setText("Pair with PC");
+        Button pair = remoteButton("Pair with PC", "pair", R.color.accent);
         pair.setTextSize(16);
-        pair.setAllCaps(false);
-        pair.setTextColor(Color.WHITE);
-        pair.setBackgroundTintList(getColorStateList(R.color.accent));
         page.addView(pair, margins(MATCH, dp(54), 0, 0, 0, 20));
 
         TextView status = text(
@@ -123,13 +122,13 @@ public final class MainActivity extends Activity {
         status.setGravity(Gravity.CENTER_HORIZONTAL);
         page.addView(status, margins(MATCH, WRAP, 0, 0, 0, 0));
 
-        pair.setOnClickListener(view -> pairWithPc(page, code.getText().toString(), pair, status));
+        pair.setOnClickListener(view -> pairWithPc(page, endpoint.getText().toString(), code.getText().toString(), pair, status));
 
         setContentView(page);
-        discoverPc(discovery, status, pair);
+        discoverPc(discovery, endpoint, status, pair);
     }
 
-    private void discoverPc(TextView discovery, TextView status, Button pairButton) {
+    private void discoverPc(TextView discovery, EditText endpointField, TextView status, Button pairButton) {
         networkExecutor.execute(() -> {
             String endpoint = null;
             try (DatagramSocket socket = new DatagramSocket()) {
@@ -158,21 +157,24 @@ public final class MainActivity extends Activity {
                     : "PC found: " + foundEndpoint;
             mainHandler.post(() -> {
                 discovery.setText(discovered);
-                pairButton.setEnabled(foundEndpoint != null);
-                if (foundEndpoint == null) {
-                    status.setText("Start the companion service on the PC, then try again.");
-                }
+                if (foundEndpoint != null) endpointField.setText(foundEndpoint);
+                pairButton.setEnabled(true);
+                status.setText(foundEndpoint == null
+                        ? "Enter the PC IP:PORT manually, then enter the six-digit pairing code."
+                        : "PC found. Enter the six-digit pairing code shown on the PC.");
             });
         });
     }
 
-    private void pairWithPc(LinearLayout page, String codeText, Button pairButton, TextView status) {
-        String endpoint = discoveredEndpoint;
+    private void pairWithPc(LinearLayout page, String endpointText, String codeText, Button pairButton, TextView status) {
+        String endpoint = endpointText.trim();
+        if (endpoint.isEmpty()) endpoint = discoveredEndpoint;
         String pairingCode = codeText.trim();
         if (endpoint == null || pairingCode.length() != 6) {
             status.setText("Enter the six-digit pairing code shown on the PC.");
             return;
         }
+        final String targetEndpoint = endpoint;
 
         pairButton.setEnabled(false);
         status.setText("Connecting to the PC companion service...");
@@ -187,7 +189,7 @@ public final class MainActivity extends Activity {
                     preferences.edit().putString("device_id", deviceId).apply();
                 }
 
-                URI uri = URI.create("http://" + endpoint + "/api/v1/pairing/approve");
+                URI uri = URI.create("http://" + targetEndpoint + "/api/v1/pairing/approve");
                 HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
                 connection.setRequestMethod("POST");
                 connection.setConnectTimeout(5000);
@@ -374,14 +376,14 @@ public final class MainActivity extends Activity {
         Button back = remoteButton("Back to Companion Sections", "back", R.color.surface);
         back.setOnClickListener(view -> showConnectedScreen(page));
         remote.addView(back, margins(MATCH, dp(36), 0, 6, 0, 0));
-        page.addView(remote, new LinearLayout.LayoutParams(dp(390), MATCH));
+        page.addView(remote, new LinearLayout.LayoutParams(dp(238), MATCH));
     }
 
     private Button remoteButton(String label, String key, int tintResource) {
         Button button = new Button(this);
         button.setText(label);
         button.setAllCaps(false);
-        button.setTextSize(12);
+        button.setTextSize(9);
         button.setTextColor(Color.WHITE);
         button.setMinHeight(0);
         button.setPadding(dp(4), 0, dp(4), 0);
