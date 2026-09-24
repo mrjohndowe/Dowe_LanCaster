@@ -52,7 +52,7 @@
                         </Border>
                 </StackPanel>
 
-                <TabControl Grid.Row="2">
+                <TabControl x:Name="MainTabs" Grid.Row="2">
 
 
                         <TabItem Header="Link Cast">

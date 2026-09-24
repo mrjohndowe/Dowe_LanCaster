@@ -27,6 +27,7 @@ public sealed class CompanionPairingService : IAsyncDisposable
     public string? PairingCode => _pairingCode;
     public DateTimeOffset PairingExpiresAt => _pairingExpiresAt;
     public event Action<string>? LogLine;
+    public event Action<string, string>? CommandReceived;
 
     public void RegeneratePairingCode()
     {
@@ -101,6 +102,27 @@ public sealed class CompanionPairingService : IAsyncDisposable
                 deviceId,
                 message = "Pairing accepted."
             });
+        });
+
+        app.MapPost("/api/v1/commands/select-tab", async (HttpRequest request) =>
+        {
+            var command = await JsonSerializer.DeserializeAsync<CompanionCommand>(request.Body,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web) { PropertyNameCaseInsensitive = true });
+            if (command is null || string.IsNullOrWhiteSpace(command.Tab))
+                return Results.BadRequest(new { error = "invalid_tab" });
+            CommandReceived?.Invoke("SelectTab", command.Tab.Trim());
+            LogLine?.Invoke($"Android companion selected the {command.Tab} tab.");
+            return Results.Ok(new { success = true, tab = command.Tab.Trim() });
+        });
+
+        app.MapPost("/api/v1/commands/remote-key", async (HttpRequest request) =>
+        {
+            var command = await JsonSerializer.DeserializeAsync<CompanionCommand>(request.Body,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web) { PropertyNameCaseInsensitive = true });
+            if (command is null || string.IsNullOrWhiteSpace(command.Key))
+                return Results.BadRequest(new { error = "invalid_key" });
+            CommandReceived?.Invoke("RemoteKey", command.Key.Trim());
+            return Results.Ok(new { success = true });
         });
 
         app.Lifetime.ApplicationStarted.Register(() =>
@@ -188,4 +210,5 @@ public sealed class CompanionPairingService : IAsyncDisposable
     public async ValueTask DisposeAsync() => await StopAsync();
 
     private sealed record PairingApproval(string? Code, string? DeviceId);
+    private sealed record CompanionCommand(string? Tab, string? Key, string? DeviceId);
 }

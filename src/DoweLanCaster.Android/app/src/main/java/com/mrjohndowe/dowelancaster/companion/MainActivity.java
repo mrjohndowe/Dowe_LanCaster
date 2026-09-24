@@ -213,14 +213,88 @@ public final class MainActivity extends Activity {
             sectionButton.setText(section);
             sectionButton.setAllCaps(false);
             sectionButton.setTextSize(16);
-            sectionButton.setOnClickListener(view ->
-                    Toast.makeText(this, section + " controls are ready for the next companion command update.", Toast.LENGTH_SHORT).show());
+            sectionButton.setOnClickListener(view -> {
+                sendTabCommand(section);
+                if (section.equals("Remote")) {
+                    showRemoteScreen(page);
+                } else {
+                    Toast.makeText(this, section + " selected on the PC.", Toast.LENGTH_SHORT).show();
+                }
+            });
             page.addView(sectionButton, margins(MATCH, dp(52), 0, 0, 0, 8));
         }
 
         TextView connected = text("Secure pairing accepted for this phone.", 14, R.color.text_secondary);
         connected.setGravity(Gravity.CENTER_HORIZONTAL);
         page.addView(connected, margins(MATCH, WRAP, 0, 16, 0, 0));
+    }
+
+    private void sendTabCommand(String tab) {
+        if (discoveredEndpoint == null) return;
+        networkExecutor.execute(() -> {
+            try {
+                HttpURLConnection connection = (HttpURLConnection)
+                        URI.create("http://" + discoveredEndpoint + "/api/v1/commands/select-tab").toURL().openConnection();
+                connection.setRequestMethod("POST");
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(5000);
+                connection.setDoOutput(true);
+                connection.setRequestProperty("Content-Type", "application/json");
+                JSONObject payload = new JSONObject();
+                payload.put("tab", tab);
+                try (OutputStream output = connection.getOutputStream()) {
+                    output.write(payload.toString().getBytes(StandardCharsets.UTF_8));
+                }
+                connection.getResponseCode();
+                connection.disconnect();
+            } catch (Exception ignored) { }
+        });
+    }
+
+    private void showRemoteScreen(LinearLayout page) {
+        page.removeAllViews();
+        TextView title = text("Dowe LanCaster Remote", 24, R.color.text_primary);
+        title.setGravity(Gravity.CENTER_HORIZONTAL);
+        page.addView(title, margins(MATCH, WRAP, 0, 16, 0, 20));
+        String[][] rows = {{"Home", "Back"}, {"Up", "Select", "Down"}, {"Left", "Right"}, {"Rev", "Play", "Fwd"}, {"VolumeDown", "Mute", "VolumeUp"}, {"Power"}};
+        for (String[] row : rows) {
+            LinearLayout line = new LinearLayout(this);
+            line.setGravity(Gravity.CENTER);
+            for (String key : row) {
+                Button button = new Button(this);
+                button.setText(key.equals("Select") ? "OK" : key);
+                button.setAllCaps(false);
+                button.setOnClickListener(view -> sendRemoteKey(key));
+                line.addView(button, new LinearLayout.LayoutParams(0, dp(54), 1));
+            }
+            page.addView(line, margins(MATCH, dp(58), 0, 0, 0, 6));
+        }
+        Button back = new Button(this);
+        back.setText("Back to Companion Sections");
+        back.setOnClickListener(view -> showConnectedScreen(page));
+        page.addView(back, margins(MATCH, dp(52), 0, 16, 0, 0));
+    }
+
+    private void sendRemoteKey(String key) {
+        if (discoveredEndpoint == null) return;
+        networkExecutor.execute(() -> {
+            try {
+                HttpURLConnection connection = (HttpURLConnection)
+                        URI.create("http://" + discoveredEndpoint + "/api/v1/commands/remote-key").toURL().openConnection();
+                connection.setRequestMethod("POST");
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(5000);
+                connection.setDoOutput(true);
+                connection.setRequestProperty("Content-Type", "application/json");
+                JSONObject payload = new JSONObject();
+                payload.put("key", key);
+                try (OutputStream output = connection.getOutputStream()) {
+                    output.write(payload.toString().getBytes(StandardCharsets.UTF_8));
+                }
+                connection.getResponseCode();
+                connection.disconnect();
+            } catch (Exception ignored) { }
+        });
     }
 
     @Override

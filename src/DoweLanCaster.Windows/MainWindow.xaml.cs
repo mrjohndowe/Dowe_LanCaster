@@ -107,6 +107,14 @@ public partial class MainWindow : Window
                 UpdateDiagnostics(message: $"Companion: {message}");
                 UpdateCompanionStatus();
             });
+        _companionPairingService.CommandReceived += (command, value) =>
+            Dispatcher.BeginInvoke(async () =>
+            {
+                if (command == "SelectTab")
+                    SelectCompanionTab(value);
+                else if (command == "RemoteKey")
+                    await SendRemoteKeyAsync(value);
+            });
 
         _privateListening.LogLine += line =>
             Dispatcher.BeginInvoke(() =>
@@ -631,6 +639,14 @@ public partial class MainWindow : Window
         CompanionPairingCodeText.Text = _companionPairingService.PairingCode ?? "------";
         CompanionStatusText.Text = $"Waiting for Android pairing until {_companionPairingService.PairingExpiresAt.LocalDateTime:t}.";
         CompanionEndpointText.Text = $"{GetLocalLanAddress()}:{_companionPairingService.Port}";
+    }
+
+    private void SelectCompanionTab(string tabName)
+    {
+        var tab = MainTabs.Items.OfType<TabItem>().FirstOrDefault(item =>
+            string.Equals(item.Header?.ToString(), tabName, StringComparison.OrdinalIgnoreCase));
+        if (tab is not null)
+            MainTabs.SelectedItem = tab;
     }
 
     private string GetLocalLanAddress()
