@@ -1,5 +1,7 @@
 using System.Net;
+using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using DoweLanCaster.Companion.Contracts;
 using Microsoft.AspNetCore.Builder;
@@ -13,6 +15,8 @@ public sealed class CompanionPairingService : IAsyncDisposable
     private readonly object _gate = new();
     private WebApplication? _app;
     private CancellationTokenSource? _lifetime;
+    private UdpClient? _discoverySocket;
+    private Task? _discoveryTask;
     private string? _pairingCode;
     private DateTimeOffset _pairingExpiresAt;
     private readonly string _serverId = Guid.NewGuid().ToString("N");
@@ -66,7 +70,12 @@ public sealed class CompanionPairingService : IAsyncDisposable
 
         app.MapPost("/api/v1/pairing/approve", async (HttpRequest request) =>
         {
-            var payload = await JsonSerializer.DeserializeAsync<PairingApproval>(request.Body);
+            var payload = await JsonSerializer.DeserializeAsync<PairingApproval>(
+                request.Body,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web)
+                {
+                    PropertyNameCaseInsensitive = true
+                });
             if (payload is null || string.IsNullOrWhiteSpace(payload.Code) ||
                 !string.Equals(payload.Code.Trim(), _pairingCode, StringComparison.Ordinal))
             {
@@ -103,6 +112,7 @@ public sealed class CompanionPairingService : IAsyncDisposable
         }
 
         await app.StartAsync(_lifetime!.Token);
+        StartDiscoveryResponder(_lifetime.Token);
     }
 
     public async Task StopAsync()
@@ -122,8 +132,48 @@ public sealed class CompanionPairingService : IAsyncDisposable
             await app.StopAsync();
         if (lifetime is not null)
             lifetime.Dispose();
+        _discoverySocket?.Dispose();
+        _discoverySocket = null;
+        if (_discoveryTask is not null)
+        {
+            try { await _discoveryTask; } catch (OperationCanceledException) { }
+            _discoveryTask = null;
+        }
         if (app is not null)
             await app.DisposeAsync();
+    }
+
+    private void StartDiscoveryResponder(CancellationToken cancellationToken)
+    {
+        _discoverySocket = new UdpClient(8771)
+        {
+            EnableBroadcast = true
+        };
+        _discoveryTask = Task.Run(async () =>
+        {
+            var discoveryToken = Encoding.UTF8.GetBytes("DOWE_LANCASTER_DISCOVER");
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                UdpReceiveResult request;
+                try
+                {
+                    request = await _discoverySocket.ReceiveAsync(cancellationToken);
+                }
+                catch (OperationCanceledException) { break; }
+                catch (ObjectDisposedException) { break; }
+
+                if (!request.Buffer.AsSpan().SequenceEqual(discoveryToken))
+                    continue;
+
+                var response = Encoding.UTF8.GetBytes($"DOWE_LANCASTER_PC|{Port}");
+                try
+                {
+                    await _discoverySocket.SendAsync(response, response.Length, request.RemoteEndPoint);
+                    LogLine?.Invoke($"Android discovery response sent to {request.RemoteEndPoint.Address}.");
+                }
+                catch (ObjectDisposedException) { break; }
+            }
+        }, cancellationToken);
     }
 
     private void RotatePairingCode()

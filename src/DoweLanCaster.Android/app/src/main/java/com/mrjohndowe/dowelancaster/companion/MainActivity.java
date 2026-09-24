@@ -20,6 +20,9 @@ import org.json.JSONObject;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -31,6 +34,7 @@ public final class MainActivity extends Activity {
     private static final int WRAP = ViewGroup.LayoutParams.WRAP_CONTENT;
     private final ExecutorService networkExecutor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private volatile String discoveredEndpoint;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,9 +64,9 @@ public final class MainActivity extends Activity {
                 16, R.color.text_secondary);
         page.addView(instructions, margins(MATCH, WRAP, 0, 0, 0, 20));
 
-        EditText address = input("PC IP:PORT, for example 10.0.0.25:8770");
-        address.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
-        page.addView(address, margins(MATCH, dp(54), 0, 0, 0, 12));
+        TextView discovery = text("Looking for Dowe LanCaster on this Wi-Fi network...", 15, R.color.text_secondary);
+        discovery.setGravity(Gravity.CENTER_HORIZONTAL);
+        page.addView(discovery, margins(MATCH, WRAP, 0, 0, 0, 12));
 
         EditText code = input("One-time pairing code");
         code.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
@@ -82,16 +86,54 @@ public final class MainActivity extends Activity {
         status.setGravity(Gravity.CENTER_HORIZONTAL);
         page.addView(status, margins(MATCH, WRAP, 0, 0, 0, 0));
 
-        pair.setOnClickListener(view -> pairWithPc(address.getText().toString(), code.getText().toString(), pair, status));
+        pair.setOnClickListener(view -> pairWithPc(code.getText().toString(), pair, status));
 
         setContentView(page);
+        discoverPc(discovery, status, pair);
     }
 
-    private void pairWithPc(String addressText, String codeText, Button pairButton, TextView status) {
-        String endpoint = addressText.trim();
+    private void discoverPc(TextView discovery, TextView status, Button pairButton) {
+        networkExecutor.execute(() -> {
+            String endpoint = null;
+            try (DatagramSocket socket = new DatagramSocket()) {
+                socket.setBroadcast(true);
+                byte[] request = "DOWE_LANCASTER_DISCOVER".getBytes(StandardCharsets.UTF_8);
+                DatagramPacket packet = new DatagramPacket(
+                        request, request.length,
+                        InetAddress.getByName("255.255.255.255"), 8771);
+                socket.send(packet);
+                socket.setSoTimeout(2500);
+                byte[] response = new byte[128];
+                DatagramPacket reply = new DatagramPacket(response, response.length);
+                socket.receive(reply);
+                String message = new String(reply.getData(), reply.getOffset(), reply.getLength(), StandardCharsets.UTF_8);
+                if (message.startsWith("DOWE_LANCASTER_PC|")) {
+                    endpoint = reply.getAddress().getHostAddress() + ":" + message.substring("DOWE_LANCASTER_PC|".length());
+                }
+            } catch (Exception ignored) {
+                // The status text below explains that the PC was not discovered.
+            }
+
+            discoveredEndpoint = endpoint;
+            final String foundEndpoint = endpoint;
+            String discovered = foundEndpoint == null
+                    ? "PC not found. Keep Dowe LanCaster open on the same Wi-Fi network."
+                    : "PC found: " + foundEndpoint;
+            mainHandler.post(() -> {
+                discovery.setText(discovered);
+                pairButton.setEnabled(foundEndpoint != null);
+                if (foundEndpoint == null) {
+                    status.setText("Start the companion service on the PC, then try again.");
+                }
+            });
+        });
+    }
+
+    private void pairWithPc(String codeText, Button pairButton, TextView status) {
+        String endpoint = discoveredEndpoint;
         String pairingCode = codeText.trim();
-        if (!endpoint.matches("^[^\\s/:]+:[1-9][0-9]{0,4}$") || pairingCode.length() != 6) {
-            status.setText("Enter the PC IP:PORT and six-digit pairing code.");
+        if (endpoint == null || pairingCode.length() != 6) {
+            status.setText("Enter the six-digit pairing code shown on the PC.");
             return;
         }
 
