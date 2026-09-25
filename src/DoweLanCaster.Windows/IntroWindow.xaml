@@ -9,7 +9,7 @@
         AllowsTransparency="True"
         Background="Transparent"
         ShowInTaskbar="False"
-        Topmost="True">
+        Topmost="False">
     <Border CornerRadius="18"
             Background="#0C1219"
             BorderBrush="#33404D"

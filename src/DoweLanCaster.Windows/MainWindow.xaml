@@ -52,7 +52,7 @@
                         </Border>
                 </StackPanel>
 
-                <TabControl Grid.Row="2">
+                <TabControl x:Name="MainTabs" Grid.Row="2">
 
 
                         <TabItem Header="Link Cast">
@@ -373,25 +373,36 @@
                                         </Grid.Resources>
 
                                         <Viewbox x:Name="EmbeddedRemoteViewbox" Grid.Column="0" Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Stretch">
-                                                <Border Width="390" HorizontalAlignment="Center" Background="#15181D" BorderBrush="#3B414A" BorderThickness="2" CornerRadius="52" Padding="24" SnapsToDevicePixels="True">
+                                                <Border Width="390" HorizontalAlignment="Center" BorderBrush="#454B55" BorderThickness="1" CornerRadius="32" Padding="18" SnapsToDevicePixels="True">
+                                                        <Border.Background>
+                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                                        <GradientStop Color="#2A2E35" Offset="0"/>
+                                                                        <GradientStop Color="#15181D" Offset="1"/>
+                                                                </LinearGradientBrush>
+                                                        </Border.Background>
                                                         <Border.Effect>
                                                                 <DropShadowEffect BlurRadius="24" ShadowDepth="5" Opacity="0.35"/>
                                                         </Border.Effect>
 
                                                         <StackPanel>
-                                                                <TextBlock Text="DOWE LANCASTER" Foreground="#4EDCFF" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" Margin="0,0,0,3"/>
-                                                                <TextBlock Text="ROKU REMOTE" Foreground="#AAB3BE" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,22"/>
-
-                                                                <Button Content="Open Pop-out Remote" Style="{StaticResource RemoteAccentButtonStyle}" Height="40" Margin="4,0,4,12" Click="OpenRemoteWindowButton_Click"/>
+                                                                <Border Background="#15181D" BorderBrush="#454B55" BorderThickness="1" CornerRadius="20" Padding="12,8" HorizontalAlignment="Stretch" Margin="0,0,0,12">
+                                                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                                                <Image Source="DoweLanCaster.ico" Width="32" Height="32" Margin="0,0,10,0"/>
+                                                                                <StackPanel VerticalAlignment="Center">
+                                                                                        <TextBlock Text="DOWE LANCASTER" Foreground="#15AFCF" FontWeight="Bold" FontSize="13"/>
+                                                                                        <TextBlock Text="ROKU REMOTE" Foreground="#AAB3BE" FontSize="9"/>
+                                                                                </StackPanel>
+                                                                        </StackPanel>
+                                                                </Border>
 
                                                                 <UniformGrid Columns="4" Margin="0,0,0,14">
-                                                                        <Button Content="↩ Back" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Height="44" Tag="Back" Click="RemoteButton_Click"/>
-                                                                        <Button Content="⌂ Home" Style="{StaticResource RemoteAccentButtonStyle}" Margin="4" Height="44" Tag="Home" Click="RemoteButton_Click"/>
-                                                                        <Button Content="↶ Replay" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Height="44" Tag="InstantReplay" Click="RemoteButton_Click"/>
-                                                                        <Button Content="⏻ Power" ToolTip="Power control for compatible Roku TVs" Style="{StaticResource RemotePowerButtonStyle}" Margin="4" Height="44" Tag="Power" Click="RemoteButton_Click"/>
+                                                                        <Button Content="↩ Back" Style="{StaticResource RemoteRoundButtonStyle}" Margin="3,0" Height="42" Tag="Back" Click="RemoteButton_Click"/>
+                                                                        <Button Content="⌂ Home" Style="{StaticResource RemoteAccentButtonStyle}" Margin="3,0" Height="42" Tag="Home" Click="RemoteButton_Click"/>
+                                                                        <Button Content="↶ Replay" Style="{StaticResource RemoteRoundButtonStyle}" Margin="3,0" Height="42" Tag="InstantReplay" Click="RemoteButton_Click"/>
+                                                                        <Button Content="⏻ Power" ToolTip="Power control for compatible Roku TVs" Style="{StaticResource RemotePowerButtonStyle}" Margin="3,0" Height="42" Tag="Power" Click="RemoteButton_Click"/>
                                                                 </UniformGrid>
 
-                                                                <Border Background="#20242A" BorderBrush="#343A43" BorderThickness="1" CornerRadius="86" Width="250" Height="250" HorizontalAlignment="Center" Padding="14" Margin="0,4,0,14">
+                                                                <Border Background="#15181D" BorderBrush="#454B55" BorderThickness="2" CornerRadius="102" Width="204" Height="204" HorizontalAlignment="Center" Padding="10" Margin="0,0,0,14">
                                                                         <Grid>
                                                                                 <Grid.RowDefinitions>
                                                                                         <RowDefinition Height="*"/>
@@ -404,54 +415,62 @@
                                                                                         <ColumnDefinition Width="*"/>
                                                                                 </Grid.ColumnDefinitions>
 
-                                                                                <Button Grid.Row="0" Grid.Column="1" Content="▲" FontSize="24" Style="{StaticResource RemoteRoundButtonStyle}" Margin="5" Tag="Up" Click="RemoteButton_Click"/>
+                                                                                <Button Grid.Row="0" Grid.Column="1" Content="▲" FontSize="20" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Tag="Up" Click="RemoteButton_Click"/>
 
-                                                                                <Button Grid.Row="1" Grid.Column="0" Content="◀" FontSize="24" Style="{StaticResource RemoteRoundButtonStyle}" Margin="5" Tag="Left" Click="RemoteButton_Click"/>
+                                                                                <Button Grid.Row="1" Grid.Column="0" Content="◀" FontSize="20" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Tag="Left" Click="RemoteButton_Click"/>
 
                                                                                 <Button Grid.Row="1" Grid.Column="1" Content="OK" FontSize="18" Style="{StaticResource RemoteAccentButtonStyle}" Margin="2" Tag="Select" Click="RemoteButton_Click"/>
 
-                                                                                <Button Grid.Row="1" Grid.Column="2" Content="▶" FontSize="24" Style="{StaticResource RemoteRoundButtonStyle}" Margin="5" Tag="Right" Click="RemoteButton_Click"/>
+                                                                                <Button Grid.Row="1" Grid.Column="2" Content="▶" FontSize="20" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Tag="Right" Click="RemoteButton_Click"/>
 
-                                                                                <Button Grid.Row="2" Grid.Column="1" Content="▼" FontSize="24" Style="{StaticResource RemoteRoundButtonStyle}" Margin="5" Tag="Down" Click="RemoteButton_Click"/>
+                                                                                <Button Grid.Row="2" Grid.Column="1" Content="▼" FontSize="20" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Tag="Down" Click="RemoteButton_Click"/>
                                                                         </Grid>
                                                                 </Border>
 
-                                                                <UniformGrid Columns="3" Margin="0,0,0,10">
-                                                                        <Button Content="⏪" ToolTip="Rewind" FontSize="20" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Height="48" Tag="Rev" Click="RemoteButton_Click"/>
-                                                                        <Button Content="⏯" ToolTip="Play / Pause" FontSize="21" Style="{StaticResource RemoteAccentButtonStyle}" Margin="4" Height="48" Tag="Play" Click="RemoteButton_Click"/>
-                                                                        <Button Content="⏩" ToolTip="Fast Forward" FontSize="20" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Height="48" Tag="Fwd" Click="RemoteButton_Click"/>
-                                                                </UniformGrid>
+                                                                <Border Background="#15181D" BorderBrush="#454B55" BorderThickness="1" CornerRadius="20" Padding="8" Margin="0,0,0,10">
+                                                                        <StackPanel>
+                                                                                <UniformGrid Columns="3">
+                                                                                        <Button Content="⏪" ToolTip="Rewind" FontSize="20" Style="{StaticResource RemoteRoundButtonStyle}" Margin="3" Height="42" Tag="Rev" Click="RemoteButton_Click"/>
+                                                                                        <Button Content="⏯" ToolTip="Play / Pause" FontSize="21" Style="{StaticResource RemoteRoundButtonStyle}" Margin="3" Height="42" Tag="Play" Click="RemoteButton_Click"/>
+                                                                                        <Button Content="⏩" ToolTip="Fast Forward" FontSize="20" Style="{StaticResource RemoteRoundButtonStyle}" Margin="3" Height="42" Tag="Fwd" Click="RemoteButton_Click"/>
+                                                                                </UniformGrid>
+                                                                                <UniformGrid Columns="3">
+                                                                                        <Button Content="Vol −" Style="{StaticResource RemoteRoundButtonStyle}" Margin="3" Height="42" Tag="VolumeDown" Click="RemoteButton_Click"/>
+                                                                                        <Button Content="Mute" Style="{StaticResource RemoteRoundButtonStyle}" Margin="3" Height="42" Tag="VolumeMute" Click="RemoteButton_Click"/>
+                                                                                        <Button Content="Vol +" Style="{StaticResource RemoteRoundButtonStyle}" Margin="3" Height="42" Tag="VolumeUp" Click="RemoteButton_Click"/>
+                                                                                </UniformGrid>
+                                                                                <Grid Margin="3,6,3,0">
+                                                                                        <Grid.ColumnDefinitions>
+                                                                                                <ColumnDefinition Width="*"/>
+                                                                                                <ColumnDefinition Width="116"/>
+                                                                                        </Grid.ColumnDefinitions>
+                                                                                        <TextBox x:Name="VolumeLevelTextBox" Text="25" Height="38" Padding="12,0" VerticalContentAlignment="Center" ToolTip="Roku TV volume, from 0 to 100"/>
+                                                                                        <Button Grid.Column="1" Content="Set Volume" Style="{StaticResource RemoteAccentButtonStyle}" Height="38" Margin="6,0,0,0" Click="SetVolumeButton_Click"/>
+                                                                                </Grid>
+                                                                        </StackPanel>
+                                                                </Border>
 
-                                                                <UniformGrid Columns="3" Margin="0,0,0,10">
-                                                                        <Button Content="Vol −" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Height="44" Tag="VolumeDown" Click="RemoteButton_Click"/>
-                                                                        <Button Content="Mute" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Height="44" Tag="VolumeMute" Click="RemoteButton_Click"/>
-                                                                        <Button Content="Vol +" Style="{StaticResource RemoteRoundButtonStyle}" Margin="4" Height="44" Tag="VolumeUp" Click="RemoteButton_Click"/>
-                                                                </UniformGrid>
+                                                                <Button x:Name="HeadphoneModeButton" Visibility="Collapsed" Content="Start Roku Private Listening" Click="HeadphoneModeButton_Click"/>
+                                                                <TextBlock x:Name="HeadphoneStatusText" Visibility="Collapsed" Text="Private Listening is off."/>
+                                                                <Button x:Name="VoiceControlButton" Visibility="Collapsed" Content="Start Voice Control" Click="VoiceControlButton_Click"/>
+                                                                <TextBlock x:Name="VoiceStatusText" Visibility="Collapsed" Text="Voice control is off"/>
 
-                                                                <Grid Margin="4,0,4,10">
-                                                                        <Grid.ColumnDefinitions>
-                                                                                <ColumnDefinition Width="*"/>
-                                                                                <ColumnDefinition Width="110"/>
-                                                                        </Grid.ColumnDefinitions>
-                                                                        <TextBox x:Name="VolumeLevelTextBox" Text="25" Height="42" Padding="12,0" VerticalContentAlignment="Center" ToolTip="Roku TV volume, from 0 to 100"/>
-                                                                        <Button Grid.Column="1" Content="Set Volume" Style="{StaticResource RemoteAccentButtonStyle}" Height="42" Margin="8,0,0,0" Click="SetVolumeButton_Click"/>
-                                                                </Grid>
-
-                                                                <Button x:Name="HeadphoneModeButton" Content="🎧  Start Roku Private Listening" Style="{StaticResource RemoteRoundButtonStyle}" Height="46" Margin="4,0,4,10" Click="HeadphoneModeButton_Click"/>
-                                                                <TextBlock x:Name="HeadphoneStatusText" Text="Private Listening is off." Foreground="#AAB3BE" FontSize="11" TextAlignment="Center" TextWrapping="Wrap" Margin="8,0,8,12"/>
-
-                                                                <Button x:Name="VoiceControlButton" Content="🎤  Start Voice Control" Style="{StaticResource RemoteAccentButtonStyle}" Height="48" Margin="4,2,4,4" Click="VoiceControlButton_Click"/>
-
-                                                                <TextBlock x:Name="VoiceStatusText" Text="Voice control is off" Foreground="#AAB3BE" FontSize="11" HorizontalAlignment="Center" Margin="0,2,0,16"/>
-
-                                                                <TextBlock Text="Keyboard Text" Foreground="White" FontWeight="SemiBold" FontSize="15" Margin="4,0,0,7"/>
-
-                                                                <Grid Margin="4,0,4,8">
-                                                                        <TextBox x:Name="RokuTextInput" Height="62" Padding="14,10" FontSize="16" VerticalContentAlignment="Center" TextChanged="RokuTextInput_TextChanged"/>
-                                                                        <TextBlock x:Name="RokuTextPlaceholder" Text="Type or dictate text to your Roku..." Foreground="#7E8996" FontSize="15" IsHitTestVisible="False" VerticalAlignment="Center" Margin="15,0,10,0"/>
-                                                                </Grid>
-
-                                                                <Button Content="Send Text to Roku" Style="{StaticResource RemoteAccentButtonStyle}" Height="46" Margin="4,0,4,6" Click="SendTextButton_Click"/>
+                                                                <Border Background="#15181D" BorderBrush="#454B55" BorderThickness="1" CornerRadius="18" Padding="10,8" Margin="0,0,0,10">
+                                                                        <StackPanel>
+                                                                                <TextBlock Text="Keyboard Text" Foreground="White" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4"/>
+                                                                                <Grid>
+                                                                                        <Grid.ColumnDefinitions>
+                                                                                                <ColumnDefinition Width="*"/>
+                                                                                                <ColumnDefinition Width="116"/>
+                                                                                        </Grid.ColumnDefinitions>
+                                                                                        <Grid>
+                                                                                                <TextBox x:Name="RokuTextInput" Height="40" Padding="12,0" FontSize="14" VerticalContentAlignment="Center" TextChanged="RokuTextInput_TextChanged"/>
+                                                                                                <TextBlock x:Name="RokuTextPlaceholder" Text="Type or dictate text to your Roku..." Foreground="#7E8996" FontSize="13" IsHitTestVisible="False" VerticalAlignment="Center" Margin="12,0,6,0"/>
+                                                                                        </Grid>
+                                                                                        <Button Grid.Column="1" Content="Send Text to Roku" Style="{StaticResource RemoteAccentButtonStyle}" Height="40" Margin="6,0,0,0" Click="SendTextButton_Click"/>
+                                                                                </Grid>
+                                                                        </StackPanel>
+                                                                </Border>
                                                         </StackPanel>
                                                 </Border>
                                         </Viewbox>
@@ -610,6 +629,39 @@
                                                                         <Button Content="Refresh Speakers" Padding="14,6" Margin="0,0,8,0" Click="RefreshPlaybackEndpointsButton_Click"/>
                                                                         <Button Content="Open Windows Sound Settings" Padding="14,6" Click="OpenWindowsSoundSettingsButton_Click"/>
                                                                 </StackPanel>
+                                                        </StackPanel>
+                                                </Border>
+
+                                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+                                                        <StackPanel>
+                                                                <TextBlock Text="Android Companion" FontSize="22" FontWeight="Bold" Margin="0,0,0,8"/>
+                                                                <TextBlock Text="Pair the Dowe LanCaster Android companion on your private network. The pairing code is one-time and expires after two minutes." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,12"/>
+                                                                <Grid>
+                                                                        <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                                <ColumnDefinition Width="28"/>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <StackPanel>
+                                                                                <TextBlock Text="Pairing code" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                                                        <TextBlock x:Name="CompanionPairingCodeText" Text="------" FontSize="24" FontWeight="Bold" Margin="0,0,18,0"/>
+                                                                                        <Button Content="New Code" Padding="14,6" Click="GenerateCompanionCodeButton_Click"/>
+                                                                                </StackPanel>
+                                                                                <TextBlock x:Name="CompanionStatusText" Text="Companion service is starting..." Margin="0,12,0,0" TextWrapping="Wrap"/>
+                                                                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                                                                        <Button Content="Start Companion Service" Padding="14,6" Margin="0,0,8,0" Click="StartCompanionServiceButton_Click"/>
+                                                                                        <Button Content="Stop Companion Service" Padding="14,6" Click="StopCompanionServiceButton_Click"/>
+                                                                                </StackPanel>
+                                                                        </StackPanel>
+                                                                        <Border Grid.Column="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="16" MinHeight="118">
+                                                                                <StackPanel VerticalAlignment="Center">
+                                                                                        <TextBlock Text="PC endpoint" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                                                                        <TextBlock x:Name="CompanionEndpointText" Text="" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                                                                                        <TextBlock Text="Enter this IP and port in the Android app" TextWrapping="Wrap" TextAlignment="Center" Opacity="0.78" Margin="0,8,0,0"/>
+                                                                                </StackPanel>
+                                                                        </Border>
+                                                                </Grid>
                                                         </StackPanel>
                                                 </Border>
 

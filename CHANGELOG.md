@@ -5,6 +5,38 @@ All notable changes to Dowe LanCaster are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5.71] - 2026-09-24
+
+### Added
+
+- Added the Android companion application with secure one-time-code pairing,
+  automatic PC discovery, manual `IP:PORT` fallback, and the Dowe LanCaster
+  application icon and startup splash.
+- Added phone controls for Roku navigation, playback, volume, text entry,
+  Link Cast, Live Cast, and Folder Cast actions while keeping the selected PC
+  tab synchronized.
+- Added an interactive PowerShell menu for building, cleaning, installing,
+  wirelessly pairing, connecting, and tunneling the Android APK.
+
+### Changed
+
+- Redesigned the Android remote with the existing Dowe LanCaster PC color
+  palette, a sculpted chassis, rounded system controls, centered directional
+  pad, grouped media controls, inline volume entry, and keyboard text dock.
+- Redesigned both the embedded Windows remote and the resizable pop-out remote
+  with the Option A gradient chassis, centered brand badge, aligned circular
+  directional pad, grouped media and volume deck, and compact keyboard panel.
+- Kept the pop-out remote command available in the PC remote section while
+  removing it from the remote face itself.
+
+### Fixed
+
+- Kept Android pairing available when automatic discovery cannot find the PC.
+- Corrected companion pairing JSON handling and ensured successful pairing
+  advances from the pairing screen to the connected controls.
+- Fixed the pop-out remote command wiring and preserved the existing PC remote
+  handlers through the visual redesign.
+
 ### Changed
 
 * Prepared the Windows application and installer for version 0.9.0.

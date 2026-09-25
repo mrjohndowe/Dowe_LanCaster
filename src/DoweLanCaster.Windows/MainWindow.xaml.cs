@@ -32,6 +32,7 @@ public partial class MainWindow : Window
     private readonly RokuPrivateListeningService _privateListening = new();
     private readonly PlaybackEndpointService _playbackEndpointService = new();
     private readonly SettingsService _settingsService = new();
+    private readonly CompanionPairingService _companionPairingService = new();
     private readonly UpdateService _updateService = new();
     private readonly DiagnosticState _diagnostics = new();
     private readonly FolderPlaylistService _folderPlaylistService = new();
@@ -100,6 +101,31 @@ public partial class MainWindow : Window
 
         _folderPollTimer.Tick += FolderPollTimer_Tick;
 
+        _companionPairingService.LogLine += message =>
+            Dispatcher.BeginInvoke(() =>
+            {
+                UpdateDiagnostics(message: $"Companion: {message}");
+                UpdateCompanionStatus();
+            });
+        _companionPairingService.CommandReceived += (command, value) =>
+            Dispatcher.BeginInvoke(async () =>
+            {
+                if (command == "SelectTab")
+                    SelectCompanionTab(value);
+                else if (command == "RemoteKey")
+                    await SendRemoteKeyAsync(value);
+                else if (command == "RemoteText")
+                    await (_rokuClient?.SendTextAsync(value) ?? Task.CompletedTask);
+                else if (command == "SetVolume" && int.TryParse(value, out var level))
+                    await SetRokuVolumeAsync(level);
+                else if (command == "TabAction")
+                {
+                    var parts = value.Split('|', 3);
+                    if (parts.Length >= 2)
+                        await HandleCompanionTabActionAsync(parts[0], parts[1], parts.Length == 3 ? parts[2] : string.Empty);
+                }
+            });
+
         _privateListening.LogLine += line =>
             Dispatcher.BeginInvoke(() =>
                 UpdateDiagnostics(message: $"Private Listening: {line}"));
@@ -137,6 +163,7 @@ public partial class MainWindow : Window
             RefreshPlaybackEndpoints();
             await InitializeTeraBoxBrowserAsync();
             LoadChangelog();
+            await StartCompanionServiceAsync();
 
             if (!string.IsNullOrWhiteSpace(_settings.LastFolderPath) &&
                 Directory.Exists(_settings.LastFolderPath))
@@ -592,6 +619,118 @@ public partial class MainWindow : Window
         AirPlayModeCheckBox.IsChecked =
             _settings.UseAirPlayHandoff;
 
+    }
+
+    private async Task StartCompanionServiceAsync()
+    {
+        try
+        {
+            await _companionPairingService.StartAsync();
+            UpdateCompanionStatus();
+        }
+        catch (Exception ex)
+        {
+            CompanionStatusText.Text = $"Companion service could not start: {ex.Message}";
+            CompanionEndpointText.Text = "Choose Start Companion Service after closing any other program using port 8770.";
+            UpdateDiagnostics(message: $"Companion service failed: {ex.Message}");
+        }
+    }
+
+    private void UpdateCompanionStatus()
+    {
+        if (!_companionPairingService.IsRunning)
+        {
+            CompanionStatusText.Text = "Companion service is stopped.";
+            CompanionPairingCodeText.Text = "------";
+            CompanionEndpointText.Text = string.Empty;
+            return;
+        }
+
+        CompanionPairingCodeText.Text = _companionPairingService.PairingCode ?? "------";
+        CompanionStatusText.Text = $"Waiting for Android pairing until {_companionPairingService.PairingExpiresAt.LocalDateTime:t}.";
+        CompanionEndpointText.Text = $"{GetLocalLanAddress()}:{_companionPairingService.Port}";
+    }
+
+    private void SelectCompanionTab(string tabName)
+    {
+        var tab = MainTabs.Items.OfType<TabItem>().FirstOrDefault(item =>
+            string.Equals(item.Header?.ToString(), tabName, StringComparison.OrdinalIgnoreCase));
+        if (tab is not null)
+            MainTabs.SelectedItem = tab;
+    }
+
+    private async Task HandleCompanionTabActionAsync(string tab, string action, string value)
+    {
+        SelectCompanionTab(tab);
+        if (tab.Equals("Link Cast", StringComparison.OrdinalIgnoreCase))
+        {
+            if (action.Equals("set-url", StringComparison.OrdinalIgnoreCase))
+                LinkUrlTextBox.Text = value;
+            else if (action.Equals("analyze", StringComparison.OrdinalIgnoreCase))
+                AnalyzeLinkButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            else if (action.Equals("stream", StringComparison.OrdinalIgnoreCase))
+                StreamLinkButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            else if (action.Equals("stop", StringComparison.OrdinalIgnoreCase))
+                StopLinkButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        }
+        else if (tab.Equals("Live Cast", StringComparison.OrdinalIgnoreCase))
+        {
+            if (action.Equals("start", StringComparison.OrdinalIgnoreCase))
+                StartLiveButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            else if (action.Equals("stop", StringComparison.OrdinalIgnoreCase))
+                StopLiveButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        }
+        else if (tab.Equals("Folder Cast", StringComparison.OrdinalIgnoreCase))
+        {
+            if (action.Equals("play", StringComparison.OrdinalIgnoreCase))
+                FolderPlayButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            else if (action.Equals("previous", StringComparison.OrdinalIgnoreCase))
+                FolderPreviousButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            else if (action.Equals("next", StringComparison.OrdinalIgnoreCase))
+                FolderNextButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            else if (action.Equals("stop", StringComparison.OrdinalIgnoreCase))
+                FolderStopButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        }
+        await Task.CompletedTask;
+    }
+
+    private string GetLocalLanAddress()
+    {
+        try
+        {
+            using var socket = new System.Net.Sockets.Socket(
+                System.Net.Sockets.AddressFamily.InterNetwork,
+                System.Net.Sockets.SocketType.Dgram,
+                System.Net.Sockets.ProtocolType.Udp);
+            socket.Connect("8.8.8.8", 65530);
+            return ((System.Net.IPEndPoint)socket.LocalEndPoint!).Address.ToString();
+        }
+        catch
+        {
+            return "<PC LAN IP>";
+        }
+    }
+
+    private async void StartCompanionServiceButton_Click(object sender, RoutedEventArgs e)
+    {
+        await StartCompanionServiceAsync();
+    }
+
+    private async void StopCompanionServiceButton_Click(object sender, RoutedEventArgs e)
+    {
+        await _companionPairingService.StopAsync();
+        UpdateCompanionStatus();
+    }
+
+    private void GenerateCompanionCodeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_companionPairingService.IsRunning)
+        {
+            CompanionStatusText.Text = "Start the companion service before generating a pairing code.";
+            return;
+        }
+        _companionPairingService.RegeneratePairingCode();
+        UpdateCompanionStatus();
     }
 
     private void RefreshPlaybackEndpoints()
@@ -3083,6 +3222,7 @@ public partial class MainWindow : Window
         }
 
         _folderPollTimer.Stop();
+        await _companionPairingService.DisposeAsync();
         await _privateListening.DisposeAsync();
         await _folderServer.DisposeAsync();
         await _folderTranscoder.DisposeAsync();
