@@ -1,13 +1,79 @@
 <?php
-declare(strict_types=1);header('Content-Type: application/json; charset=utf-8');
-function respond(array $body,int $status=200):never{http_response_code($status);echo json_encode($body,JSON_UNESCAPED_SLASHES);exit;}
+
+declare(strict_types=1);
+header('Content-Type: application/json; charset=utf-8');
+function respond(array $body, int $status = 200): never
+{
+    http_response_code($status);
+    echo json_encode($body, JSON_UNESCAPED_SLASHES);
+    exit;
+}
 try {
-$dir=sys_get_temp_dir().DIRECTORY_SEPARATOR.'dowe-lancaster-remote-sessions';if(!is_dir($dir))@mkdir($dir,0700,true);if(is_dir($dir)&&is_writable($dir))session_save_path($dir);session_start();
-function deviceId():string{if(empty($_SESSION['remote_device_id']))$_SESSION['remote_device_id']=bin2hex(random_bytes(16));return $_SESSION['remote_device_id'];}
-function discover():?string{$socket=@stream_socket_server('udp://0.0.0.0:0',$errno,$error,STREAM_SERVER_BIND);if(!is_resource($socket))return null;try{@stream_socket_sendto($socket,'DOWE_LANCASTER_DISCOVER',0,'udp://255.255.255.255:8771');$read=[$socket];$write=null;$except=null;if(@stream_select($read,$write,$except,0,50000)!==1)return null;$peer='';$reply=@stream_socket_recvfrom($socket,128,0,$peer);if(!is_string($reply)||!preg_match('/^DOWE_LANCASTER_PC\\|(\\d{1,5})$/',trim($reply),$m)||!preg_match('/^udp:\\/\\/([^:]+):\\d+$/',$peer,$ip))return null;return 'http://'.$ip[1].':'.$m[1];}finally{fclose($socket);}}
-function postJson(string $url,array $payload):bool{$ctx=stream_context_create(['http'=>['method'=>'POST','header'=>"Content-Type: application/json\r\nAccept: application/json\r\n",'content'=>json_encode($payload),'timeout'=>5,'ignore_errors'=>true]]);$body=@file_get_contents($url,false,$ctx);return $body!==false&&preg_match('/^HTTP\/\S+\s+2\d\d/',($http_response_header[0]??''));}
-if($_SERVER['REQUEST_METHOD']!=='POST')respond(['ok'=>false,'message'=>'POST only'],405);$d=json_decode((string)file_get_contents('php://input'),true);if(!is_array($d))respond(['ok'=>false,'message'=>'Invalid JSON request.'],400);$action=$d['action']??'';
-if($action==='status')respond(['ok'=>true,'paired'=>isset($_SESSION['remote_endpoint']),'deviceId'=>deviceId()]);if($action==='disconnect'){unset($_SESSION['remote_endpoint']);respond(['ok'=>true,'paired'=>false,'message'=>'Disconnected.']);}
-if($action==='pair'){if(!preg_match('/^\d{6}$/',(string)($d['code']??'')))respond(['ok'=>false,'message'=>'Enter the six-digit pairing code.'],422);$endpoint=discover();if(!$endpoint)respond(['ok'=>false,'message'=>'No Dowe LanCaster PC answered discovery.'],503);if(!postJson($endpoint.'/api/v1/pairing/approve',['code'=>$d['code'],'deviceId'=>deviceId()]))respond(['ok'=>false,'message'=>'The PC rejected the pairing code.'],403);$_SESSION['remote_endpoint']=$endpoint;respond(['ok'=>true,'paired'=>true,'message'=>'Paired with Dowe LanCaster.']);}
-if($action!=='command'||empty($_SESSION['remote_endpoint']))respond(['ok'=>false,'message'=>'Pair with a PC before sending commands.'],401);$map=['power'=>'Power','home'=>'Home','back'=>'Back','up'=>'Up','down'=>'Down','left'=>'Left','right'=>'Right','select'=>'Select','replay'=>'Replay','play_pause'=>'Play','rev'=>'Rev','fwd'=>'Fwd','volume_down'=>'VolumeDown','volume_up'=>'VolumeUp','mute'=>'Mute'];$cmd=$d['command']??'';if(isset($map[$cmd])){$route='remote-key';$payload=['key'=>$map[$cmd],'deviceId'=>deviceId()];}elseif($cmd==='volume'&&filter_var($d['value']??null,FILTER_VALIDATE_INT)!==false&&(int)$d['value']>=0&&(int)$d['value']<=100){$route='set-volume';$payload=['value'=>(string)$d['value'],'deviceId'=>deviceId()];}elseif($cmd==='text'&&is_string($d['value']??null)&&trim($d['value'])!==''&&mb_strlen($d['value'])<=160){$route='remote-text';$payload=['value'=>$d['value'],'deviceId'=>deviceId()];}else respond(['ok'=>false,'message'=>'Unsupported command.'],422);if(!postJson($_SESSION['remote_endpoint'].'/api/v1/commands/'.$route,$payload))respond(['ok'=>false,'message'=>'Paired PC did not confirm command.'],502);respond(['ok'=>true,'message'=>'Command confirmed by paired PC.']);
-} catch (Throwable $error) { respond(['ok'=>false,'message'=>'Remote bridge failed safely.'],500); }
+    $dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'dowe-lancaster-remote-sessions';
+    if (!is_dir($dir)) @mkdir($dir, 0700, true);
+    if (is_dir($dir) && is_writable($dir)) session_save_path($dir);
+    session_start();
+    function deviceId(): string
+    {
+        if (empty($_SESSION['remote_device_id'])) $_SESSION['remote_device_id'] = bin2hex(random_bytes(16));
+        return $_SESSION['remote_device_id'];
+    }
+    function discover(): ?string
+    {
+        $socket = @stream_socket_server('udp://0.0.0.0:0', $errno, $error, STREAM_SERVER_BIND);
+        if (!is_resource($socket)) return null;
+        try {
+            @stream_socket_sendto($socket, 'DOWE_LANCASTER_DISCOVER', 0, 'udp://255.255.255.255:8771');
+            $read = [$socket];
+            $write = null;
+            $except = null;
+            if (@stream_select($read, $write, $except, 0, 50000) !== 1) return null;
+            $peer = '';
+            $reply = @stream_socket_recvfrom($socket, 128, 0, $peer);
+            if (!is_string($reply) || !preg_match('/^DOWE_LANCASTER_PC\\|(\\d{1,5})$/', trim($reply), $m) || !preg_match('/^udp:\\/\\/([^:]+):\\d+$/', $peer, $ip)) return null;
+            return 'http://' . $ip[1] . ':' . $m[1];
+        } finally {
+            fclose($socket);
+        }
+    }
+    function postJson(string $url, array $payload): bool
+    {
+        $ctx = stream_context_create(['http' => ['method' => 'POST', 'header' => "Content-Type: application/json\r\nAccept: application/json\r\n", 'content' => json_encode($payload), 'timeout' => 5, 'ignore_errors' => true]]);
+        $body = @file_get_contents($url, false, $ctx);
+        return $body !== false && preg_match('/^HTTP\/\S+\s+2\d\d/', ($http_response_header[0] ?? ''));
+    }
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') respond(['ok' => false, 'message' => 'POST only'], 405);
+    $d = json_decode((string)file_get_contents('php://input'), true);
+    if (!is_array($d)) respond(['ok' => false, 'message' => 'Invalid JSON request.'], 400);
+    $action = $d['action'] ?? '';
+    if ($action === 'status') respond(['ok' => true, 'paired' => isset($_SESSION['remote_endpoint']), 'deviceId' => deviceId()]);
+    if ($action === 'disconnect') {
+        unset($_SESSION['remote_endpoint']);
+        respond(['ok' => true, 'paired' => false, 'message' => 'Disconnected.']);
+    }
+    if ($action === 'pair') {
+        if (!preg_match('/^\d{6}$/', (string)($d['code'] ?? ''))) respond(['ok' => false, 'message' => 'Enter the six-digit pairing code.'], 422);
+        $endpoint = discover();
+        if (!$endpoint) respond(['ok' => false, 'message' => 'No Dowe LanCaster PC answered discovery.'], 503);
+        if (!postJson($endpoint . '/api/v1/pairing/approve', ['code' => $d['code'], 'deviceId' => deviceId()])) respond(['ok' => false, 'message' => 'The PC rejected the pairing code.'], 403);
+        $_SESSION['remote_endpoint'] = $endpoint;
+        respond(['ok' => true, 'paired' => true, 'message' => 'Paired with Dowe LanCaster.']);
+    }
+    if ($action !== 'command' || empty($_SESSION['remote_endpoint'])) respond(['ok' => false, 'message' => 'Pair with a PC before sending commands.'], 401);
+    $map = ['power' => 'Power', 'home' => 'Home', 'back' => 'Back', 'up' => 'Up', 'down' => 'Down', 'left' => 'Left', 'right' => 'Right', 'select' => 'Select', 'replay' => 'Replay', 'play_pause' => 'Play', 'rev' => 'Rev', 'fwd' => 'Fwd', 'volume_down' => 'VolumeDown', 'volume_up' => 'VolumeUp', 'mute' => 'Mute'];
+    $cmd = $d['command'] ?? '';
+    if (isset($map[$cmd])) {
+        $route = 'remote-key';
+        $payload = ['key' => $map[$cmd], 'deviceId' => deviceId()];
+    } elseif ($cmd === 'volume' && filter_var($d['value'] ?? null, FILTER_VALIDATE_INT) !== false && (int)$d['value'] >= 0 && (int)$d['value'] <= 100) {
+        $route = 'set-volume';
+        $payload = ['value' => (string)$d['value'], 'deviceId' => deviceId()];
+    } elseif ($cmd === 'text' && is_string($d['value'] ?? null) && trim($d['value']) !== '' && mb_strlen($d['value']) <= 160) {
+        $route = 'remote-text';
+        $payload = ['value' => $d['value'], 'deviceId' => deviceId()];
+    } else respond(['ok' => false, 'message' => 'Unsupported command.'], 422);
+    if (!postJson($_SESSION['remote_endpoint'] . '/api/v1/commands/' . $route, $payload)) respond(['ok' => false, 'message' => 'Paired PC did not confirm command.'], 502);
+    respond(['ok' => true, 'message' => 'Command confirmed by paired PC.']);
+} catch (Throwable $error) {
+    respond(['ok' => false, 'message' => 'Remote bridge failed safely.'], 500);
+}
