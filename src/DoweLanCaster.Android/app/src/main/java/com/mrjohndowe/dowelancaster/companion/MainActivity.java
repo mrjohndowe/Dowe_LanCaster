@@ -294,66 +294,90 @@ public final class MainActivity extends Activity {
         page.removeAllViews();
         page.setGravity(Gravity.CENTER_HORIZONTAL);
         page.setPadding(0, dp(12), 0, dp(12));
+
+        // Sculpted obsidian remote chassis.
         LinearLayout remote = new LinearLayout(this);
         remote.setOrientation(LinearLayout.VERTICAL);
-        remote.setPadding(dp(18), dp(12), dp(18), dp(12));
+        remote.setGravity(Gravity.CENTER_HORIZONTAL);
+        remote.setPadding(dp(20), dp(16), dp(20), dp(16));
         GradientDrawable remotePanel = new GradientDrawable();
         remotePanel.setColor(color(R.color.background));
-        remotePanel.setStroke(dp(1), color(R.color.outline));
-        remotePanel.setCornerRadius(dp(24));
+        remotePanel.setStroke(dp(1), color(R.color.chassis_outline));
+        remotePanel.setCornerRadius(dp(32));
         remote.setBackground(remotePanel);
+
+        // Compact brand header badge.
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER);
         ImageView logo = new ImageView(this);
         logo.setImageResource(R.drawable.dowelancaster_icon);
         logo.setContentDescription("Dowe LanCaster logo");
         logo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        remote.addView(logo, margins(MATCH, dp(34), 0, 0, 0, 2));
+        header.addView(logo, margins(dp(28), dp(28), 0, 0, 8, 0));
 
+        LinearLayout brandTextCol = new LinearLayout(this);
+        brandTextCol.setOrientation(LinearLayout.VERTICAL);
         TextView title = text("DOWE LANCASTER", 11, R.color.accent);
-        title.setGravity(Gravity.CENTER_HORIZONTAL);
         title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
-        remote.addView(title, margins(MATCH, WRAP, 0, 0, 0, 1));
-        TextView remoteLabel = text("ROKU REMOTE", 8, R.color.text_secondary);
-        remoteLabel.setGravity(Gravity.CENTER_HORIZONTAL);
-        remote.addView(remoteLabel, margins(MATCH, WRAP, 0, 0, 0, 4));
+        brandTextCol.addView(title, margins(WRAP, WRAP, 0, 0, 0, 0));
+        TextView remoteLabel = text("ROKU REMOTE • ECP READY", 8, R.color.text_secondary);
+        brandTextCol.addView(remoteLabel, margins(WRAP, WRAP, 0, 0, 0, 0));
+        header.addView(brandTextCol, margins(WRAP, WRAP, 0, 0, 0, 0));
+        remote.addView(header, margins(MATCH, WRAP, 0, 0, 0, 12));
 
-        Button popout = remoteButton("Open Pop-out Remote", "popout", R.color.accent);
-        popout.setOnClickListener(view -> Toast.makeText(this, "Open the pop-out remote from the PC remote section.", Toast.LENGTH_SHORT).show());
-        remote.addView(popout, margins(MATCH, dp(34), 0, 0, 0, 8));
-
+        // Recessed system pill bar.
         LinearLayout top = new LinearLayout(this);
+        top.setOrientation(LinearLayout.HORIZONTAL);
         top.setGravity(Gravity.CENTER);
-        top.addView(remoteButton("↩ Back", "Back", R.color.surface), new LinearLayout.LayoutParams(0, dp(42), 1));
-        top.addView(remoteButton("⌂ Home", "Home", R.color.accent), new LinearLayout.LayoutParams(0, dp(42), 1));
-        top.addView(remoteButton("⟳ Replay", "Replay", R.color.surface), new LinearLayout.LayoutParams(0, dp(42), 1));
-        top.addView(remoteButton("⏻ Power", "Power", R.color.power), new LinearLayout.LayoutParams(0, dp(42), 1));
-        remote.addView(top, margins(MATCH, dp(42), 0, 0, 0, 8));
+        top.setPadding(dp(4), dp(4), dp(4), dp(4));
+        GradientDrawable topTrack = new GradientDrawable();
+        topTrack.setColor(color(R.color.remote_well));
+        topTrack.setStroke(dp(1), color(R.color.chassis_outline));
+        topTrack.setCornerRadius(dp(18));
+        top.setBackground(topTrack);
+        String[][] sysKeys = {
+                {"↩ Back", "Back", "surface"},
+                {"⌂ Home", "Home", "accent"},
+                {"⟳ Replay", "Replay", "surface"},
+                {"⏻ Power", "Power", "power"}
+        };
+        for (String[] sys : sysKeys) {
+            int colorRes = sys[2].equals("accent") ? R.color.accent
+                    : sys[2].equals("power") ? R.color.power : R.color.surface;
+            Button button = remoteButton(sys[0], sys[1], colorRes);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, dp(44), 1f);
+            params.setMargins(dp(2), 0, dp(2), 0);
+            top.addView(button, params);
+        }
+        remote.addView(top, margins(MATCH, dp(52), 0, 0, 0, 12));
 
+        // Sculpted circular D-pad well and center OK jewel.
         LinearLayout dpad = new LinearLayout(this);
         dpad.setOrientation(LinearLayout.VERTICAL);
         dpad.setGravity(Gravity.CENTER);
         GradientDrawable dpadBackground = new GradientDrawable();
-        dpadBackground.setColor(color(R.color.surface));
-        dpadBackground.setCornerRadius(dp(54));
+        dpadBackground.setColor(color(R.color.remote_well));
+        dpadBackground.setStroke(dp(1), color(R.color.chassis_outline));
+        dpadBackground.setCornerRadius(dp(92));
         dpad.setBackground(dpadBackground);
-
         LinearLayout dpadTop = new LinearLayout(this);
         dpadTop.setGravity(Gravity.CENTER);
-        dpadTop.addView(remoteButton("▲", "Up", R.color.surface), new LinearLayout.LayoutParams(dp(54), dp(42)));
-        dpad.addView(dpadTop, new LinearLayout.LayoutParams(MATCH, dp(44)));
-
+        dpadTop.addView(remoteButton("▲", "Up", R.color.surface), new LinearLayout.LayoutParams(dp(64), dp(48)));
+        dpad.addView(dpadTop, new LinearLayout.LayoutParams(MATCH, dp(52)));
         LinearLayout dpadMiddle = new LinearLayout(this);
         dpadMiddle.setGravity(Gravity.CENTER);
-        dpadMiddle.addView(remoteButton("◀", "Left", R.color.surface), new LinearLayout.LayoutParams(dp(54), dp(42)));
-        dpadMiddle.addView(remoteButton("OK", "Select", R.color.accent), new LinearLayout.LayoutParams(dp(68), dp(52)));
-        dpadMiddle.addView(remoteButton("▶", "Right", R.color.surface), new LinearLayout.LayoutParams(dp(54), dp(42)));
-        dpad.addView(dpadMiddle, new LinearLayout.LayoutParams(MATCH, dp(54)));
-
+        dpadMiddle.addView(remoteButton("◀", "Left", R.color.surface), new LinearLayout.LayoutParams(dp(56), dp(52)));
+        dpadMiddle.addView(remoteButton("OK", "Select", R.color.accent), margins(dp(68), dp(68), 6, 0, 6, 0));
+        dpadMiddle.addView(remoteButton("▶", "Right", R.color.surface), new LinearLayout.LayoutParams(dp(56), dp(52)));
+        dpad.addView(dpadMiddle, new LinearLayout.LayoutParams(MATCH, dp(74)));
         LinearLayout dpadBottom = new LinearLayout(this);
         dpadBottom.setGravity(Gravity.CENTER);
-        dpadBottom.addView(remoteButton("▼", "Down", R.color.surface), new LinearLayout.LayoutParams(dp(54), dp(42)));
-        dpad.addView(dpadBottom, new LinearLayout.LayoutParams(MATCH, dp(44)));
-        remote.addView(dpad, margins(MATCH, dp(142), 0, 4, 0, 8));
+        dpadBottom.addView(remoteButton("▼", "Down", R.color.surface), new LinearLayout.LayoutParams(dp(64), dp(48)));
+        dpad.addView(dpadBottom, new LinearLayout.LayoutParams(MATCH, dp(52)));
+        remote.addView(dpad, margins(dp(184), dp(184), 0, 2, 0, 12));
 
+        // Molded transport and volume control decks.
         String[][] rows = {{"▣|Rev", "▶|Play", "▣|Fwd"}, {"Vol -|VolumeDown", "Mute|Mute", "Vol +|VolumeUp"}};
         for (String[] row : rows) {
             LinearLayout line = new LinearLayout(this);
@@ -362,46 +386,66 @@ public final class MainActivity extends Activity {
                 String[] parts = item.split("\\|", 2);
                 String label = parts[0];
                 String key = parts[1];
-                Button button = remoteButton(label, key, key.equals("Select") ? R.color.accent : R.color.surface);
-                LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(0, dp(42), 1);
+                int buttonColor = key.equals("Select") || key.equals("Play") ? R.color.accent : R.color.surface;
+                Button button = remoteButton(label, key, buttonColor);
+                LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(0, dp(44), 1f);
                 buttonParams.setMargins(dp(3), dp(3), dp(3), dp(3));
                 line.addView(button, buttonParams);
             }
-            remote.addView(line, margins(MATCH, dp(48), 0, 0, 0, 0));
+            remote.addView(line, margins(MATCH, dp(50), 0, 0, 0, 4));
         }
 
+        // Inline direct volume set dock.
+        LinearLayout volumeDock = new LinearLayout(this);
+        volumeDock.setOrientation(LinearLayout.HORIZONTAL);
+        volumeDock.setGravity(Gravity.CENTER_VERTICAL);
         EditText volumeInput = input("Roku volume 0-100");
         volumeInput.setInputType(InputType.TYPE_CLASS_NUMBER);
-        remote.addView(volumeInput, margins(MATCH, dp(38), 0, 6, 0, 4));
+        LinearLayout.LayoutParams volumeInputParams = new LinearLayout.LayoutParams(0, dp(40), 1f);
+        volumeInputParams.setMargins(0, 0, dp(6), 0);
+        volumeDock.addView(volumeInput, volumeInputParams);
         Button setVolume = remoteButton("Set Volume", "set-volume", R.color.accent);
         setVolume.setOnClickListener(view -> sendValueCommand("set-volume", "value", volumeInput.getText().toString()));
-        remote.addView(setVolume, margins(MATCH, dp(36), 0, 0, 0, 6));
+        volumeDock.addView(setVolume, new LinearLayout.LayoutParams(dp(112), dp(40)));
+        remote.addView(volumeDock, margins(MATCH, WRAP, 0, 6, 0, 8));
 
-        Button privateListening = remoteButton("♬ Start Roku Private Listening", "PrivateListening", R.color.surface);
-        privateListening.setOnClickListener(view -> sendRemoteKey("PrivateListening"));
-        remote.addView(privateListening, margins(MATCH, dp(36), 0, 0, 0, 2));
-        TextView privateHint = text("Private listening status is shown on the PC remote.", 8, R.color.text_secondary);
-        privateHint.setGravity(Gravity.CENTER_HORIZONTAL);
-        remote.addView(privateHint, margins(MATCH, WRAP, 0, 0, 0, 6));
+        // Disabled hardware modules.
+        LinearLayout disabledAudioRow = new LinearLayout(this);
+        disabledAudioRow.setOrientation(LinearLayout.HORIZONTAL);
+        disabledAudioRow.setGravity(Gravity.CENTER);
+        Button privateListening = remoteButton("♬ Private Listening (Off)", "PrivateListening", R.color.surface);
+        privateListening.setEnabled(false);
+        privateListening.setAlpha(0.38f);
+        LinearLayout.LayoutParams privateParams = new LinearLayout.LayoutParams(0, dp(34), 1f);
+        privateParams.setMargins(0, 0, dp(4), 0);
+        disabledAudioRow.addView(privateListening, privateParams);
+        Button voice = remoteButton("♩ Voice Control (Off)", "VoiceControl", R.color.surface);
+        voice.setEnabled(false);
+        voice.setAlpha(0.38f);
+        LinearLayout.LayoutParams voiceParams = new LinearLayout.LayoutParams(0, dp(34), 1f);
+        voiceParams.setMargins(dp(4), 0, 0, 0);
+        disabledAudioRow.addView(voice, voiceParams);
+        remote.addView(disabledAudioRow, margins(MATCH, dp(36), 0, 0, 0, 10));
 
-        Button voice = remoteButton("♩ Start Voice Control", "VoiceControl", R.color.accent);
-        voice.setOnClickListener(view -> sendRemoteKey("VoiceControl"));
-        remote.addView(voice, margins(MATCH, dp(36), 0, 0, 0, 2));
-        TextView voiceHint = text("Voice control is off", 8, R.color.text_secondary);
-        voiceHint.setGravity(Gravity.CENTER_HORIZONTAL);
-        remote.addView(voiceHint, margins(MATCH, WRAP, 0, 0, 0, 6));
-
-        TextView keyboardLabel = text("Keyboard Text", 12, R.color.text_primary);
-        remote.addView(keyboardLabel, margins(MATCH, WRAP, 0, 4, 0, 2));
+        // Recessed keyboard text entry dock.
+        TextView keyboardLabel = text("KEYBOARD TEXT DISPATCH", 10, R.color.text_secondary);
+        remote.addView(keyboardLabel, margins(MATCH, WRAP, 2, 2, 0, 4));
+        LinearLayout textDock = new LinearLayout(this);
+        textDock.setOrientation(LinearLayout.HORIZONTAL);
+        textDock.setGravity(Gravity.CENTER_VERTICAL);
         EditText textInput = input("Type or dictate text to your Roku...");
-        remote.addView(textInput, margins(MATCH, dp(42), 0, 6, 0, 4));
-        Button sendText = remoteButton("Send Text to Roku", "remote-text", R.color.accent);
+        LinearLayout.LayoutParams textInputParams = new LinearLayout.LayoutParams(0, dp(42), 1f);
+        textInputParams.setMargins(0, 0, dp(6), 0);
+        textDock.addView(textInput, textInputParams);
+        Button sendText = remoteButton("Send Text", "remote-text", R.color.accent);
         sendText.setOnClickListener(view -> sendValueCommand("remote-text", "value", textInput.getText().toString()));
-        remote.addView(sendText, margins(MATCH, dp(36), 0, 0, 0, 6));
+        textDock.addView(sendText, new LinearLayout.LayoutParams(dp(104), dp(42)));
+        remote.addView(textDock, margins(MATCH, WRAP, 0, 0, 0, 12));
 
+        // Footer navigation.
         Button back = remoteButton("Back to Companion Sections", "back", R.color.surface);
         back.setOnClickListener(view -> showConnectedScreen(page));
-        remote.addView(back, margins(MATCH, dp(36), 0, 6, 0, 0));
+        remote.addView(back, margins(MATCH, dp(40), 0, 2, 0, 0));
         page.addView(remote, new LinearLayout.LayoutParams(dp(390), MATCH));
     }
 

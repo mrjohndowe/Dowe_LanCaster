@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background">#171B23</color>
-    <color name="surface">#222936</color>
-    <color name="outline">#3B4658</color>
-    <color name="accent">#00AEEF</color>
-    <color name="power">#A94B55</color>
+    <color name="background">#15181D</color>
+    <color name="surface">#2A2E35</color>
+    <color name="remote_well">#20242A</color>
+    <color name="outline">#454B55</color>
+    <color name="chassis_outline">#3B414A</color>
+    <color name="accent">#15AFCF</color>
+    <color name="power">#A83A3A</color>
     <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#B8C1CF</color>
+    <color name="text_secondary">#AAB3BE</color>
 </resources>
