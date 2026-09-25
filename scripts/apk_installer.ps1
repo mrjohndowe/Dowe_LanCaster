@@ -3,7 +3,7 @@ param(
     [ValidateSet("Debug", "Release")]
     [string]$Configuration = "Debug",
 
-    [ValidateSet("BuildAndInstall", "Build", "Clean", "RebuildAndInstall", "Connect", "Tunnel")]
+    [ValidateSet("BuildAndInstall", "Build", "Clean", "RebuildAndInstall", "Connect", "Tunnel", "UninstallFirst")]
     [string]$Action,
 
     [string]$ProjectPath,
@@ -131,8 +131,109 @@ function Read-AdbNetworkAddress {
     return "${hostAddress}:$port"
 }
 
+function createBanner {
+    [CmdletBinding()]
+    param(
+        [ConsoleColor[]]$Palette = @(
+            [ConsoleColor]::DarkCyan
+            [ConsoleColor]::Cyan
+            [ConsoleColor]::Blue
+            [ConsoleColor]::DarkBlue
+            [ConsoleColor]::White
+            [ConsoleColor]::Red
+        ),
+
+        [ConsoleColor]$BorderColor = [ConsoleColor]::Cyan
+    )
+
+    $banner = @'
+_(`-')                  .->    (`-')  _             (`-')  _ <-. (`-')_         (`-')  _  (`-').->`-')      (`-')  _   (`-')
+( (OO ).->    .->    (`(`-')/`) ( OO).-/       <-.   (OO ).-/    \( OO) )        (OO ).-/  ( OO)_ ( OO).->   ( OO).-/<-.(OO )
+\    .'_(`-')----. ,-`( OO).',(,------.     ,--. )  / ,---.  ,--./ ,--/\-,-----./ ,---.  (_)--\_)/    '._  (,------.,------,)
+'`'-..__| OO).-.  '|  |\  |  | |  .---'     |  (`-')| \ /`.\ |   \ |  | |  .--./| \ /`.\ /    _ /|'--...__) |  .---'|   /`. '
+|  |  ' ( _) | |  ||  | '.|  |(|  '--.      |  |OO )'-'|_.' ||  . '|  |)_) (`-')'-'|_.' |\_..`--.`--.  .--'(|  '--. |  |_.' |
+|  |  / :\|  |)|  ||  |.'.|  | |  .--'     (|  '__ (|  .-.  ||  |\    |||  |OO ||  .-.  |.-._)   \  |  |    |  .--' |  .   .'
+|  '-'  / '  '-'  '|   ,'.   | |  `---.     |     |'|  | |  ||  | \   (_'  '--'\|  | |  |\       /  |  |    |  `---.|  |\  \
+`------'   `-----' `--'   '--' `------'     `-----' `--' `--'`--'  `--'  `-----'`--' `--' `-----'   `--'    `------'`--' '--'
+'@ -split "`r?`n"
+
+    if ($Palette.Count -eq 0) {
+        $Palette = @([ConsoleColor]::Cyan)
+    }
+
+    $bannerWidth = ($banner | Measure-Object -Property Length -Maximum).Maximum
+    $colorBandWidth = [Math]::Max(1, [Math]::Ceiling($bannerWidth / $Palette.Count))
+
+    Write-Host ('=' * $bannerWidth) -ForegroundColor $BorderColor
+    Write-Host ""
+    foreach ($line in $banner) {
+        for ($position = 0; $position -lt $line.Length; $position++) {
+            $character = $line[$position]
+            if ([char]::IsWhiteSpace($character)) {
+                Write-Host $character -NoNewline
+                continue
+            }
+
+            $paletteIndex = [Math]::Min(
+                [Math]::Floor($position / $colorBandWidth),
+                $Palette.Count - 1
+            )
+            Write-Host $character -NoNewline -ForegroundColor $Palette[$paletteIndex]
+        }
+        Write-Host ""
+    }
+
+    Write-Host ('=' * $bannerWidth) -ForegroundColor $BorderColor
+    $menuTitle = " Installation Menu "
+    $titlePadding = [Math]::Max(0, $bannerWidth - $menuTitle.Length)
+
+    $leftPadding = [Math]::Floor($titlePadding / 2)
+    $rightPadding = $titlePadding - $leftPadding
+
+    Write-Color (
+        ('=' * $leftPadding) +
+        $menuTitle +
+        ('=' * $rightPadding)
+    ) Green Black 1
+
+
+
+    [Console]::ResetColor()
+    Write-Host ""
+}
+
 $interactiveMenu = -not $Clean -and -not $Action
 $returnToMenu = -not $NoMenuReturn
+
+function Write-Color {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Message,
+
+        [Parameter(Mandatory)]
+        [ValidateSet("Black", "DarkBlue", "DarkGreen", "DarkCyan", "DarkRed", "DarkMagenta", "DarkYellow", "Gray", "Blue", "Green", "Cyan", "Red", "Magenta", "Yellow", "White")]
+        [ConsoleCOlor]$ForegroundColor = "DarkGreen",
+
+        [Parameter(Mandatory)]
+        [ValidateSet("Black", "DarkBlue", "DarkGreen", "DarkCyan", "DarkRed", "DarkMagenta", "DarkYellow", "Gray", "Blue", "Green", "Cyan", "Red", "Magenta", "Yellow", "White")]
+        [ConsoleColor]$backgroundColor = "Black",
+
+        [boolean]$upperCase
+    )
+
+    if ($upperCase) {
+        Write-Host $Message.ToUpper() `
+            -ForegroundColor $ForegroundColor `
+            -BackgroundColor $backgroundColor
+        [Console]::ResetColor()
+    }
+    else {
+        Write-Host $Message `
+            -ForegroundColor $ForegroundColor `
+            -BackgroundColor $backgroundColor
+        [Console]::ResetColor()
+    }
+}
 
 function Return-ToMainMenu {
     if (-not $returnToMenu) {
@@ -163,19 +264,24 @@ elseif ($Action) {
 }
 else {
     Write-Host ""
-    Write-Host "=========================================" -ForegroundColor Cyan
-    Write-Host " Dowe LanCaster Android Companion" -ForegroundColor Cyan
-    Write-Host "=========================================" -ForegroundColor Cyan
-    Write-Host "1. Build APK only"
-    Write-Host "2. Clean build files only"
-    Write-Host "3. Build APK and install"
-    Write-Host "4. Clean, rebuild, and install"
-    Write-Host "5. Connect to phone"
-    Write-Host "6. Create PC service tunnel"
-    Write-Host "7. Exit"
+    createBanner
+
+
+    # Write-Host ""
+    # Write-Host "=========================================" -ForegroundColor Cyan
+    # Write-Host " Dowe LanCaster Android Companion" -ForegroundColor Cyan
+    # Write-Host "=========================================" -ForegroundColor Cyan
+    Write-Color "1. Build APK only" White Black 1
+    Write-Color "2. Clean build files only" White Black 1
+    Write-Color "3. Build APK and install" White Black 1
+    Write-Color "4. Clean, rebuild, and install" White Black 1
+    Write-Color "5. Connect to phone" White Black 1
+    Write-Color "6. Create PC service tunnel" White Black 1
+    Write-Color "7. Uninstall, Clean, Rebuild, and Re-Install" White Black 1
+    Write-Color "8. Exit" Red Black 1
     Write-Host ""
 
-    $menuChoice = Read-MenuChoice -Prompt "Select an option [1-7]" -ValidChoices @("1", "2", "3", "4", "5", "6", "7")
+    $menuChoice = Read-MenuChoice -Prompt "Select an option [1-8]" -ValidChoices @("1", "2", "3", "4", "5", "6", "7", "8")
     $effectiveAction = switch ($menuChoice) {
         "1" { "Build" }
         "2" { "Clean" }
@@ -183,28 +289,29 @@ else {
         "4" { "RebuildAndInstall" }
         "5" { "Connect" }
         "6" { "Tunnel" }
-        "7" { Write-Host "No changes were made."; exit 0 }
+        "7" { "UninstallFirst" }
+        "8" { Write-Host "No changes were made."; Return-ToMainMenu; exit 0 }
     }
 }
 
-$needsBuild = $effectiveAction -in @("BuildAndInstall", "Build", "Clean", "RebuildAndInstall")
+$needsBuild = $effectiveAction -in @("BuildAndInstall", "Build", "Clean", "RebuildAndInstall", "UninstallFirst")
 if ($interactiveMenu -and $needsBuild -and $effectiveAction -ne "Clean" -and
     -not $PSBoundParameters.ContainsKey("Configuration")) {
     Write-Host ""
-    Write-Host "1. Debug (recommended for testing)"
-    Write-Host "2. Release"
+    Write-Color "1. Debug (recommended for testing)" White Black 1
+    Write-Color "2. Release" White Black 1
     $configurationChoice = Read-MenuChoice -Prompt "Select build type [1-2]" -ValidChoices @("1", "2")
     $Configuration = if ($configurationChoice -eq "2") { "Release" } else { "Debug" }
 }
 
-$willUseDevice = $effectiveAction -in @("BuildAndInstall", "RebuildAndInstall", "Connect", "Tunnel")
+$willUseDevice = $effectiveAction -in @("BuildAndInstall", "RebuildAndInstall", "UninstallFirst", "Connect", "Tunnel")
 if ($interactiveMenu -and $willUseDevice -and -not $DeviceSerial -and -not $WirelessAddress) {
     Write-Host ""
-    Write-Host "How should the phone be connected?"
-    Write-Host "1. Use a device already connected to ADB"
-    Write-Host "2. Connect using Wireless Debugging"
-    Write-Host "3. Pair a new Wireless Debugging device, then connect"
-    Write-Host "4. Cancel"
+    Write-Color "How should the phone be connected?" White Blue 1
+    Write-Color "1. Use a device already connected to ADB" White Black 1
+    Write-Color "2. Connect using Wireless Debugging" White Black 1
+    Write-Color "3. Pair a new Wireless Debugging device, then connect" White Black 1
+    Write-Color "4. Cancel" Red Black 1
     $connectionChoice = Read-MenuChoice -Prompt "Select connection type [1-4]" -ValidChoices @("1", "2", "3", "4")
 
     switch ($connectionChoice) {
@@ -218,6 +325,8 @@ if ($interactiveMenu -and $willUseDevice -and -not $DeviceSerial -and -not $Wire
         "4" { Write-Host "Operation cancelled."; Return-ToMainMenu; exit 0 }
     }
 }
+
+
 
 $gradleWrapper = $null
 if ($needsBuild) {
@@ -271,8 +380,8 @@ $sdkCandidates = @(
 ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique
 
 $androidSdk = $sdkCandidates |
-    Where-Object { Test-Path -LiteralPath (Join-Path $_ "platform-tools\adb.exe") -PathType Leaf } |
-    Select-Object -First 1
+Where-Object { Test-Path -LiteralPath (Join-Path $_ "platform-tools\adb.exe") -PathType Leaf } |
+Select-Object -First 1
 
 if (-not $androidSdk) {
     if ($interactiveMenu) {
@@ -292,6 +401,7 @@ $env:ANDROID_HOME = $androidSdk
 $env:ANDROID_SDK_ROOT = $androidSdk
 
 $adb = Join-Path $androidSdk "platform-tools\adb.exe"
+
 
 function Assert-AdbNetworkAddress {
     param(
@@ -394,12 +504,15 @@ function Invoke-CheckedCommand {
     }
 }
 
+
 Write-Host ""
 Write-Host "Dowe LanCaster Android Companion: $effectiveAction ($Configuration)"
 Write-Host "Android SDK: $androidSdk"
 if ($needsBuild) {
     Push-Location $ProjectPath
     try {
+
+
         if ($effectiveAction -in @("Clean", "RebuildAndInstall")) {
             Write-Host "Cleaning Android build outputs..."
             Invoke-CheckedCommand -Command $gradleWrapper -Arguments @("clean", "--console=plain", "--no-daemon") `
@@ -427,9 +540,9 @@ if ($needsBuild) {
     $variantDirectory = $Configuration.ToLowerInvariant()
     $apkDirectory = Join-Path $ProjectPath "app\build\outputs\apk\$variantDirectory"
     $apk = Get-ChildItem -LiteralPath $apkDirectory -Filter "*.apk" -File -Recurse -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -notmatch "androidTest|unaligned" } |
-        Sort-Object LastWriteTimeUtc -Descending |
-        Select-Object -First 1
+    Where-Object { $_.Name -notmatch "androidTest|unaligned" } |
+    Sort-Object LastWriteTimeUtc -Descending |
+    Select-Object -First 1
 
     if (-not $apk) {
         throw "Gradle completed, but no $Configuration APK was found under '$apkDirectory'."
@@ -487,7 +600,7 @@ if ($WirelessAddress) {
     $connectOutput = @(& $adb connect $WirelessAddress 2>&1)
     $connectOutput | ForEach-Object { Write-Host $_ }
     $connectSucceeded = $LASTEXITCODE -eq 0 -and
-        ($connectOutput -join "`n") -match "(?i)(connected to|already connected to)"
+    ($connectOutput -join "`n") -match "(?i)(connected to|already connected to)"
 
     if (-not $connectSucceeded -and -not $PairingAddress -and -not [Console]::IsInputRedirected) {
         Write-Host ""
@@ -539,7 +652,7 @@ if ($WirelessAddress) {
         $connectOutput = @(& $adb connect $WirelessAddress 2>&1)
         $connectOutput | ForEach-Object { Write-Host $_ }
         $connectSucceeded = $LASTEXITCODE -eq 0 -and
-            ($connectOutput -join "`n") -match "(?i)(connected to|already connected to)"
+        ($connectOutput -join "`n") -match "(?i)(connected to|already connected to)"
     }
 
     if (-not $connectSucceeded) {
@@ -550,11 +663,11 @@ if ($WirelessAddress) {
 }
 
 $connectedDevices = @(& $adb devices) |
-    ForEach-Object {
-        if ($_ -match "^(?<serial>\S+)\s+(?<state>device|unauthorized|offline)$") {
-            [pscustomobject]@{ Serial = $Matches.serial; State = $Matches.state }
-        }
+ForEach-Object {
+    if ($_ -match "^(?<serial>\S+)\s+(?<state>device|unauthorized|offline)$") {
+        [pscustomobject]@{ Serial = $Matches.serial; State = $Matches.state }
     }
+}
 
 if ($DeviceSerial) {
     $selectedDevice = $connectedDevices | Where-Object Serial -EQ $DeviceSerial | Select-Object -First 1
@@ -596,6 +709,61 @@ else {
 
 if ($selectedDevice.State -ne "device") {
     throw "Android device '$($selectedDevice.Serial)' is $($selectedDevice.State). Unlock it and approve USB debugging."
+}
+
+if ($effectiveAction -eq "UninstallFirst") {
+    Push-Location $ProjectPath
+    $packageId = "com.dowelancaster.companion"
+    Write-Host "Uninstalling the old app..."
+
+    & $adb -s $selectedDevice.Serial uninstall $packageId
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "The app was not already installed. Continuing:..." -ForegroundColor White -BackgroundColor Red
+    }
+    Write-Host "Cleaning old build output..."
+
+    Invoke-CheckedCommand -Command $gradleWrapper -Arguments @(
+        "clean",
+        "--console=plain",
+        "--no-daemon"
+    ) -FailureMessage "Gradle clean failed."
+
+    Write-Host "Building the new $Configuration APK..."
+
+    Invoke-CheckedCommand -Command $gradleWrapper -Arguments @(
+        "assemble$Configuration",
+        "--console=plain",
+        "--no-daemon"
+    ) -FailureMessage "APK build failed."
+
+    $variantDirectory = $Configuration.ToLowerInvariant()
+    # $apkDirectory = "C:\Users\MrJohnDowe\AppData\Local\Android\Sdk\platform-tools\adb.exe"
+    $apkDirectory = Join-Path $ProjectPath "app\build\outputs\apk\$variantDirectory"
+
+    $apk = Get-ChildItem -LiteralPath $apkDirectory -Filter "*.apk" -File -Recurse |
+    Where-Object { $_.Name -notmatch "androidTest|unaligned|unsigned" } |
+    Sort-Object LastWriteTimeUtc -Descending |
+    Select-Object -First 1
+
+    if (-not $apk) {
+        throw "No $Configuration APK was found after build."
+    }
+
+    Write-Host "Installing the new APK..."
+
+    Invoke-CheckedCommand -Command $adb -Arguments @(
+        "-s",
+        $selectedDevice.Serial,
+        "install",
+        "-r",
+        $apk.FullName
+    ) -FailureMessage "APK installation failed"
+
+    Write-Host "Finished: uninstalled, cleaned, rebuilt, and reinstalled." -ForegroundColor Green
+    Return-ToMainMenu
+
+
+
 }
 
 if ($effectiveAction -eq "Connect") {
