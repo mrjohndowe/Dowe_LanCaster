@@ -1,0 +1,350 @@
+:root {
+  --v: #7c5cff;
+  --b: #090a0f;
+  --p: #171a26;
+  --i: #f3f4f6;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--b);
+  color: var(--i);
+  font: 14px system-ui;
+}
+header,
+nav,
+main,
+footer {
+  max-width: 1300px;
+  margin: auto;
+  padding: 18px;
+}
+header {
+  border-bottom: 1px solid #ffffff20;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+}
+header button {
+  float: right;
+}
+nav {
+  color: #aaa;
+  font-size: 11px;
+  word-spacing: 8px;
+}
+main {
+  display: grid;
+  grid-template-columns: 430px 1fr;
+  gap: 45px;
+}
+.remote {
+  padding: 22px;
+  border-radius: 35px;
+  background: linear-gradient(145deg, #343741, #11131b);
+  box-shadow: 0 25px 60px #000;
+  border: 1px solid #ffffff22;
+}
+.keys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.remote button {
+  padding: 15px 8px;
+  border: 1px solid #ffffff22;
+  border-radius: 12px;
+  background: #252834;
+  color: #fff;
+  cursor: pointer;
+}
+.remote button:active {
+  transform: translateY(2px);
+  background: #10121a;
+}
+.pad {
+  width: 210px;
+  height: 210px;
+  margin: 20px auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  justify-items: center;
+  border-radius: 50%;
+  background: #151721;
+}
+.pad button {
+  width: 55px;
+  height: 55px;
+}
+.pad button:first-child {
+  grid-column: 2;
+}
+.pad button:nth-child(3) {
+  grid-column: 2;
+  grid-row: 2;
+  background: var(--v);
+}
+.pad button:last-child {
+  grid-column: 2;
+}
+.remote input {
+  padding: 12px;
+  background: #0d0f15;
+  color: #fff;
+  border: 1px solid #ffffff22;
+  border-radius: 8px;
+  width: 65%;
+}
+aside {
+  background: var(--p);
+  padding: 25px;
+  border-radius: 18px;
+}
+h1 {
+  font-size: 28px;
+}
+em {
+  color: #6eebad;
+  font-size: 11px;
+}
+pre {
+  background: #080a0f;
+  padding: 15px;
+  border-radius: 10px;
+}
+li {
+  padding: 8px;
+  border-bottom: 1px solid #ffffff16;
+}
+footer {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 10px;
+}
+@media (max-width: 800px) {
+  main {
+    grid-template-columns: 1fr;
+  }
+  .remote {
+    max-width: 390px;
+    margin: auto;
+  }
+}
+:focus-visible {
+  outline: 3px solid #55e6e2;
+  outline-offset: 3px;
+}
+.remote label {
+  display: block;
+  text-align: left;
+  color: #c4c7d0;
+  font-size: 9px;
+  font-weight: 800;
+  margin-top: 9px;
+}
+.remote label span {
+  display: flex;
+  margin-top: 5px;
+}
+.remote label input {
+  width: 100%;
+}
+.shortcuts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 10px;
+}
+.shortcuts button {
+  font-size: 10px;
+}
+.remote button.active,
+[aria-pressed="true"] {
+  background: #7c5cff !important;
+  color: #fff;
+  box-shadow: 0 0 15px #7c5cff88 !important;
+}
+.debug {
+  display: grid;
+  gap: 7px;
+  padding: 13px;
+  border: 1px solid #7c5cff66;
+  background: #7c5cff12;
+  border-radius: 10px;
+  font-size: 11px;
+}
+.debug span {
+  color: #65e6a4;
+  font-weight: bold;
+}
+.debug small {
+  color: #b0b4bf;
+}
+@media (max-width: 768px) {
+  #stages {
+    grid-template-columns: repeat(3, 1fr);
+    font-size: 9px;
+  }
+  main {
+    gap: 25px;
+  }
+  .remote-area {
+    order: -1;
+  }
+  .remote {
+    width: min(100%, 420px);
+  }
+  aside {
+    padding: 18px;
+  }
+}
+@media (max-width: 375px) {
+  header b {
+    font-size: 9px;
+  }
+  #stages {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .remote {
+    padding: 13px;
+  }
+  .keys button {
+    font-size: 11px;
+  }
+  .pad {
+    width: 190px;
+    height: 190px;
+  }
+  .shortcuts button {
+    font-size: 8px;
+  }
+}
+.pair {
+  max-width: 390px;
+  margin: 50px auto;
+  padding: 28px;
+  background: #171a26;
+  border: 1px solid #7c5cff55;
+  border-radius: 18px;
+}
+.pair label {
+  display: block;
+  margin: 16px 0;
+  font-size: 10px;
+}
+.pair input {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+  padding: 14px;
+  background: #090a0f;
+  color: #f3f4f6;
+  border: 1px solid #ffffff22;
+  border-radius: 8px;
+  letter-spacing: 0.3em;
+  font-size: 20px;
+}
+.pair button {
+  padding: 12px 18px;
+  background: #7c5cff;
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+}
+#pair-status {
+  color: #9ca3af;
+  font-size: 12px;
+}
+.canonical {
+  padding: 18px;
+}
+.brandbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 7px 15px;
+  color: #d8d9e0;
+}
+.brandbar b {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+}
+.brandbar span,
+.lbl {
+  font-size: 9px;
+  color: #9ca3af;
+}
+.system-pills,
+.transport-deck,
+.volume-deck {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.system-pills {
+  grid-template-columns: repeat(4, 1fr);
+}
+.transport-deck,
+.volume-deck {
+  grid-template-columns: repeat(3, 1fr);
+}
+.canonical button {
+  min-height: 48px;
+  font-weight: 700;
+}
+.canonical .accent {
+  background: #7c5cff;
+}
+.canonical .power {
+  color: #ff8795;
+}
+.radial-pad {
+  width: 210px;
+  height: 210px;
+  margin: 18px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #0b0d13 26%, #242733 27%, #0d0f16 67%);
+}
+.radial-pad > div {
+  display: flex;
+  align-items: center;
+  gap: 19px;
+}
+.radial-pad button {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  padding: 0;
+}
+.radial-pad .ok {
+  width: 64px;
+  height: 64px;
+}
+.dock {
+  display: flex;
+  gap: 6px;
+  margin: 7px 0;
+}
+.dock input {
+  flex: 1;
+  width: auto !important;
+}
+.dock button {
+  min-height: 42px !important;
+  padding: 8px 12px;
+  background: #7c5cff;
+}
+.lbl {
+  margin: 12px 0 4px;
+  text-align: left;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+}
