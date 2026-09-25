@@ -328,7 +328,33 @@ public final class MainActivity extends Activity {
         top.addView(remoteButton("⏻ Power", "Power", R.color.power), new LinearLayout.LayoutParams(0, dp(42), 1));
         remote.addView(top, margins(MATCH, dp(42), 0, 0, 0, 8));
 
-        String[][] rows = {{"▲|Up"}, {"◀|Left", "OK|Select", "▶|Right"}, {"▼|Down"}, {"▣|Rev", "▶|Play", "▣|Fwd"}, {"Vol -|VolumeDown", "Mute|Mute", "Vol +|VolumeUp"}};
+        LinearLayout dpad = new LinearLayout(this);
+        dpad.setOrientation(LinearLayout.VERTICAL);
+        dpad.setGravity(Gravity.CENTER);
+        GradientDrawable dpadBackground = new GradientDrawable();
+        dpadBackground.setColor(color(R.color.surface));
+        dpadBackground.setCornerRadius(dp(54));
+        dpad.setBackground(dpadBackground);
+
+        LinearLayout dpadTop = new LinearLayout(this);
+        dpadTop.setGravity(Gravity.CENTER);
+        dpadTop.addView(remoteButton("▲", "Up", R.color.surface), new LinearLayout.LayoutParams(dp(54), dp(42)));
+        dpad.addView(dpadTop, new LinearLayout.LayoutParams(MATCH, dp(44)));
+
+        LinearLayout dpadMiddle = new LinearLayout(this);
+        dpadMiddle.setGravity(Gravity.CENTER);
+        dpadMiddle.addView(remoteButton("◀", "Left", R.color.surface), new LinearLayout.LayoutParams(dp(54), dp(42)));
+        dpadMiddle.addView(remoteButton("OK", "Select", R.color.accent), new LinearLayout.LayoutParams(dp(68), dp(52)));
+        dpadMiddle.addView(remoteButton("▶", "Right", R.color.surface), new LinearLayout.LayoutParams(dp(54), dp(42)));
+        dpad.addView(dpadMiddle, new LinearLayout.LayoutParams(MATCH, dp(54)));
+
+        LinearLayout dpadBottom = new LinearLayout(this);
+        dpadBottom.setGravity(Gravity.CENTER);
+        dpadBottom.addView(remoteButton("▼", "Down", R.color.surface), new LinearLayout.LayoutParams(dp(54), dp(42)));
+        dpad.addView(dpadBottom, new LinearLayout.LayoutParams(MATCH, dp(44)));
+        remote.addView(dpad, margins(MATCH, dp(142), 0, 4, 0, 8));
+
+        String[][] rows = {{"▣|Rev", "▶|Play", "▣|Fwd"}, {"Vol -|VolumeDown", "Mute|Mute", "Vol +|VolumeUp"}};
         for (String[] row : rows) {
             LinearLayout line = new LinearLayout(this);
             line.setGravity(Gravity.CENTER);
@@ -376,14 +402,14 @@ public final class MainActivity extends Activity {
         Button back = remoteButton("Back to Companion Sections", "back", R.color.surface);
         back.setOnClickListener(view -> showConnectedScreen(page));
         remote.addView(back, margins(MATCH, dp(36), 0, 6, 0, 0));
-        page.addView(remote, new LinearLayout.LayoutParams(dp(238), MATCH));
+        page.addView(remote, new LinearLayout.LayoutParams(dp(390), MATCH));
     }
 
     private Button remoteButton(String label, String key, int tintResource) {
         Button button = new Button(this);
         button.setText(label);
         button.setAllCaps(false);
-        button.setTextSize(9);
+        button.setTextSize(12);
         button.setTextColor(Color.WHITE);
         button.setMinHeight(0);
         button.setPadding(dp(4), 0, dp(4), 0);
