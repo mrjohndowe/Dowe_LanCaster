@@ -37,6 +37,8 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Fixed the pop-out remote command wiring and preserved the existing PC remote
   handlers through the visual redesign.
 
+## [Unreleased]
+
 ### Changed
 
 * Prepared the Windows application and installer for version 0.9.0.
@@ -649,5 +651,4 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   High Profile Level 4.1 encoding.
 - Waited for playable media segments before launching the Roku receiver.
 
-## [Unreleased](https://github.com/mrjohndowe/Dowe_LanCaster/compare/v0.9.5.30...HEAD)
 
