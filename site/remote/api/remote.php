@@ -6,7 +6,10 @@ header('Cache-Control: no-store');
 function reply(array $body, int $status = 200): never
 {
     http_response_code($status);
-    echo json_encode($body, JSON_UNESCAPED_SLASHES);
+    $jsonCode = json_encode($body, JSON_UNESCAPED_SLASHES);
+    echo $jsonCode;
+
+
     exit;
 }
 function httpCall(string $url, string $method = 'GET', string $body = ''): array
@@ -31,33 +34,39 @@ try {
     }
     function discoverRoku(): array
     {
-        $socket = @stream_socket_server('udp://0.0.0.0:0', $errno, $error, STREAM_SERVER_BIND, stream_context_create(['socket' => ['so_broadcast' => true]]));
-        if (!is_resource($socket)) return [];
-        stream_set_blocking($socket, false);
-        $request = "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nST: roku:ecp\r\nMX: 1\r\n\r\n";
-        @stream_socket_sendto($socket, $request, 0, '239.255.255.250:1900');
-        $found = [];
-        $deadline = microtime(true) + 2.5;
+        $context = stream_context_create(['socket' => ['so_broadcast' => true]]);
+        $socket = @stream_socket_server('udp://0.0.0.0:0', $errno, $error, STREAM_SERVER_BIND, $context);
+        if (!is_resource($socket)) return null;
         try {
-            while (microtime(true) < $deadline) {
-                $read = [$socket];
-                $write = null;
-                $except = null;
-                $remaining = max(0.05, $deadline - microtime(true));
-                $seconds = (int)$remaining;
-                $microseconds = (int)(($remaining - $seconds) * 1000000);
-                if (@stream_select($read, $write, $except, $seconds, $microseconds) !== 1) continue;
-                $from = '';
-                $packet = @stream_socket_recvfrom($socket, 4096, 0, $from);
-                if (!is_string($packet) || !preg_match('/^LOCATION:\s*http:\/\/([^:]+):8060/mi', $packet, $match)) continue;
-                $endpoint = rokuEndpoint($match[1]);
-                if ($endpoint && !isset($found[$endpoint])) {
-                    [$status, $info] = httpCall($endpoint . '/query/device-info');
-                    $name = $endpoint;
-                    if ($status === 200 && preg_match('/<friendly-device-name[^>]*>(.*?)<\/friendly-device-name>/i', $info, $nameMatch)) $name = html_entity_decode(strip_tags($nameMatch[1]));
-                    $found[$endpoint] = ['endpoint' => $endpoint, 'name' => $name];
+            $targets = ['255.255.255.255'];
+            $localAddresses = @gethostbynamel(gethostname()) ?: [];
+            foreach ($localAddresses as $localAddress) {
+                if (filter_var($localAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                    $parts = explode('.', $localAddress);
+                    if (count($parts) === 4) $targets[] = "$parts[0].$parts[1].$parts[2].255";
                 }
             }
+            foreach (array_unique($targets) as $target) {
+                @stream_socket_sendto($socket, 'DOWE_LANCASTER_DISCOVER', 0, "$target:8771");
+            }
+            $deadline = microtime(true) + 2.5;
+            $candidates = [];
+            while (($remaining = $deadline - microtime(true)) > 0) {
+                $read = [$socket]; $write = null; $except = null;
+                $seconds = (int)$remaining;
+                $microseconds = (int)(($remaining - $seconds) * 1_000_000);
+                if (@stream_select($read, $write, $except, $seconds, $microseconds) !== 1) break;
+                $peer = '';
+                $reply = @stream_socket_recvfrom($socket, 128, 0, $peer);
+                if (is_string($reply) && preg_match('/^DOWE_LANCASTER_PC\\|(\\d{1,5})$/', trim($reply), $m) && preg_match('/^([^:]+):\\d+$/', $peer, $ip)) {
+                    $candidates[] = 'http://' . $ip[1] . ':' . $m[1];
+                }
+            }
+            foreach (array_unique($candidates) as $candidate) {
+                $health = @file_get_contents($candidate . '/api/v1/health', false, stream_context_create(['http' => ['timeout' => 2]]));
+                if (is_string($health) && $health !== '') return $candidate;
+            }
+            return null;
         } finally {
             fclose($socket);
         }

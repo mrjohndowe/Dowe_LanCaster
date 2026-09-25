@@ -43,3 +43,5 @@ Thumbs.db
 
 # ftp-sync credentials
 .vscode/ftp-sync.json
+site/remote/.vite/deps/_metadata.json
+site/remote/.vite/deps/package.json
