@@ -35,7 +35,7 @@
         <aside>
             <h1>Operational Remote Dashboard</h1>
             <p>Build stages, command parity, telemetry and real paired companion transport status.</p>
-            <div class="debug"><b>TRANSPORT</b><span id="mode">PAIRING REQUIRED</span><small id="endpoint">No upstream configured · demo recording enabled</small><small id="response">Last response: awaiting command</small><small>Timeout: 3 seconds · endpoint URL is server configuration only</small></div>
+            <div class="debug"><b>TRANSPORT</b><span id="mode">PAIRING REQUIRED</span><small id="endpoint">Enter the one-time PC code to connect the Companion service</small><small id="response">Last response: awaiting pairing</small><small>Commands are sent only after the paired PC confirms them</small></div>
             <h2>LIVE BUILD OUTPUT</h2>
             <pre id="buildout">FINAL BUILD ACTIVE
 API whitelist locked · payload validation ready.</pre>

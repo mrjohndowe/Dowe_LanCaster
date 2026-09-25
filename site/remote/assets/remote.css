@@ -258,6 +258,78 @@ footer {
   color: #9ca3af;
   font-size: 12px;
 }
+
+/* Canonical PHP remote layout from the supplied redesign archive. */
+.canonical {
+  width: 390px;
+  max-width: 100%;
+  padding: 18px 20px;
+  border-radius: 32px;
+  background: linear-gradient(180deg, #16161d 0%, #0c0c10 100%);
+  border: 1px solid rgba(255, 255, 255, .08);
+  box-shadow: 0 28px 60px -12px rgba(0, 0, 0, .85);
+}
+.brandbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #0c0c10;
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 16px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+.brandbar b { color: #a78bfa; font-size: 11px; letter-spacing: .14em; }
+.brandbar span { color: #9e9ea9; font-size: 9px; letter-spacing: .18em; }
+.system-pills, .transport-deck, .volume-deck {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.transport-deck, .volume-deck { grid-template-columns: repeat(3, 1fr); }
+.canonical button {
+  height: 46px;
+  border: 0;
+  border-radius: 14px;
+  cursor: pointer;
+  color: #f4f4f6;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(180deg, #23232c, #191920);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+.canonical button:active { transform: scale(.96) translateY(1px); }
+.canonical button.accent { background: linear-gradient(180deg, #8b5cf6, #6d28d9); }
+.canonical button.power { background: linear-gradient(180deg, #31131c, #220d14); color: #fda4af; }
+.radial-pad {
+  background: radial-gradient(circle at 50% 32%, #181820, #09090c);
+  border-radius: 50%;
+  width: 196px;
+  height: 196px;
+  margin: 0 auto 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  box-shadow: inset 0 4px 12px rgba(0, 0, 0, .85);
+}
+.radial-pad > div { display: flex; align-items: center; gap: 8px; width: 100%; justify-content: space-between; }
+.radial-pad button { width: 54px; height: 48px; }
+.radial-pad button.ok { width: 70px; height: 70px; border-radius: 50%; }
+.canonical .dock {
+  display: flex;
+  gap: 8px;
+  background: #0b0b0e;
+  border-radius: 16px;
+  padding: 6px;
+  margin-bottom: 12px;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .85);
+}
+.canonical .dock input { flex: 1; width: auto; background: transparent; border: 0; color: #f4f4f6; padding: 0 10px; font-size: 12px; outline: none; }
+.canonical .dock button { width: auto; padding: 0 14px; height: 38px; }
+.canonical .lbl { font-size: 10px; letter-spacing: .14em; color: #9e9ea9; margin: 0 0 6px 4px; text-transform: uppercase; }
 .canonical {
   padding: 18px;
 }

@@ -295,7 +295,7 @@ public final class MainActivity extends Activity {
         page.setGravity(Gravity.CENTER_HORIZONTAL);
         page.setPadding(0, dp(12), 0, dp(12));
 
-            // 1. Sculpted Obsidian Remote Chassis
+        // 1. Sculpted Obsidian Remote Chassis
         LinearLayout remote = new LinearLayout(this);
         remote.setOrientation(LinearLayout.VERTICAL);
         remote.setGravity(Gravity.CENTER_HORIZONTAL);
