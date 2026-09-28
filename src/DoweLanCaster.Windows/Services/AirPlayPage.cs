@@ -91,6 +91,8 @@ public static class AirPlayPage
                     const status = document.getElementById('airplay-status');
                     const supported = typeof video.webkitShowPlaybackTargetPicker === 'function';
                     const unsupportedMessage = 'The AirPlay picker is available in Safari on an iPhone, iPad, or Mac.';
+                    let currentRevision = {{completionRevision}};
+                    let pollInterval = null;
 
                     status.textContent = supported
                       ? 'Ready. Tap the button to choose your Roku.'
@@ -115,6 +117,31 @@ public static class AirPlayPage
                         ? 'AirPlay devices are available. Tap the button to choose your Roku.'
                         : 'No AirPlay device is currently visible. Check that the Roku is on the same Wi-Fi network.';
                     });
+
+                    // Poll for stream changes (for folder cast auto-advance)
+                    function pollForStreamChanges() {
+                      if (pollInterval) return;
+                      
+                      pollInterval = setInterval(async () => {
+                        try {
+                          const response = await fetch('/control?_=' + Date.now(), { cache: 'no-store' });
+                          const data = await response.json();
+                          
+                          if (data.revision && data.revision !== currentRevision && data.streamUrl) {
+                            currentRevision = data.revision;
+                            // Reload the page with cache-busting to get the new stream
+                            window.location.href = window.location.href.split('?')[0] + '?_=' + Date.now();
+                          }
+                        } catch (error) {
+                          // Silently ignore polling errors
+                        }
+                      }, 1000); // Check every 1 second (was 2 seconds)
+                    }
+
+                    // Start polling if this is a folder cast (has completion revision)
+                    if (currentRevision > 0) {
+                      pollForStreamChanges();
+                    }
                   })();
                 </script>
                 {{completionScript}}
