@@ -8,9 +8,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>DoweLanCaster</AssemblyName>
     <RootNamespace>DoweLanCaster</RootNamespace>
-    <Version>0.9.5.73</Version>
-    <AssemblyVersion>0.9.5.73</AssemblyVersion>
-    <FileVersion>0.9.5.73</FileVersion>
+    <Version>0.9.5.74</Version>
+    <AssemblyVersion>0.9.5.74</AssemblyVersion>
+    <FileVersion>0.9.5.74</FileVersion>
     <StartupObject>DoweLanCaster.App</StartupObject>
     <AssemblyTitle>DoweLanCaster</AssemblyTitle>
     <ApplicationIcon>DoweLanCaster.ico</ApplicationIcon>
@@ -25,7 +25,7 @@
     <RepositoryUrl>https://github.com/mrjohndowe/Dowe_LanCaster.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>roku; streaming; casting; media; hls; ffmpeg; remote-control; windows; wpf;</PackageTags>
-    <PackageReleaseNotes>Dowe LanCaster v0.9.5.73 keeps AirPlay connected while Folder Cast advances between videos and makes FFmpeg setup resilient to temporary download outages.</PackageReleaseNotes>
+    <PackageReleaseNotes>Dowe LanCaster v0.9.5.74 adds automatic Link Playlist streaming and repairs the web Roku remote controls.</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
