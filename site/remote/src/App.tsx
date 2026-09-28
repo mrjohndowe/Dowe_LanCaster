@@ -138,7 +138,7 @@ function App() {
   };
 
   const apiCall = async (body: any): Promise<ApiResponse> => {
-    const response = await fetch("./api/remote.php", {
+    const response = await fetch("api/remote.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -362,10 +362,10 @@ function App() {
           </div>
 
           <div className="primary-actions" aria-label="Primary remote controls">
-            <ActionButton label="Back" icon="back" onClick={() => sendRemoteKey("Back")} />
-            <ActionButton label="Home" icon="home" tone="accent" onClick={() => sendRemoteKey("Home")} />
-            <ActionButton label="Replay" icon="refresh" onClick={() => sendRemoteKey("Replay")} />
-            <ActionButton label="Power" icon="power" tone="power" onClick={() => sendRemoteKey("Power")} />
+            <ActionButton label="Back" icon="back" onClick={() => sendRemoteKey("back")} />
+            <ActionButton label="Home" icon="home" tone="accent" onClick={() => sendRemoteKey("home")} />
+            <ActionButton label="Replay" icon="refresh" onClick={() => sendRemoteKey("replay")} />
+            <ActionButton label="Power" icon="power" tone="power" onClick={() => sendRemoteKey("power")} />
           </div>
 
           <div className="remote-divider" />
@@ -373,19 +373,19 @@ function App() {
           <section className="navigation-section" aria-label="Navigation pad">
             <p className="section-label">Navigation</p>
             <div className="dpad">
-              <button className="dpad-button dpad-up" type="button" aria-label="Up" onClick={() => sendRemoteKey("Up")}>
+              <button className="dpad-button dpad-up" type="button" aria-label="Up" onClick={() => sendRemoteKey("up")}>
                 <Icon name="chevron-up" size={24} />
               </button>
-              <button className="dpad-button dpad-left" type="button" aria-label="Left" onClick={() => sendRemoteKey("Left")}>
+              <button className="dpad-button dpad-left" type="button" aria-label="Left" onClick={() => sendRemoteKey("left")}>
                 <Icon name="chevron-left" size={24} />
               </button>
-              <button className="dpad-button dpad-select" type="button" aria-label="Select" onClick={() => sendRemoteKey("Select", "Select")}>
+              <button className="dpad-button dpad-select" type="button" aria-label="Select" onClick={() => sendRemoteKey("select", "Select")}>
                 <span>OK</span>
               </button>
-              <button className="dpad-button dpad-right" type="button" aria-label="Right" onClick={() => sendRemoteKey("Right")}>
+              <button className="dpad-button dpad-right" type="button" aria-label="Right" onClick={() => sendRemoteKey("right")}>
                 <Icon name="chevron-right" size={24} />
               </button>
-              <button className="dpad-button dpad-down" type="button" aria-label="Down" onClick={() => sendRemoteKey("Down")}>
+              <button className="dpad-button dpad-down" type="button" aria-label="Down" onClick={() => sendRemoteKey("down")}>
                 <Icon name="chevron-down" size={24} />
               </button>
             </div>
@@ -397,14 +397,14 @@ function App() {
               <span className="section-caption">Media controls</span>
             </div>
             <div className="media-grid">
-              <ActionButton label="Rev" icon="rewind" onClick={() => sendRemoteKey("Rev")} />
-              <ActionButton label="Play" icon="play" tone="accent" onClick={() => sendRemoteKey("Play")} />
-              <ActionButton label="Fwd" icon="arrow-right" onClick={() => sendRemoteKey("Fwd")} />
+              <ActionButton label="Rev" icon="rewind" onClick={() => sendRemoteKey("rev")} />
+              <ActionButton label="Play" icon="play" tone="accent" onClick={() => sendRemoteKey("play_pause")} />
+              <ActionButton label="Fwd" icon="arrow-right" onClick={() => sendRemoteKey("fwd")} />
             </div>
             <div className="media-grid volume-actions">
-              <ActionButton label="Vol -" icon="speaker-down" onClick={() => sendRemoteKey("VolumeDown")} />
-              <ActionButton label="Mute" icon="mute" onClick={() => sendRemoteKey("Mute")} />
-              <ActionButton label="Vol +" icon="speaker-up" onClick={() => sendRemoteKey("VolumeUp")} />
+              <ActionButton label="Vol -" icon="speaker-down" onClick={() => sendRemoteKey("volume_down")} />
+              <ActionButton label="Mute" icon="mute" onClick={() => sendRemoteKey("mute")} />
+              <ActionButton label="Vol +" icon="speaker-up" onClick={() => sendRemoteKey("volume_up")} />
             </div>
           </section>
 
