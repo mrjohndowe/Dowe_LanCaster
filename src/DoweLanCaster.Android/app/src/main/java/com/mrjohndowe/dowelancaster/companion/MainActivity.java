@@ -246,7 +246,7 @@ public final class MainActivity extends Activity {
         subtitle.setGravity(Gravity.CENTER_HORIZONTAL);
         page.addView(subtitle, margins(MATCH, WRAP, 0, 0, 0, 24));
 
-        String[] sections = {"Remote", "Link Cast", "Live Cast", "Folder Cast", "TeraBox", "Settings", "Diagnostics"};
+        String[] sections = {"Remote", "Link Cast", "Link Playlist", "Live Cast", "Folder Cast", "TeraBox", "Settings", "Diagnostics"};
         for (String section : sections) {
             Button sectionButton = new Button(this);
             sectionButton.setText(section);
@@ -499,6 +499,27 @@ public final class MainActivity extends Activity {
             page.addView(actionButton(section, "Analyze Link", "analyze", R.color.accent), margins(MATCH, dp(42), 0, 0, 0, 8));
             page.addView(actionButton(section, "Stream to Roku", "stream", R.color.accent), margins(MATCH, dp(42), 0, 0, 0, 8));
             page.addView(actionButton(section, "Stop Link Stream", "stop", R.color.surface), margins(MATCH, dp(42), 0, 0, 0, 8));
+        } else if (section.equals("Link Playlist")) {
+            TextView description = text("Add public video links to the queue on your PC. The PC streams each completed video to Roku automatically.", 15, R.color.text_secondary);
+            description.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
+            page.addView(description, margins(MATCH, WRAP, 0, 0, 0, 14));
+
+            EditText playlistUrl = input("Paste a media link for the playlist");
+            page.addView(playlistUrl, margins(MATCH, dp(48), 0, 0, 0, 8));
+
+            Button addToPlaylist = remoteButton("Add Link to Playlist", "add-url", R.color.surface);
+            addToPlaylist.setOnClickListener(view -> {
+                String value = playlistUrl.getText().toString().trim();
+                if (value.isEmpty()) {
+                    playlistUrl.setError("Enter a media link first");
+                    return;
+                }
+                sendTabAction(section, "add-url", value);
+                playlistUrl.setText("");
+            });
+            page.addView(addToPlaylist, margins(MATCH, dp(44), 0, 0, 0, 8));
+            page.addView(actionButton(section, "Start Playlist", "start", R.color.accent), margins(MATCH, dp(44), 0, 0, 0, 8));
+            page.addView(actionButton(section, "Stop Playlist", "stop", R.color.surface), margins(MATCH, dp(44), 0, 0, 0, 8));
         } else if (section.equals("Live Cast")) {
             page.addView(actionButton(section, "Start Live Cast", "start", R.color.accent), margins(MATCH, dp(46), 0, 0, 0, 8));
             page.addView(actionButton(section, "Stop Live Cast", "stop", R.color.surface), margins(MATCH, dp(46), 0, 0, 0, 8));
