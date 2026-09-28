@@ -294,7 +294,7 @@ function App() {
             <div className="pairing-card">
               <h2>Connect to your Roku</h2>
               <p>Find a Roku automatically, or enter its local IP address.</p>
-              
+
               <button
                 className="discover-btn"
                 type="button"
@@ -303,19 +303,19 @@ function App() {
               >
                 {isDiscovering ? "Searching..." : "Discover Roku Devices"}
               </button>
-              
+
               <div className="ip-input-group">
                 <label htmlFor="roku-ip">Roku IP Address</label>
                 <input
                   id="roku-ip"
                   type="text"
                   inputMode="decimal"
-                  placeholder="Example: 10.0.0.42"
+                  placeholder="Example: 10.0.0.10"
                   value={rokuIp}
                   onChange={(e) => setRokuIp(e.target.value)}
                 />
               </div>
-              
+
               <button
                 className="connect-btn"
                 type="button"
@@ -324,7 +324,7 @@ function App() {
               >
                 {isConnecting ? "Connecting..." : "Connect to Roku"}
               </button>
-              
+
               {discoveredDevices.length > 0 && (
                 <div className="device-list">
                   <p className="device-list-label">Found devices:</p>
@@ -346,7 +346,7 @@ function App() {
             </div>
           </section>
         )}
-        
+
         {connected && (
           <section className="remote-device" aria-label="Dowe LanCaster Roku remote">
           <div className="device-topline">

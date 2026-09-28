@@ -129,13 +129,13 @@ public static class AirPlayPage
                           
                           if (data.revision && data.revision !== currentRevision && data.streamUrl) {
                             currentRevision = data.revision;
-                            // Reload the page to get the new stream
-                            window.location.reload();
+                            // Reload the page with cache-busting to get the new stream
+                            window.location.href = window.location.href.split('?')[0] + '?_=' + Date.now();
                           }
                         } catch (error) {
                           // Silently ignore polling errors
                         }
-                      }, 2000); // Check every 2 seconds
+                      }, 1000); // Check every 1 second (was 2 seconds)
                     }
 
                     // Start polling if this is a folder cast (has completion revision)
