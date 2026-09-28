@@ -62,9 +62,20 @@ try
 
     if (!hlsHtml.Contains(streamUrl, StringComparison.Ordinal) ||
         !hlsHtml.Contains("application/vnd.apple.mpegurl", StringComparison.Ordinal) ||
-        !hlsHtml.Contains($"completedRevision={revision}", StringComparison.Ordinal))
+        !hlsHtml.Contains("video.src = withCacheBust(streamUrl, revision);", StringComparison.Ordinal) ||
+        !hlsHtml.Contains("completedRevision=' + currentRevision", StringComparison.Ordinal) ||
+        hlsHtml.Contains("window.location.href", StringComparison.Ordinal))
     {
-        throw new InvalidOperationException("The HLS AirPlay page is missing its stream or completion callback.");
+        throw new InvalidOperationException("The HLS AirPlay page does not preserve the AirPlay session during a stream transition.");
+    }
+
+    var nextStreamUrl = "http://127.0.0.1:18876/live/index.m3u8?item=next";
+    var nextRevision = hlsServer.SetControlState(nextStreamUrl);
+    var control = await client.GetStringAsync("http://127.0.0.1:18876/control");
+    if (!control.Contains(nextStreamUrl, StringComparison.Ordinal) ||
+        !control.Contains($"\"revision\":{nextRevision}", StringComparison.Ordinal))
+    {
+        throw new InvalidOperationException("The HLS control endpoint did not publish the next folder item.");
     }
 
     var playlist = await client.GetAsync(streamUrl);
@@ -72,7 +83,7 @@ try
     if (playlist.Content.Headers.ContentType?.MediaType != "application/vnd.apple.mpegurl")
         throw new InvalidOperationException("The HLS playlist has the wrong AirPlay media type.");
 
-    Console.WriteLine("AirPlay HLS smoke test passed: page=200, playlist=200, MIME type and completion callback present.");
+    Console.WriteLine("AirPlay HLS smoke test passed: page=200, playlist=200, next-item control state and in-player transition present.");
 }
 finally
 {

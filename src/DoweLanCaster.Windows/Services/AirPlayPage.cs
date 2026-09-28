@@ -13,10 +13,6 @@ public static class AirPlayPage
         var safeTitle = WebUtility.HtmlEncode(title);
         var safeUrl = WebUtility.HtmlEncode(mediaUrl);
         var safeType = WebUtility.HtmlEncode(mediaType);
-        var completionScript = completionRevision > 0
-            ? $"<script>document.querySelector('video').addEventListener('ended',()=>fetch('/control?completedRevision={completionRevision}',{{cache:'no-store'}}));</script>"
-            : "";
-
         return $$"""
             <!doctype html>
             <html lang="en">
@@ -94,6 +90,30 @@ public static class AirPlayPage
                     let currentRevision = {{completionRevision}};
                     let pollInterval = null;
 
+                    function withCacheBust(url, revision) {
+                      const separator = url.includes('?') ? '&' : '?';
+                      return url + separator + 'revision=' + encodeURIComponent(revision);
+                    }
+
+                    async function switchStream(streamUrl, revision) {
+                      currentRevision = revision;
+                      status.textContent = 'Loading the next video...';
+
+                      // Keep the same video element alive. Replacing the page
+                      // drops Safari's AirPlay target, while replacing its source
+                      // lets the existing AirPlay session continue on the Roku.
+                      video.pause();
+                      video.src = withCacheBust(streamUrl, revision);
+                      video.load();
+
+                      try {
+                        await video.play();
+                        status.textContent = 'Playing the next video on the selected AirPlay device.';
+                      } catch (error) {
+                        status.textContent = 'The next video is ready. Press Play if Safari did not resume it automatically.';
+                      }
+                    }
+
                     status.textContent = supported
                       ? 'Ready. Tap the button to choose your Roku.'
                       : unsupportedMessage;
@@ -128,9 +148,7 @@ public static class AirPlayPage
                           const data = await response.json();
                           
                           if (data.revision && data.revision !== currentRevision && data.streamUrl) {
-                            currentRevision = data.revision;
-                            // Reload the page with cache-busting to get the new stream
-                            window.location.href = window.location.href.split('?')[0] + '?_=' + Date.now();
+                            await switchStream(data.streamUrl, data.revision);
                           }
                         } catch (error) {
                           // Silently ignore polling errors
@@ -142,9 +160,16 @@ public static class AirPlayPage
                     if (currentRevision > 0) {
                       pollForStreamChanges();
                     }
+
+                    video.addEventListener('ended', () => {
+                      if (currentRevision > 0) {
+                        fetch('/control?completedRevision=' + currentRevision, {
+                          cache: 'no-store'
+                        });
+                      }
+                    });
                   })();
                 </script>
-                {{completionScript}}
               </main>
             </body>
             </html>

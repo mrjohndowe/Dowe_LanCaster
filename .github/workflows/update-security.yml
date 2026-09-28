@@ -49,7 +49,7 @@ jobs:
           }
 
           if ($version -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?$') {
-            throw "Invalid version '$version'. Use a release tag such as v0.9.5.33."
+            throw "Invalid version '$version'. Use a release tag such as v0.9.5.x."
           }
 
           "tag=$version" >> $env:GITHUB_OUTPUT
