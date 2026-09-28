@@ -29,6 +29,7 @@ public sealed class CompanionPairingService : IAsyncDisposable
     public DateTimeOffset PairingExpiresAt => _pairingExpiresAt;
     public event Action<string>? LogLine;
     public event Action<string, string>? CommandReceived;
+    public event Action<string>? RemoteActionReceived;
 
     public void RegeneratePairingCode()
     {
@@ -157,6 +158,18 @@ public sealed class CompanionPairingService : IAsyncDisposable
             return Results.Ok(new { success = true });
         });
 
+        app.MapPost("/api/v1/commands/remote-action", async (HttpRequest request) =>
+        {
+            var command = await JsonSerializer.DeserializeAsync<CompanionCommand>(request.Body,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web) { PropertyNameCaseInsensitive = true });
+            var action = command?.Value?.Trim();
+            if (action is not ("private-listening" or "voice-control"))
+                return Results.BadRequest(new { error = "invalid_remote_action" });
+
+            RemoteActionReceived?.Invoke(action);
+            return Results.Ok(new { success = true, action });
+        });
+
         app.MapPost("/api/v1/commands/tab-action", async (HttpRequest request) =>
         {
             var command = await JsonSerializer.DeserializeAsync<TabActionCommand>(request.Body,
@@ -183,6 +196,7 @@ public sealed class CompanionPairingService : IAsyncDisposable
     {
         "Remote" => new { title = "Roku Remote", description = "Control navigation, playback, volume, power, text input, and private listening.", controls = new[] { "Home", "Back", "Replay", "Power", "D-pad", "Play/Pause", "Volume", "Keyboard text" } },
         "Link Cast" => new { title = "Link Cast", description = "Paste a media link, choose the encoder and quality, then cast it to the selected Roku.", controls = new[] { "Media link", "Analyze", "Encoder", "Video bitrate", "Start cast", "Stop cast" } },
+        "Link Playlist" => new { title = "Link Playlist", description = "Queue public media links and automatically cast each completed video to the selected Roku.", controls = new[] { "Add link", "Remove link", "Move up", "Move down", "Start playlist", "Stop playlist" } },
         "Live Cast" => new { title = "Live Cast", description = "Stream the selected desktop, window, screen, and PC audio source to Roku.", controls = new[] { "Capture source", "PC audio", "Encoder", "Frame rate", "Video bitrate", "Start live cast", "Stop live cast" } },
         "Folder Cast" => new { title = "Folder Cast", description = "Play a folder playlist on Roku with next, previous, pause, and stop controls.", controls = new[] { "Folder playlist", "Play", "Previous", "Next", "Stop" } },
         "TeraBox" => new { title = "TeraBox", description = "Browse TeraBox in the embedded browser and cast a detected video to Roku.", controls = new[] { "Browser", "Back", "Home", "Refresh", "Cast detected video", "Stop cast" } },

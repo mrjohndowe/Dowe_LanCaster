@@ -8,12 +8,21 @@ namespace DoweLanCaster.Services;
 public sealed class UrlStreamCaptureService : IAsyncDisposable
 {
     private Process? _process;
+    private TaskCompletionSource<bool>? _completion;
     private readonly Queue<string> _recentLog = new();
 
     public string OutputDirectory { get; private set; } = "";
     public bool IsRunning => _process is { HasExited: false };
 
     public event Action<string>? LogLine;
+
+    /// <summary>Completes true only when FFmpeg finishes the source without an error.</summary>
+    public Task<bool> WaitForCompletionAsync(CancellationToken token = default)
+    {
+        var completion = _completion
+            ?? throw new InvalidOperationException("No link stream is running.");
+        return completion.Task.WaitAsync(token);
+    }
 
     public async Task StartAsync(
         string ffmpegPath,
@@ -162,11 +171,16 @@ public sealed class UrlStreamCaptureService : IAsyncDisposable
             LogLine?.Invoke(e.Data);
         };
 
+        var completion = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        process.Exited += (_, _) => completion.TrySetResult(process.ExitCode == 0);
+
         if (!process.Start())
             throw new InvalidOperationException("FFmpeg could not be started.");
 
         process.BeginErrorReadLine();
         _process = process;
+        _completion = completion;
 
         for (int i = 0; i < 150; i++)
         {
@@ -272,6 +286,8 @@ public sealed class UrlStreamCaptureService : IAsyncDisposable
     {
         var process = _process;
         _process = null;
+        var completion = _completion;
+        _completion = null;
 
         if (process is not null)
         {
@@ -286,6 +302,8 @@ public sealed class UrlStreamCaptureService : IAsyncDisposable
             catch { }
             finally { process.Dispose(); }
         }
+
+        completion?.TrySetResult(false);
 
         if (!string.IsNullOrWhiteSpace(OutputDirectory) &&
             Directory.Exists(OutputDirectory))
