@@ -1,10 +1,26 @@
+<?php
+// Serve the React remote app
+$reactAppPath = __DIR__ . '/dist/index.html';
+
+if (file_exists($reactAppPath)) {
+    // Read the React app HTML
+    $html = file_get_contents($reactAppPath);
+    
+    // Update asset paths to work from the remote directory
+    $html = str_replace('href="/', 'href="./', $html);
+    $html = str_replace('src="/', 'src="./', $html);
+    
+    echo $html;
+} else {
+    // Fallback to original PHP remote if React build doesn't exist
+    ?>
 <!doctype html>
 <html>
 
 <head>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <link rel="stylesheet" href="assets/remote.css?v=<?= getVersionNumber() ?>">
-    <script src="assets/remote.js?v=<?= getVersionNumber() ?>" defer></script>
+    <link rel="stylesheet" href="assets/remote.css?v=<?= rand(1, 999) ?>">
+    <script src="assets/remote.js?v=<?= rand(1, 999) ?>" defer></script>
     <title>Dowe LanCaster Remote</title>
 </head>
 
@@ -57,28 +73,6 @@ API whitelist locked · payload validation ready.</pre>
 </body>
 
 </html>
-
-<?php
-function getVersionNumber()
-{
-    $v1 = rand(1, 99);
-    $v2 = rand(1, 99);
-    $v3 = rand(1, 99);
-    $versionNumber = $v1 . '.' . $v2 . '.' . $v3;
-
-    return $versionNumber;
+    <?php
 }
-function console_log($data)
-{
-
-    $display = '<script>';
-    $display .= 'console.log(' . json_encode($data) . ');';
-    $display .= '</script>';
-    echo $display;
-}
-$versionNumber = getVersionNumber();
-// file_put_contents('storage/logs/oldVersion.log', 'Version Number: ' . date('m/d/Y H:i:s') . ' ' . $versionNumber . PHP_EOL, FILE_APPEND);
-console_log('Version Number: v' . $versionNumber);
-// console_log('Old Version Number: v' . $oldVersion);
-
 ?>

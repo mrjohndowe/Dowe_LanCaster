@@ -15,9 +15,14 @@ obj/
 
 # Build output / packages
 dist/
+!site/remote/dist/
 release-build/
 publish/
 *.zip
+
+# Node modules (for React remote)
+site/remote/node_modules/
+site/remote/package-lock.json
 
 # Downloaded release dependencies are packaged by Build-Release.ps1 and must
 # not be committed; FFmpeg exceeds GitHub's normal file-size limit.
