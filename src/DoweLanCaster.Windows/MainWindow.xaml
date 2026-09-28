@@ -112,6 +112,80 @@
                                 </ScrollViewer>
                         </TabItem>
 
+                        <TabItem Header="Link Playlist">
+                                <Grid Margin="16">
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="12"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="12"/>
+                                                <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18">
+                                                <StackPanel>
+                                                        <TextBlock Text="Link Playlist" FontSize="24" FontWeight="Bold" Margin="0,0,0,8"/>
+                                                        <TextBlock Text="Add public video links, then stream them in order. Each link uses the same extraction, transcoding, Roku, audio, and AirPlay options as Link Cast." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,14"/>
+                                                        <DockPanel>
+                                                                <Button x:Name="AddPlaylistLinkButton" Content="Add Link" Width="110" Height="36" DockPanel.Dock="Right" Click="AddPlaylistLinkButton_Click"/>
+                                                                <TextBox x:Name="PlaylistLinkUrlTextBox" Height="36" Margin="0,0,10,0" VerticalContentAlignment="Center" ToolTip="Paste an HTTP or HTTPS video link"/>
+                                                        </DockPanel>
+                                                </StackPanel>
+                                        </Border>
+
+                                        <Grid Grid.Row="2">
+                                                <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="14"/>
+                                                        <ColumnDefinition Width="260"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                                        <Grid>
+                                                                <Grid.RowDefinitions>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                        <RowDefinition Height="8"/>
+                                                                        <RowDefinition Height="*"/>
+                                                                </Grid.RowDefinitions>
+                                                                <DockPanel>
+                                                                        <TextBlock Text="Queue" FontSize="22" FontWeight="Bold" DockPanel.Dock="Left"/>
+                                                                        <TextBlock x:Name="PlaylistCountText" Text="0 links" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                                                </DockPanel>
+                                                                <ListBox x:Name="LinkPlaylistListBox" Grid.Row="2" DisplayMemberPath="DisplayText" SelectionChanged="LinkPlaylistListBox_SelectionChanged"/>
+                                                        </Grid>
+                                                </Border>
+                                                <Border Grid.Column="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                                        <StackPanel>
+                                                                <TextBlock Text="Queue Controls" FontSize="20" FontWeight="Bold" Margin="0,0,0,12"/>
+                                                                <Button x:Name="PlaylistRemoveButton" Content="Remove Selected" Height="36" Margin="0,0,0,8" IsEnabled="False" Click="PlaylistRemoveButton_Click"/>
+                                                                <UniformGrid Columns="2" Margin="0,0,0,8">
+                                                                        <Button x:Name="PlaylistMoveUpButton" Content="Move Up" Height="36" Margin="0,0,4,0" IsEnabled="False" Click="PlaylistMoveUpButton_Click"/>
+                                                                        <Button x:Name="PlaylistMoveDownButton" Content="Move Down" Height="36" Margin="4,0,0,0" IsEnabled="False" Click="PlaylistMoveDownButton_Click"/>
+                                                                </UniformGrid>
+                                                                <Button x:Name="PlaylistClearButton" Content="Clear List" Height="36" Click="PlaylistClearButton_Click"/>
+                                                                <TextBlock Text="The playlist stops if a link cannot be extracted or streamed. It advances only after FFmpeg finishes the current video." TextWrapping="Wrap" Opacity="0.78" Margin="0,16,0,0"/>
+                                                        </StackPanel>
+                                                </Border>
+                                        </Grid>
+
+                                        <Border Grid.Row="4" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                                <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="10"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Button x:Name="StartPlaylistButton" Content="Start Playlist" Width="130" Height="40" Click="StartPlaylistButton_Click"/>
+                                                        <Button x:Name="StopPlaylistButton" Grid.Column="2" Content="Stop Playlist" Width="130" Height="40" IsEnabled="False" Click="StopPlaylistButton_Click"/>
+                                                        <StackPanel Grid.Column="3" Margin="18,0,0,0" VerticalAlignment="Center">
+                                                                <TextBlock x:Name="PlaylistNowPlayingText" Text="Nothing playing" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                                <TextBlock x:Name="PlaylistStatusText" Text="Add one or more public HTTP/HTTPS video links." TextWrapping="Wrap" Opacity="0.78"/>
+                                                        </StackPanel>
+                                                </Grid>
+                                        </Border>
+                                </Grid>
+                        </TabItem>
+
                         <TabItem Header="Live Cast">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                                         <StackPanel Margin="16">

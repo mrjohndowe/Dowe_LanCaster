@@ -42,6 +42,7 @@ public partial class MainWindow : Window
     {
         Interval = TimeSpan.FromSeconds(2)
     };
+    private readonly List<LinkPlaylistItem> _linkPlaylistItems = new();
 
     private RokuClient? _rokuClient;
     private string? _selectedFile;
@@ -55,6 +56,8 @@ public partial class MainWindow : Window
     private bool _folderReceiverLaunched;
     private long _folderControlRevision;
     private bool _linkReceiverLaunched;
+    private CancellationTokenSource? _linkPlaylistCancellation;
+    private bool _linkPlaylistRunning;
     private SpeechRecognitionEngine? _voiceRecognizer;
     private bool _voiceListening;
     private string? _pcAudioMonitorUrl;
@@ -124,6 +127,14 @@ public partial class MainWindow : Window
                     if (parts.Length >= 2)
                         await HandleCompanionTabActionAsync(parts[0], parts[1], parts.Length == 3 ? parts[2] : string.Empty);
                 }
+            });
+        _companionPairingService.RemoteActionReceived += action =>
+            Dispatcher.BeginInvoke(async () =>
+            {
+                if (action == "private-listening")
+                    HeadphoneStatusText.Text = await TogglePrivateListeningAsync();
+                else if (action == "voice-control")
+                    ToggleVoiceControlFromRemote();
             });
 
         _privateListening.LogLine += line =>
@@ -581,6 +592,228 @@ public partial class MainWindow : Window
         }
     }
 
+    private void AddPlaylistLinkButton_Click(object sender, RoutedEventArgs e)
+    {
+        var url = PlaylistLinkUrlTextBox.Text.Trim();
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            PlaylistStatusText.Text = "Enter a valid HTTP or HTTPS video URL.";
+            return;
+        }
+
+        _linkPlaylistItems.Add(new LinkPlaylistItem
+        {
+            Url = uri.AbsoluteUri,
+            Title = string.IsNullOrWhiteSpace(uri.AbsolutePath.Trim('/'))
+                ? uri.Host
+                : $"{uri.Host}{uri.AbsolutePath}",
+            Number = _linkPlaylistItems.Count + 1
+        });
+        PlaylistLinkUrlTextBox.Clear();
+        RefreshLinkPlaylist(_linkPlaylistItems.Count - 1);
+        PlaylistStatusText.Text = "Link added to the queue.";
+    }
+
+    private void LinkPlaylistListBox_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
+        UpdatePlaylistButtons();
+
+    private void PlaylistRemoveButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_linkPlaylistRunning || LinkPlaylistListBox.SelectedIndex < 0)
+            return;
+        _linkPlaylistItems.RemoveAt(LinkPlaylistListBox.SelectedIndex);
+        RefreshLinkPlaylist();
+        PlaylistStatusText.Text = "Selected link removed.";
+    }
+
+    private void PlaylistClearButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_linkPlaylistRunning)
+            return;
+        _linkPlaylistItems.Clear();
+        RefreshLinkPlaylist();
+        PlaylistStatusText.Text = "Playlist cleared.";
+    }
+
+    private void PlaylistMoveUpButton_Click(object sender, RoutedEventArgs e) => MovePlaylistItem(-1);
+    private void PlaylistMoveDownButton_Click(object sender, RoutedEventArgs e) => MovePlaylistItem(1);
+
+    private void MovePlaylistItem(int direction)
+    {
+        if (_linkPlaylistRunning)
+            return;
+        var index = LinkPlaylistListBox.SelectedIndex;
+        var destination = index + direction;
+        if (index < 0 || destination < 0 || destination >= _linkPlaylistItems.Count)
+            return;
+        (_linkPlaylistItems[index], _linkPlaylistItems[destination]) =
+            (_linkPlaylistItems[destination], _linkPlaylistItems[index]);
+        RefreshLinkPlaylist(destination);
+    }
+
+    private void RefreshLinkPlaylist(int selectedIndex = -1)
+    {
+        for (var i = 0; i < _linkPlaylistItems.Count; i++)
+            _linkPlaylistItems[i].Number = i + 1;
+        LinkPlaylistListBox.ItemsSource = null;
+        LinkPlaylistListBox.ItemsSource = _linkPlaylistItems;
+        if (selectedIndex >= 0 && selectedIndex < _linkPlaylistItems.Count)
+            LinkPlaylistListBox.SelectedIndex = selectedIndex;
+        PlaylistCountText.Text = $"{_linkPlaylistItems.Count} {(_linkPlaylistItems.Count == 1 ? "link" : "links")}";
+        UpdatePlaylistButtons();
+    }
+
+    private void UpdatePlaylistButtons()
+    {
+        var index = LinkPlaylistListBox.SelectedIndex;
+        var canEdit = !_linkPlaylistRunning && index >= 0;
+        PlaylistRemoveButton.IsEnabled = canEdit;
+        PlaylistMoveUpButton.IsEnabled = canEdit && index > 0;
+        PlaylistMoveDownButton.IsEnabled = canEdit && index < _linkPlaylistItems.Count - 1;
+        PlaylistClearButton.IsEnabled = !_linkPlaylistRunning && _linkPlaylistItems.Count > 0;
+        AddPlaylistLinkButton.IsEnabled = !_linkPlaylistRunning;
+        StartPlaylistButton.IsEnabled = !_linkPlaylistRunning;
+        StopPlaylistButton.IsEnabled = _linkPlaylistRunning;
+    }
+
+    private async void StartPlaylistButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_linkPlaylistRunning)
+            return;
+        if (_rokuClient is null)
+        {
+            PlaylistStatusText.Text = "Select a Roku device first.";
+            return;
+        }
+        if (_linkPlaylistItems.Count == 0)
+        {
+            PlaylistStatusText.Text = "Add at least one HTTP or HTTPS video link first.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_ffmpegPath))
+        {
+            PlaylistStatusText.Text = "FFmpeg was not found. Run SETUP-DEPENDENCIES.cmd.";
+            return;
+        }
+
+        _linkPlaylistRunning = true;
+        _linkPlaylistCancellation = new CancellationTokenSource();
+        UpdatePlaylistButtons();
+        try
+        {
+            await StopLinkInternalAsync(sendHome: false);
+            for (var index = 0; index < _linkPlaylistItems.Count; index++)
+            {
+                _linkPlaylistCancellation.Token.ThrowIfCancellationRequested();
+                var item = _linkPlaylistItems[index];
+                PlaylistNowPlayingText.Text = $"Playing {index + 1} of {_linkPlaylistItems.Count}: {item.Title}";
+                PlaylistStatusText.Text = "Extracting video link...";
+
+                var media = await ExtractLinkMediaAsync(item.Url);
+                item.Title = string.IsNullOrWhiteSpace(media.Title) ? item.Title : media.Title;
+                RefreshLinkPlaylist(index);
+                await StartPlaylistItemAsync(media, _linkPlaylistCancellation.Token);
+                PlaylistStatusText.Text = $"Streaming {index + 1} of {_linkPlaylistItems.Count}. Waiting for the video to finish...";
+
+                var completed = await _urlCapture.WaitForCompletionAsync(_linkPlaylistCancellation.Token);
+                if (!completed)
+                    throw new InvalidOperationException("The current video stream ended with an FFmpeg error.");
+
+                await _urlCapture.StopAsync();
+                LinkStreamUrlTextBox.Clear();
+                if (index + 1 < _linkPlaylistItems.Count)
+                    PlaylistStatusText.Text = "Video completed. Starting the next link...";
+            }
+            PlaylistNowPlayingText.Text = "Playlist completed";
+            PlaylistStatusText.Text = $"Finished {_linkPlaylistItems.Count} of {_linkPlaylistItems.Count} links.";
+            StatusText.Text = "Playlist completed.";
+        }
+        catch (OperationCanceledException)
+        {
+            PlaylistNowPlayingText.Text = "Playlist stopped";
+            PlaylistStatusText.Text = "Playlist stopped. No more links will start.";
+            StatusText.Text = "Ready.";
+        }
+        catch (Exception ex)
+        {
+            PlaylistStatusText.Text = $"Playlist stopped: {ex.Message}";
+            StatusText.Text = "Playlist failed.";
+            UpdateDiagnostics(hls: "Link Playlist failed", message: ex.Message);
+        }
+        finally
+        {
+            await StopLinkInternalAsync(sendHome: false);
+            _linkPlaylistCancellation?.Dispose();
+            _linkPlaylistCancellation = null;
+            _linkPlaylistRunning = false;
+            UpdatePlaylistButtons();
+        }
+    }
+
+    private async void StopPlaylistButton_Click(object sender, RoutedEventArgs e)
+    {
+        _linkPlaylistCancellation?.Cancel();
+        await _urlCapture.StopAsync();
+        PlaylistStatusText.Text = "Stopping playlist...";
+    }
+
+    private async Task<ExtractedMedia> ExtractLinkMediaAsync(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            throw new InvalidOperationException("The playlist link is not a valid URL.");
+        if (DirectMediaDetector.IsDirectMediaUrl(url, out var extension))
+        {
+            var isTeraBoxStream = DirectMediaDetector.IsTeraBoxStreamingUrl(url);
+            return new ExtractedMedia
+            {
+                PageUrl = url, MediaUrl = url,
+                Title = isTeraBoxStream ? "TeraBox video" : Path.GetFileNameWithoutExtension(uri.AbsolutePath.TrimEnd('/')),
+                Protocol = extension.Equals(".m3u8", StringComparison.OrdinalIgnoreCase) ? "HLS" : "Direct HTTP",
+                Extension = extension.TrimStart('.'),
+                IsLive = extension.Equals(".m3u8", StringComparison.OrdinalIgnoreCase),
+                HttpHeaders = isTeraBoxStream ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["Referer"] = $"{uri.Scheme}://{uri.Host}/",
+                    ["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+                } : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            };
+        }
+
+        if (string.IsNullOrWhiteSpace(_ytDlpPath) || !File.Exists(_ytDlpPath))
+            _ytDlpPath = YtDlpLocator.Find();
+        return await _linkExtractor.ExtractAsync(_ytDlpPath, url);
+    }
+
+    private async Task StartPlaylistItemAsync(ExtractedMedia media, CancellationToken token)
+    {
+        var friendlyEncoder = SettingsEncoderComboBox.SelectedItem?.ToString() ?? "CPU (libx264)";
+        var encoder = EncoderDetectionService.ToFFmpegEncoder(friendlyEncoder);
+        var bitrateText = ((ComboBoxItem)SettingsBitrateComboBox.SelectedItem).Content.ToString()!;
+        var bitrate = int.Parse(bitrateText.Split(' ')[0]);
+        await _urlCapture.StartAsync(_ffmpegPath!, media, encoder, bitrate, token);
+        await _urlServer.StartAsync(_urlCapture.OutputDirectory, port: 8767);
+        var ip = NetworkHelper.GetBestLocalIPv4ForRemote(_rokuClient!.Device.IpAddress)
+            ?? throw new InvalidOperationException("Could not determine the PC LAN IP.");
+        var streamUrl = $"http://{ip}:{_urlServer.Port}/live/index.m3u8";
+        LinkStreamUrlTextBox.Text = streamUrl;
+        SetPcAudioMonitorSource(streamUrl);
+        _urlServer.SetControlState(streamUrl);
+        var airPlayPageUrl = $"http://{ip}:{_urlServer.Port}/airplay";
+        if (UseAirPlayHandoff)
+        {
+            SetAirPlayPage(airPlayPageUrl);
+            _linkReceiverLaunched = false;
+        }
+        else
+        {
+            await _rokuClient.LaunchDoweLanCasterLiveAsync(streamUrl, $"http://{ip}:{_urlServer.Port}/control");
+            _linkReceiverLaunched = true;
+        }
+        UpdateDiagnostics(hls: "Link Playlist running", streamUrl: streamUrl,
+            message: $"Streaming playlist item: {media.Title}");
+    }
+
     private void LoadSavedSettings()
     {
         ManualRokuIpTextBox.Text =
@@ -672,6 +905,18 @@ public partial class MainWindow : Window
                 StreamLinkButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             else if (action.Equals("stop", StringComparison.OrdinalIgnoreCase))
                 StopLinkButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        }
+        else if (tab.Equals("Link Playlist", StringComparison.OrdinalIgnoreCase))
+        {
+            if (action.Equals("add-url", StringComparison.OrdinalIgnoreCase))
+            {
+                PlaylistLinkUrlTextBox.Text = value;
+                AddPlaylistLinkButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            }
+            else if (action.Equals("start", StringComparison.OrdinalIgnoreCase))
+                StartPlaylistButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            else if (action.Equals("stop", StringComparison.OrdinalIgnoreCase))
+                StopPlaylistButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
         }
         else if (tab.Equals("Live Cast", StringComparison.OrdinalIgnoreCase))
         {
