@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using System.Speech.Recognition;
 using System.Windows;
 using System.Windows.Controls;
@@ -672,9 +673,169 @@ public partial class MainWindow : Window
         PlaylistMoveUpButton.IsEnabled = canEdit && index > 0;
         PlaylistMoveDownButton.IsEnabled = canEdit && index < _linkPlaylistItems.Count - 1;
         PlaylistClearButton.IsEnabled = !_linkPlaylistRunning && _linkPlaylistItems.Count > 0;
+        PlaylistOpenButton.IsEnabled = !_linkPlaylistRunning;
+        PlaylistSaveButton.IsEnabled = !_linkPlaylistRunning && _linkPlaylistItems.Count > 0;
+        PlaylistImportVlcButton.IsEnabled = !_linkPlaylistRunning;
         AddPlaylistLinkButton.IsEnabled = !_linkPlaylistRunning;
         StartPlaylistButton.IsEnabled = !_linkPlaylistRunning;
         StopPlaylistButton.IsEnabled = _linkPlaylistRunning;
+    }
+
+    private void PlaylistSaveButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_linkPlaylistItems.Count == 0)
+            return;
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save Link Playlist",
+            Filter = "Dowe LanCaster playlist|*.dlcp|JSON playlist|*.json",
+            DefaultExt = ".dlcp",
+            AddExtension = true,
+            FileName = "Link Playlist.dlcp"
+        };
+        if (dialog.ShowDialog(this) != true)
+            return;
+
+        try
+        {
+            var playlist = new SavedLinkPlaylist
+            {
+                Format = "DoweLanCaster.LinkPlaylist",
+                Version = 1,
+                Items = _linkPlaylistItems.Select(item => new SavedLinkPlaylistItem
+                {
+                    Url = item.Url,
+                    Title = item.Title
+                }).ToList()
+            };
+            File.WriteAllText(dialog.FileName, JsonSerializer.Serialize(playlist, new JsonSerializerOptions { WriteIndented = true }));
+            PlaylistStatusText.Text = $"Saved {playlist.Items.Count} links to {Path.GetFileName(dialog.FileName)}.";
+        }
+        catch (Exception exception)
+        {
+            PlaylistStatusText.Text = $"Could not save playlist: {exception.Message}";
+        }
+    }
+
+    private void PlaylistOpenButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Open Link Playlist",
+            Filter = "Dowe LanCaster playlist|*.dlcp;*.json|VLC playlists|*.m3u;*.m3u8;*.xspf|All files|*.*"
+        };
+        if (dialog.ShowDialog(this) != true)
+            return;
+
+        try
+        {
+            var imported = LoadSavedLinkPlaylist(dialog.FileName);
+            ReplaceLinkPlaylist(imported, Path.GetFileName(dialog.FileName));
+        }
+        catch (Exception exception)
+        {
+            PlaylistStatusText.Text = $"Could not open playlist: {exception.Message}";
+        }
+    }
+
+    private void PlaylistImportVlcButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Import VLC Playlist",
+            Filter = "VLC playlists|*.m3u;*.m3u8;*.xspf|All files|*.*"
+        };
+        if (dialog.ShowDialog(this) != true)
+            return;
+
+        try
+        {
+            var imported = LoadVlcPlaylist(dialog.FileName);
+            ReplaceLinkPlaylist(imported, Path.GetFileName(dialog.FileName));
+        }
+        catch (Exception exception)
+        {
+            PlaylistStatusText.Text = $"Could not import VLC playlist: {exception.Message}";
+        }
+    }
+
+    private void ReplaceLinkPlaylist(IReadOnlyList<SavedLinkPlaylistItem> items, string sourceName)
+    {
+        _linkPlaylistItems.Clear();
+        foreach (var item in items)
+        {
+            if (!TryCreateLinkPlaylistItem(item.Url, item.Title, out var playlistItem))
+                continue;
+            _linkPlaylistItems.Add(playlistItem);
+        }
+        RefreshLinkPlaylist();
+        PlaylistStatusText.Text = _linkPlaylistItems.Count == 0
+            ? $"No public HTTP/HTTPS links were found in {sourceName}."
+            : $"Loaded {_linkPlaylistItems.Count} links from {sourceName}.";
+    }
+
+    private static IReadOnlyList<SavedLinkPlaylistItem> LoadSavedLinkPlaylist(string path)
+    {
+        var extension = Path.GetExtension(path);
+        if (extension.Equals(".m3u", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".m3u8", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".xspf", StringComparison.OrdinalIgnoreCase))
+            return LoadVlcPlaylist(path);
+
+        var playlist = JsonSerializer.Deserialize<SavedLinkPlaylist>(File.ReadAllText(path));
+        if (playlist?.Items is null)
+            throw new InvalidOperationException("The saved playlist has no links.");
+        return playlist.Items;
+    }
+
+    private static IReadOnlyList<SavedLinkPlaylistItem> LoadVlcPlaylist(string path)
+    {
+        var extension = Path.GetExtension(path);
+        if (extension.Equals(".xspf", StringComparison.OrdinalIgnoreCase))
+        {
+            var document = XDocument.Load(path);
+            return document.Descendants().Where(element => element.Name.LocalName == "track")
+                .Select(track => new SavedLinkPlaylistItem
+                {
+                    Url = track.Elements().FirstOrDefault(element => element.Name.LocalName == "location")?.Value.Trim() ?? "",
+                    Title = track.Elements().FirstOrDefault(element => element.Name.LocalName == "title")?.Value.Trim() ?? "Video link"
+                }).ToList();
+        }
+
+        var result = new List<SavedLinkPlaylistItem>();
+        string? title = null;
+        foreach (var rawLine in File.ReadLines(path))
+        {
+            var line = rawLine.Trim();
+            if (line.StartsWith("#EXTINF:", StringComparison.OrdinalIgnoreCase))
+            {
+                var separator = line.IndexOf(',');
+                title = separator >= 0 ? line[(separator + 1)..].Trim() : null;
+                continue;
+            }
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
+                continue;
+            result.Add(new SavedLinkPlaylistItem { Url = line, Title = title ?? "Video link" });
+            title = null;
+        }
+        return result;
+    }
+
+    private static bool TryCreateLinkPlaylistItem(string? url, string? title, out LinkPlaylistItem item)
+    {
+        item = null!;
+        if (!Uri.TryCreate(url?.Trim(), UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            return false;
+        item = new LinkPlaylistItem
+        {
+            Url = uri.AbsoluteUri,
+            Title = string.IsNullOrWhiteSpace(title)
+                ? (string.IsNullOrWhiteSpace(uri.AbsolutePath.Trim('/')) ? uri.Host : $"{uri.Host}{uri.AbsolutePath}")
+                : title.Trim()
+        };
+        return true;
     }
 
     private async void StartPlaylistButton_Click(object sender, RoutedEventArgs e)
