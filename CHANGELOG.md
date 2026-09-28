@@ -5,6 +5,21 @@ All notable changes to Dowe LanCaster are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5.74] - 2026-09-28
+
+### Added
+
+- Added the Windows **Link Playlist** tab. Queue public media links, reorder
+  them, and automatically stream each completed item to Roku through the same
+  extraction, HLS, encoder, audio, and AirPlay path as Link Cast.
+
+### Fixed
+
+- Made the local web Roku remote send Home, Back, Power, absolute volume, and
+  text commands to the selected Roku instead of leaving showcase buttons idle.
+- Connected the web remote's Voice Control and Private Listening buttons to
+  the Dowe LanCaster companion service on the PC.
+
 ## [0.9.5.73] - 2026-09-28
 
 ### Fixed
