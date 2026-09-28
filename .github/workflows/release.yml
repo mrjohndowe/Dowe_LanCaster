@@ -70,6 +70,33 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Set up Java for Android companion
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build Android companion APK
+        id: android
+        shell: pwsh
+        run: |
+          Push-Location 'src/DoweLanCaster.Android'
+          try {
+            & '.\gradlew.bat' ':app:assembleDebug' '--no-daemon'
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            $assetsDir = Join-Path $env:GITHUB_WORKSPACE 'release-assets'
+            New-Item -ItemType Directory -Force -Path $assetsDir | Out-Null
+            $apk = Join-Path $assetsDir "Dowe-LanCaster-Companion-$env:RELEASE_VERSION-Android.apk"
+            Copy-Item 'app\build\outputs\apk\debug\app-debug.apk' $apk -Force
+            if (-not (Test-Path $apk)) { throw "Android APK was not created at $apk" }
+            "apk=$apk" >> $env:GITHUB_OUTPUT
+          }
+          finally {
+            Pop-Location
+          }
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.number }}
+
       - name: Package Roku receiver
         id: roku
         shell: pwsh
@@ -160,6 +187,7 @@ jobs:
             ${{ steps.package.outputs.zip }}
             ${{ steps.installer.outputs.exe }}
             ${{ steps.roku.outputs.zip }}
+            ${{ steps.android.outputs.apk }}
 
       - name: Build release notes from actual changes
         id: notes
@@ -199,6 +227,7 @@ jobs:
             ${{ steps.package.outputs.zip }}
             ${{ steps.installer.outputs.exe }}
             ${{ steps.roku.outputs.zip }}
+            ${{ steps.android.outputs.apk }}
   update-changelog:
     name: Update changelog
     needs: release

@@ -5,6 +5,14 @@ All notable changes to Dowe LanCaster are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5.76] - 2026-09-28
+
+### Added
+
+- Added the installable Android Companion APK to the published release assets,
+  so the Link Playlist companion section can be installed from the same
+  release as the Windows and Roku components.
+
 ## [0.9.5.75] - 2026-09-28
 
 ### Added
