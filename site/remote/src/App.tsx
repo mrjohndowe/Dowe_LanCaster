@@ -12,6 +12,7 @@ type IconName =
   | "keyboard"
   | "more"
   | "mute"
+  | "pause"
   | "play"
   | "power"
   | "refresh"
@@ -72,6 +73,8 @@ function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
       return <svg {...common}><path d="M5 10v4h4l5 4V6l-5 4H5Z" /><path d="m18 9 4 6m0-6-4 6" /></svg>;
     case "play":
       return <svg {...common} fill="currentColor" stroke="none"><path d="m8 5 11 7-11 7V5Z" /></svg>;
+    case "pause":
+      return <svg {...common} fill="currentColor" stroke="none"><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg>;
     case "power":
       return <svg {...common}><path d="M12 3v9" /><path d="M7.05 5.93a8 8 0 1 0 9.9 0" /></svg>;
     case "refresh":
@@ -130,6 +133,10 @@ function App() {
   const [discoveredDevices, setDiscoveredDevices] = useState<RokuDevice[]>([]);
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  // Roku does not expose a universal playback-state endpoint. Start with the
+  // least surprising action (Play); after a confirmed keypress the control
+  // becomes Pause and continues to use Roku's single Play key for toggling.
+  const [isPlaybackPaused, setIsPlaybackPaused] = useState(true);
 
   const announce = (message: string) => {
     setLastAction(message);
@@ -202,22 +209,32 @@ function App() {
       await apiCall({ action: "disconnect" });
       setConnected(false);
       setRokuName("");
+      setIsPlaybackPaused(true);
       announce("Disconnected from Roku");
     } catch (error) {
       announce(`Disconnect failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   };
 
-  const sendRemoteKey = async (key: string, label = key) => {
+  const sendRemoteKey = async (key: string, label = key): Promise<boolean> => {
     if (!connected) {
       announce("Not connected to Roku");
-      return;
+      return false;
     }
     try {
       await apiCall({ action: "command", command: key });
       announce(`${label} command sent`);
+      return true;
     } catch (error) {
       announce(`${label} failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      return false;
+    }
+  };
+
+  const togglePlayPause = async () => {
+    const action = isPlaybackPaused ? "Play" : "Pause";
+    if (await sendRemoteKey("play_pause", action)) {
+      setIsPlaybackPaused((paused) => !paused);
     }
   };
 
@@ -398,7 +415,13 @@ function App() {
             </div>
             <div className="media-grid">
               <ActionButton label="Rev" icon="rewind" onClick={() => sendRemoteKey("rev")} />
-              <ActionButton label="Play" icon="play" tone="accent" onClick={() => sendRemoteKey("play_pause")} />
+              <ActionButton
+                label={isPlaybackPaused ? "Play" : "Pause"}
+                icon={isPlaybackPaused ? "play" : "pause"}
+                tone="accent"
+                ariaLabel={isPlaybackPaused ? "Play" : "Pause"}
+                onClick={togglePlayPause}
+              />
               <ActionButton label="Fwd" icon="arrow-right" onClick={() => sendRemoteKey("fwd")} />
             </div>
             <div className="media-grid volume-actions">

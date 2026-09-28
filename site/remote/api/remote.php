@@ -17,7 +17,28 @@ function httpCall(string $url, string $method = 'GET', string $body = ''): array
     $context = stream_context_create(['http' => ['method' => $method, 'header' => "Content-Type: application/x-www-form-urlencoded\r\nAccept: application/json\r\n", 'content' => $body, 'timeout' => 3, 'ignore_errors' => true]]);
     $response = @file_get_contents($url, false, $context);
     $status = 0;
-    if (!empty($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) $status = (int)$m[1];
+    $responseHeaders = function_exists('http_get_last_response_headers')
+        ? http_get_last_response_headers()
+        : ($http_response_header ?? []);
+    if (!empty($responseHeaders[0]) && preg_match('/\s(\d{3})\s/', $responseHeaders[0], $m)) $status = (int)$m[1];
+    return [$status, is_string($response) ? $response : ''];
+}
+function companionCall(string $action): array
+{
+    $context = stream_context_create(['http' => [
+        'method' => 'POST',
+        'header' => "Content-Type: application/json\r\nAccept: application/json\r\n",
+        'content' => json_encode(['value' => $action], JSON_UNESCAPED_SLASHES),
+        'timeout' => 3,
+        'ignore_errors' => true
+    ]]);
+    $response = @file_get_contents('http://127.0.0.1:8770/api/v1/commands/remote-action', false, $context);
+    $responseHeaders = function_exists('http_get_last_response_headers')
+        ? http_get_last_response_headers()
+        : ($http_response_header ?? []);
+    $status = !empty($responseHeaders[0]) && preg_match('/\s(\d{3})\s/', $responseHeaders[0], $match)
+        ? (int)$match[1]
+        : 0;
     return [$status, is_string($response) ? $response : ''];
 }
 try {
@@ -36,21 +57,17 @@ try {
     {
         $context = stream_context_create(['socket' => ['so_broadcast' => true]]);
         $socket = @stream_socket_server('udp://0.0.0.0:0', $errno, $error, STREAM_SERVER_BIND, $context);
-        if (!is_resource($socket)) return null;
+        if (!is_resource($socket)) return [];
         try {
-            $targets = ['255.255.255.255'];
-            $localAddresses = @gethostbynamel(gethostname()) ?: [];
-            foreach ($localAddresses as $localAddress) {
-                if (filter_var($localAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                    $parts = explode('.', $localAddress);
-                    if (count($parts) === 4) $targets[] = "$parts[0].$parts[1].$parts[2].255";
-                }
-            }
-            foreach (array_unique($targets) as $target) {
-                @stream_socket_sendto($socket, 'DOWE_LANCASTER_DISCOVER', 0, "$target:8771");
-            }
+            $search = "M-SEARCH * HTTP/1.1\r\n"
+                . "HOST: 239.255.255.250:1900\r\n"
+                . "MAN: \"ssdp:discover\"\r\n"
+                . "ST: roku:ecp\r\n"
+                . "MX: 2\r\n\r\n";
+            @stream_socket_sendto($socket, $search, 0, '239.255.255.250:1900');
+
             $deadline = microtime(true) + 2.5;
-            $candidates = [];
+            $endpoints = [];
             while (($remaining = $deadline - microtime(true)) > 0) {
                 $read = [$socket]; $write = null; $except = null;
                 $seconds = (int)$remaining;
@@ -58,19 +75,26 @@ try {
                 if (@stream_select($read, $write, $except, $seconds, $microseconds) !== 1) break;
                 $peer = '';
                 $reply = @stream_socket_recvfrom($socket, 128, 0, $peer);
-                if (is_string($reply) && preg_match('/^DOWE_LANCASTER_PC\\|(\\d{1,5})$/', trim($reply), $m) && preg_match('/^([^:]+):\\d+$/', $peer, $ip)) {
-                    $candidates[] = 'http://' . $ip[1] . ':' . $m[1];
+                if (is_string($reply) && preg_match('/^location:\s*http:\/\/([^:\/]+):8060\//im', $reply, $m)) {
+                    $endpoints['http://' . $m[1] . ':8060'] = true;
                 }
             }
-            foreach (array_unique($candidates) as $candidate) {
-                $health = @file_get_contents($candidate . '/api/v1/health', false, stream_context_create(['http' => ['timeout' => 2]]));
-                if (is_string($health) && $health !== '') return $candidate;
+
+            $devices = [];
+            foreach (array_keys($endpoints) as $endpoint) {
+                [$status, $deviceInfo] = httpCall($endpoint . '/query/device-info');
+                if ($status !== 200) continue;
+
+                $name = $endpoint;
+                if (preg_match('/<friendly-device-name>(.*?)<\/friendly-device-name>/is', $deviceInfo, $match)) {
+                    $name = html_entity_decode(trim($match[1]), ENT_QUOTES | ENT_XML1, 'UTF-8');
+                }
+                $devices[] = ['endpoint' => $endpoint, 'name' => $name];
             }
-            return null;
+            return $devices;
         } finally {
             fclose($socket);
         }
-        return array_values($found);
     }
     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') reply(['ok' => false, 'message' => 'POST only.'], 405);
     $data = json_decode((string)file_get_contents('php://input'), true) ?: [];
@@ -101,7 +125,27 @@ try {
     $keys = ['power' => 'Power', 'home' => 'Home', 'back' => 'Back', 'up' => 'Up', 'down' => 'Down', 'left' => 'Left', 'right' => 'Right', 'select' => 'Select', 'replay' => 'InstantReplay', 'play_pause' => 'Play', 'rev' => 'Rev', 'fwd' => 'Fwd', 'volume_down' => 'VolumeDown', 'volume_up' => 'VolumeUp', 'mute' => 'VolumeMute'];
     if (isset($keys[$command])) [$status] = httpCall($endpoint . '/keypress/' . $keys[$command], 'POST');
     elseif ($command === 'text' && is_string($data['value'] ?? null) && trim($data['value']) !== '') [$status] = httpCall($endpoint . '/input', 'POST', http_build_query(['text' => $data['value']]));
-    elseif ($command === 'volume') reply(['ok' => false, 'message' => 'Use Volume Up, Volume Down, or Mute with this Roku control protocol.'], 422);
+    elseif ($command === 'volume') {
+        $level = filter_var($data['value'] ?? null, FILTER_VALIDATE_INT);
+        if ($level === false || $level < 0 || $level > 100)
+            reply(['ok' => false, 'message' => 'Enter a volume from 0 to 100.'], 422);
+        [$audioStatus, $audioXml] = httpCall($endpoint . '/query/audio-device');
+        if ($audioStatus !== 200 || !preg_match('/<global[^>]*>.*?<volume>(\\d+)<\\/volume>/is', $audioXml, $match))
+            reply(['ok' => false, 'message' => 'Roku did not report its current volume.'], 502);
+        $current = (int)$match[1];
+        $key = $level < $current ? 'VolumeDown' : 'VolumeUp';
+        $status = 200;
+        for ($i = 0; $i < abs($level - $current); $i++) {
+            [$status] = httpCall($endpoint . '/keypress/' . $key, 'POST');
+            if ($status < 200 || $status >= 300) break;
+        }
+    }
+    elseif ($command === 'private_listening' || $command === 'voice_control') {
+        [$status] = companionCall($command === 'private_listening' ? 'private-listening' : 'voice-control');
+        if ($status < 200 || $status >= 300)
+            reply(['ok' => false, 'message' => 'The Dowe LanCaster desktop app is not ready. Open the updated app on this PC and try again.'], 503);
+        reply(['ok' => true, 'message' => $command === 'private_listening' ? 'Private Listening was toggled in Dowe LanCaster.' : 'Voice Control was toggled in Dowe LanCaster.']);
+    }
     else reply(['ok' => false, 'message' => 'Unsupported Roku command: ' . $command], 422);
     if (($status ?? 0) < 200 || ($status ?? 0) >= 300) reply(['ok' => false, 'message' => 'Roku did not confirm that command. Status: ' . ($status ?? 'unknown')], 502);
     reply(['ok' => true, 'message' => 'Roku command sent.']);
