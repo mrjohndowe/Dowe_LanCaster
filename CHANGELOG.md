@@ -5,6 +5,18 @@ All notable changes to Dowe LanCaster are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5.75] - 2026-09-28
+
+### Added
+
+- Added saved Link Playlist libraries. Save link queues as Dowe LanCaster
+  playlist files and reopen them later.
+- Added VLC playlist import for `.m3u`, `.m3u8`, and `.xspf` files. Public
+  HTTP/HTTPS entries and their available VLC titles are imported into Link
+  Playlist; local or unsupported entries are skipped safely.
+- Added a Link Playlist section to the Android companion app with controls to
+  add a link, start the queue, and stop the queue on the paired PC.
+
 ## [0.9.5.74] - 2026-09-28
 
 ### Added
