@@ -13,9 +13,13 @@
     <nav id="stages"><span>01 BASELINE</span><span>02 CHASSIS</span><span>03 D-PAD</span><span>04 MEDIA</span><span>05 AUDIO</span><b>06 FINAL BUILD</b></nav>
     <main>
         <section id="pairing" class="pair">
-            <h1>Pair this remote</h1>
-            <p>Enter the six-digit code displayed by Dowe LanCaster on your PC.</p><label>PAIRING CODE <input id="pair-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" aria-label="Six digit pairing code"></label><button id="connect">CONNECT</button>
-            <p id="pair-status">Not paired. The browser discovers your PC only when you connect.</p>
+            <h1>Connect to your Roku</h1>
+            <p>Find a Roku automatically, or enter its local IP address.</p>
+            <button id="discover" type="button">DISCOVER ROKU DEVICES</button>
+            <label>ROKU IP ADDRESS <input id="roku-ip" inputmode="decimal" placeholder="Example: 10.0.0.42" aria-label="Roku IP address"></label>
+            <button id="connect" type="button">CONNECT TO ROKU</button>
+            <p id="pair-status">No Roku selected.</p>
+            <div id="roku-devices" aria-live="polite"></div>
         </section>
         <section class="remote-area" id="controls" hidden>
             <p id="note">AFTER • TACTILE HARDWARE EDITION</p>
@@ -34,8 +38,8 @@
         </section>
         <aside>
             <h1>Operational Remote Dashboard</h1>
-            <p>Build stages, command parity, telemetry and real paired companion transport status.</p>
-            <div class="debug"><b>TRANSPORT</b><span id="mode">PAIRING REQUIRED</span><small id="endpoint">Enter the one-time PC code to connect the Companion service</small><small id="response">Last response: awaiting pairing</small><small>Commands are sent only after the paired PC confirms them</small></div>
+            <p>Build stages, command parity, telemetry and direct Roku ECP transport status.</p>
+            <div class="debug"><b>TRANSPORT</b><span id="mode">ROKU NOT CONNECTED</span><small id="endpoint">Discover a Roku or enter its local IP address</small><small id="response">Last response: awaiting Roku connection</small><small>Commands are sent directly to the selected Roku on your LAN</small></div>
             <h2>LIVE BUILD OUTPUT</h2>
             <pre id="buildout">FINAL BUILD ACTIVE
 API whitelist locked · payload validation ready.</pre>
@@ -49,7 +53,7 @@ API whitelist locked · payload validation ready.</pre>
             </ol>
         </aside>
     </main>
-    <footer>PAIRING REQUIRED NEVER CLAIMS PHYSICAL ROKU CONTROL · UPSTREAM URL IS NEVER EXPOSED TO THE BROWSER</footer>
+    <footer>DIRECT ROKU LAN CONTROL · NO PC COMPANION REQUIRED · THE SELECTED ROKU IP STAYS IN THIS SESSION</footer>
 </body>
 
 </html>
