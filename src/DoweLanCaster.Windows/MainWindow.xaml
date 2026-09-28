@@ -162,6 +162,10 @@
                                                                         <Button x:Name="PlaylistMoveDownButton" Content="Move Down" Height="36" Margin="4,0,0,0" IsEnabled="False" Click="PlaylistMoveDownButton_Click"/>
                                                                 </UniformGrid>
                                                                 <Button x:Name="PlaylistClearButton" Content="Clear List" Height="36" Click="PlaylistClearButton_Click"/>
+                                                                <Separator Margin="0,14,0,12"/>
+                                                                <Button x:Name="PlaylistOpenButton" Content="Open Saved Playlist" Height="36" Margin="0,0,0,8" Click="PlaylistOpenButton_Click"/>
+                                                                <Button x:Name="PlaylistSaveButton" Content="Save Playlist" Height="36" Margin="0,0,0,8" IsEnabled="False" Click="PlaylistSaveButton_Click"/>
+                                                                <Button x:Name="PlaylistImportVlcButton" Content="Import VLC Playlist" Height="36" Click="PlaylistImportVlcButton_Click"/>
                                                                 <TextBlock Text="The playlist stops if a link cannot be extracted or streamed. It advances only after FFmpeg finishes the current video." TextWrapping="Wrap" Opacity="0.78" Margin="0,16,0,0"/>
                                                         </StackPanel>
                                                 </Border>
