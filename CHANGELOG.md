@@ -5,6 +5,18 @@ All notable changes to Dowe LanCaster are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5.73] - 2026-09-28
+
+### Fixed
+
+- Kept the Safari AirPlay session connected while Folder Cast advances to the
+  next video. The existing player now receives the next HLS stream directly,
+  rather than reloading the handoff page and losing its selected Roku.
+- Reported the completion revision for the currently playing Folder Cast item,
+  allowing a full AirPlay playlist to continue advancing automatically.
+- Retried the FFmpeg download and added a fallback provider so a temporary
+  503 response does not immediately fail the Windows build-artifact workflow.
+
 ## [0.9.5.71] - 2026-09-24
 
 ### Added

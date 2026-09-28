@@ -12,12 +12,45 @@ if (Test-Path $FfmpegExe) {
 
 New-Item -ItemType Directory -Force -Path $ToolsDir | Out-Null
 
-$DownloadUrl = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
 $TempZip = Join-Path $env:TEMP "dowe-lancaster-ffmpeg.zip"
 $TempDir = Join-Path $env:TEMP "dowe-lancaster-ffmpeg"
 
-Write-Host "Downloading FFmpeg Windows essentials..."
-Invoke-WebRequest -Uri $DownloadUrl -OutFile $TempZip -UseBasicParsing
+$DownloadUrls = @(
+    "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
+    "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
+)
+
+Remove-Item $TempZip -Force -ErrorAction SilentlyContinue
+
+$downloaded = $false
+$downloadErrors = [System.Collections.Generic.List[string]]::new()
+
+foreach ($downloadUrl in $DownloadUrls) {
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            Write-Host "Downloading FFmpeg (attempt $attempt of 3): $downloadUrl"
+            Invoke-WebRequest -Uri $downloadUrl -OutFile $TempZip -UseBasicParsing
+            $downloaded = $true
+            break
+        }
+        catch {
+            Remove-Item $TempZip -Force -ErrorAction SilentlyContinue
+            $downloadErrors.Add("$downloadUrl (attempt $attempt): $($_.Exception.Message)")
+
+            if ($attempt -lt 3) {
+                Start-Sleep -Seconds (2 * $attempt)
+            }
+        }
+    }
+
+    if ($downloaded) {
+        break
+    }
+}
+
+if (-not $downloaded) {
+    throw "Could not download FFmpeg after retrying both providers.$([Environment]::NewLine)$($downloadErrors -join [Environment]::NewLine)"
+}
 
 if (Test-Path $TempDir) {
     Remove-Item $TempDir -Recurse -Force
