@@ -21,6 +21,9 @@ public sealed class CompanionPairingService : IAsyncDisposable
     private DateTimeOffset _pairingExpiresAt;
     private readonly string _serverId = Guid.NewGuid().ToString("N");
     private string _activeTab = "Settings";
+    private string? _linkPlaylistTitle;
+    private string? _linkPlaylistUrl;
+    private DateTimeOffset? _linkPlaylistStartedAt;
 
     public int Port { get; private set; } = CompanionProtocol.DefaultPort;
     public bool IsRunning => _app is not null;
@@ -30,6 +33,33 @@ public sealed class CompanionPairingService : IAsyncDisposable
     public event Action<string>? LogLine;
     public event Action<string, string>? CommandReceived;
     public event Action<string>? RemoteActionReceived;
+
+    public void SetLinkPlaylistPlayback(string? title, string? url, bool isPlaying)
+    {
+        lock (_gate)
+        {
+            _linkPlaylistTitle = title;
+            _linkPlaylistUrl = url;
+            _linkPlaylistStartedAt = isPlaying ? DateTimeOffset.UtcNow : null;
+        }
+    }
+
+    private object GetLinkPlaylistPlayback()
+    {
+        lock (_gate)
+        {
+            var elapsed = _linkPlaylistStartedAt is null
+                ? 0
+                : Math.Max(0, (int)(DateTimeOffset.UtcNow - _linkPlaylistStartedAt.Value).TotalSeconds);
+            return new
+            {
+                isPlaying = _linkPlaylistStartedAt is not null,
+                title = _linkPlaylistTitle,
+                url = _linkPlaylistUrl,
+                elapsedSeconds = elapsed
+            };
+        }
+    }
 
     public void RegeneratePairingCode()
     {
@@ -68,6 +98,7 @@ public sealed class CompanionPairingService : IAsyncDisposable
             serverId = _serverId,
             activeTab = _activeTab,
             tabInfo = GetTabInfo(_activeTab),
+            linkPlaylist = GetLinkPlaylistPlayback(),
             companionConnected = true,
             servicePort = Port
         }));
@@ -196,7 +227,7 @@ public sealed class CompanionPairingService : IAsyncDisposable
     {
         "Remote" => new { title = "Roku Remote", description = "Control navigation, playback, volume, power, text input, and private listening.", controls = new[] { "Home", "Back", "Replay", "Power", "D-pad", "Play/Pause", "Volume", "Keyboard text" } },
         "Link Cast" => new { title = "Link Cast", description = "Paste a media link, choose the encoder and quality, then cast it to the selected Roku.", controls = new[] { "Media link", "Analyze", "Encoder", "Video bitrate", "Start cast", "Stop cast" } },
-        "Link Playlist" => new { title = "Link Playlist", description = "Queue public media links and automatically cast each completed video to the selected Roku.", controls = new[] { "Add link", "Remove link", "Move up", "Move down", "Start playlist", "Stop playlist" } },
+        "Link Playlist" => new { title = "Link Playlist", description = "Queue public media links and automatically cast each completed video to the selected Roku.", controls = new[] { "Add link", "Remove link", "Move up", "Move down", "Start playlist", "Skip current video", "Stop playlist" } },
         "Live Cast" => new { title = "Live Cast", description = "Stream the selected desktop, window, screen, and PC audio source to Roku.", controls = new[] { "Capture source", "PC audio", "Encoder", "Frame rate", "Video bitrate", "Start live cast", "Stop live cast" } },
         "Folder Cast" => new { title = "Folder Cast", description = "Play a folder playlist on Roku with next, previous, pause, and stop controls.", controls = new[] { "Folder playlist", "Play", "Previous", "Next", "Stop" } },
         "TeraBox" => new { title = "TeraBox", description = "Browse TeraBox in the embedded browser and cast a detected video to Roku.", controls = new[] { "Browser", "Back", "Home", "Refresh", "Cast detected video", "Stop cast" } },

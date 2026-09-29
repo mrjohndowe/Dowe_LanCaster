@@ -37,6 +37,7 @@ public final class MainActivity extends Activity {
     private final ExecutorService networkExecutor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private volatile String discoveredEndpoint;
+    private int screenRevision;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -229,6 +230,7 @@ public final class MainActivity extends Activity {
     }
 
     private void showConnectedScreen(LinearLayout page) {
+        screenRevision++;
         page.removeAllViews();
 
         ImageView logo = new ImageView(this);
@@ -291,6 +293,7 @@ public final class MainActivity extends Activity {
     }
 
     private void showRemoteScreen(LinearLayout page) {
+        screenRevision++;
         page.removeAllViews();
         page.setGravity(Gravity.CENTER_HORIZONTAL);
         page.setPadding(0, dp(12), 0, dp(12));
@@ -485,6 +488,7 @@ public final class MainActivity extends Activity {
     }
 
     private void showSectionScreen(LinearLayout page, String section) {
+        final int sectionRevision = ++screenRevision;
         page.removeAllViews();
         TextView title = text(section, 24, R.color.text_primary);
         title.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -504,6 +508,11 @@ public final class MainActivity extends Activity {
             description.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
             page.addView(description, margins(MATCH, WRAP, 0, 0, 0, 14));
 
+            TextView nowPlaying = text("Now playing: nothing", 15, R.color.text_primary);
+            nowPlaying.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
+            page.addView(nowPlaying, margins(MATCH, WRAP, 0, 0, 0, 12));
+            loadPlaylistPlaybackState(nowPlaying, sectionRevision);
+
             EditText playlistUrl = input("Paste a media link for the playlist");
             page.addView(playlistUrl, margins(MATCH, dp(48), 0, 0, 0, 8));
 
@@ -519,6 +528,7 @@ public final class MainActivity extends Activity {
             });
             page.addView(addToPlaylist, margins(MATCH, dp(44), 0, 0, 0, 8));
             page.addView(actionButton(section, "Start Playlist", "start", R.color.accent), margins(MATCH, dp(44), 0, 0, 0, 8));
+            page.addView(actionButton(section, "Skip Current Video", "skip", R.color.surface), margins(MATCH, dp(44), 0, 0, 0, 8));
             page.addView(actionButton(section, "Stop Playlist", "stop", R.color.surface), margins(MATCH, dp(44), 0, 0, 0, 8));
         } else if (section.equals("Live Cast")) {
             page.addView(actionButton(section, "Start Live Cast", "start", R.color.accent), margins(MATCH, dp(46), 0, 0, 0, 8));
@@ -566,6 +576,38 @@ public final class MainActivity extends Activity {
                 connection.getResponseCode();
                 connection.disconnect();
             } catch (Exception ignored) { }
+        });
+    }
+
+    private void loadPlaylistPlaybackState(TextView state, int expectedRevision) {
+        if (discoveredEndpoint == null || expectedRevision != screenRevision) return;
+        networkExecutor.execute(() -> {
+            String message;
+            try {
+                HttpURLConnection connection = (HttpURLConnection) URI.create("http://" + discoveredEndpoint + "/api/v1/state").toURL().openConnection();
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(5000);
+                String json = new String(connection.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+                connection.disconnect();
+                JSONObject playlist = new JSONObject(json).optJSONObject("linkPlaylist");
+                if (playlist == null || !playlist.optBoolean("isPlaying")) {
+                    message = "Now playing: nothing";
+                } else {
+                    int elapsed = playlist.optInt("elapsedSeconds", 0);
+                    String time = String.format(java.util.Locale.US, "%d:%02d", elapsed / 60, elapsed % 60);
+                    String title = playlist.optString("title", "Video link");
+                    String url = playlist.optString("url", "");
+                    message = "Now playing: " + title + "\n" + url + "\nPlaying for " + time;
+                }
+            } catch (Exception exception) {
+                message = "Now playing: unavailable";
+            }
+            String finalMessage = message;
+            mainHandler.post(() -> {
+                if (expectedRevision != screenRevision) return;
+                state.setText(finalMessage);
+                mainHandler.postDelayed(() -> loadPlaylistPlaybackState(state, expectedRevision), 1000);
+            });
         });
     }
 

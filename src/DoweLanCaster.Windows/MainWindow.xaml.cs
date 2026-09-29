@@ -58,6 +58,7 @@ public partial class MainWindow : Window
     private long _folderControlRevision;
     private bool _linkReceiverLaunched;
     private CancellationTokenSource? _linkPlaylistCancellation;
+    private CancellationTokenSource? _linkPlaylistItemCancellation;
     private bool _linkPlaylistRunning;
     private SpeechRecognitionEngine? _voiceRecognizer;
     private bool _voiceListening;
@@ -674,10 +675,11 @@ public partial class MainWindow : Window
         PlaylistMoveDownButton.IsEnabled = canEdit && index < _linkPlaylistItems.Count - 1;
         PlaylistClearButton.IsEnabled = !_linkPlaylistRunning && _linkPlaylistItems.Count > 0;
         PlaylistOpenButton.IsEnabled = !_linkPlaylistRunning;
-        PlaylistSaveButton.IsEnabled = !_linkPlaylistRunning && _linkPlaylistItems.Count > 0;
+        PlaylistSaveButton.IsEnabled = _linkPlaylistItems.Count > 0;
         PlaylistImportVlcButton.IsEnabled = !_linkPlaylistRunning;
         AddPlaylistLinkButton.IsEnabled = !_linkPlaylistRunning;
         StartPlaylistButton.IsEnabled = !_linkPlaylistRunning;
+        SkipPlaylistButton.IsEnabled = _linkPlaylistRunning && _linkPlaylistItemCancellation is not null;
         StopPlaylistButton.IsEnabled = _linkPlaylistRunning;
     }
 
@@ -866,25 +868,48 @@ public partial class MainWindow : Window
             await StopLinkInternalAsync(sendHome: false);
             for (var index = 0; index < _linkPlaylistItems.Count; index++)
             {
-                _linkPlaylistCancellation.Token.ThrowIfCancellationRequested();
-                var item = _linkPlaylistItems[index];
-                PlaylistNowPlayingText.Text = $"Playing {index + 1} of {_linkPlaylistItems.Count}: {item.Title}";
-                PlaylistStatusText.Text = "Extracting video link...";
+                using var itemCancellation = CancellationTokenSource.CreateLinkedTokenSource(_linkPlaylistCancellation.Token);
+                _linkPlaylistItemCancellation = itemCancellation;
+                UpdatePlaylistButtons();
+                try
+                {
+                    itemCancellation.Token.ThrowIfCancellationRequested();
+                    var item = _linkPlaylistItems[index];
+                    _companionPairingService.SetLinkPlaylistPlayback(item.Title, item.Url, isPlaying: true);
+                    PlaylistNowPlayingText.Text = $"Playing {index + 1} of {_linkPlaylistItems.Count}: {item.Title}";
+                    PlaylistStatusText.Text = "Extracting video link...";
 
-                var media = await ExtractLinkMediaAsync(item.Url);
-                item.Title = string.IsNullOrWhiteSpace(media.Title) ? item.Title : media.Title;
-                RefreshLinkPlaylist(index);
-                await StartPlaylistItemAsync(media, _linkPlaylistCancellation.Token);
-                PlaylistStatusText.Text = $"Streaming {index + 1} of {_linkPlaylistItems.Count}. Waiting for the video to finish...";
+                    var media = await ExtractLinkMediaAsync(item.Url);
+                    itemCancellation.Token.ThrowIfCancellationRequested();
+                    item.Title = string.IsNullOrWhiteSpace(media.Title) ? item.Title : media.Title;
+                    _companionPairingService.SetLinkPlaylistPlayback(item.Title, item.Url, isPlaying: true);
+                    RefreshLinkPlaylist(index);
+                    await StartPlaylistItemAsync(media, itemCancellation.Token);
+                    PlaylistStatusText.Text = $"Streaming {index + 1} of {_linkPlaylistItems.Count}. Waiting for the video to finish...";
 
-                var completed = await _urlCapture.WaitForCompletionAsync(_linkPlaylistCancellation.Token);
-                if (!completed)
-                    throw new InvalidOperationException("The current video stream ended with an FFmpeg error.");
+                    var completed = await _urlCapture.WaitForCompletionAsync(itemCancellation.Token);
+                    if (!completed)
+                        throw new InvalidOperationException("The current video stream ended with an FFmpeg error.");
 
-                await _urlCapture.StopAsync();
-                LinkStreamUrlTextBox.Clear();
-                if (index + 1 < _linkPlaylistItems.Count)
-                    PlaylistStatusText.Text = "Video completed. Starting the next link...";
+                    await _urlCapture.StopAsync();
+                    LinkStreamUrlTextBox.Clear();
+                    if (index + 1 < _linkPlaylistItems.Count)
+                        PlaylistStatusText.Text = "Video completed. Starting the next link...";
+                }
+                catch (OperationCanceledException) when (!_linkPlaylistCancellation.IsCancellationRequested)
+                {
+                    await _urlCapture.StopAsync();
+                    LinkStreamUrlTextBox.Clear();
+                    PlaylistStatusText.Text = index + 1 < _linkPlaylistItems.Count
+                        ? "Video skipped. Starting the next link..."
+                        : "Final video skipped.";
+                }
+                finally
+                {
+                    if (ReferenceEquals(_linkPlaylistItemCancellation, itemCancellation))
+                        _linkPlaylistItemCancellation = null;
+                    UpdatePlaylistButtons();
+                }
             }
             PlaylistNowPlayingText.Text = "Playlist completed";
             PlaylistStatusText.Text = $"Finished {_linkPlaylistItems.Count} of {_linkPlaylistItems.Count} links.";
@@ -907,6 +932,8 @@ public partial class MainWindow : Window
             await StopLinkInternalAsync(sendHome: false);
             _linkPlaylistCancellation?.Dispose();
             _linkPlaylistCancellation = null;
+            _linkPlaylistItemCancellation = null;
+            _companionPairingService.SetLinkPlaylistPlayback(null, null, isPlaying: false);
             _linkPlaylistRunning = false;
             UpdatePlaylistButtons();
         }
@@ -915,8 +942,17 @@ public partial class MainWindow : Window
     private async void StopPlaylistButton_Click(object sender, RoutedEventArgs e)
     {
         _linkPlaylistCancellation?.Cancel();
+        _linkPlaylistItemCancellation?.Cancel();
         await _urlCapture.StopAsync();
         PlaylistStatusText.Text = "Stopping playlist...";
+    }
+
+    private void SkipPlaylistButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_linkPlaylistRunning || _linkPlaylistItemCancellation is null)
+            return;
+        _linkPlaylistItemCancellation.Cancel();
+        PlaylistStatusText.Text = "Skipping current video...";
     }
 
     private async Task<ExtractedMedia> ExtractLinkMediaAsync(string url)
@@ -1078,6 +1114,8 @@ public partial class MainWindow : Window
                 StartPlaylistButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             else if (action.Equals("stop", StringComparison.OrdinalIgnoreCase))
                 StopPlaylistButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            else if (action.Equals("skip", StringComparison.OrdinalIgnoreCase))
+                SkipPlaylistButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
         }
         else if (tab.Equals("Live Cast", StringComparison.OrdinalIgnoreCase))
         {

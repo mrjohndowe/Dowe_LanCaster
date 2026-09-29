@@ -5,6 +5,16 @@ All notable changes to Dowe LanCaster are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5.77] - 2026-09-28
+
+### Added
+
+- Added **Skip Current Video** to Link Playlist in the Windows app and Android
+  companion. Skipping stops only the active item and immediately proceeds to
+  the next queued link without ending the rest of the playlist.
+- Added a live Android companion playback readout with the current Link
+  Playlist title, source link, and elapsed playing time.
+
 ## [0.9.5.76] - 2026-09-28
 
 ### Added

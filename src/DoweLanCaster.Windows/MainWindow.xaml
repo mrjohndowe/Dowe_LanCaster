@@ -155,18 +155,18 @@
                                                 </Border>
                                                 <Border Grid.Column="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
                                                         <StackPanel>
-                                                                <TextBlock Text="Queue Controls" FontSize="20" FontWeight="Bold" Margin="0,0,0,12"/>
-                                                                <Button x:Name="PlaylistRemoveButton" Content="Remove Selected" Height="36" Margin="0,0,0,8" IsEnabled="False" Click="PlaylistRemoveButton_Click"/>
-                                                                <UniformGrid Columns="2" Margin="0,0,0,8">
-                                                                        <Button x:Name="PlaylistMoveUpButton" Content="Move Up" Height="36" Margin="0,0,4,0" IsEnabled="False" Click="PlaylistMoveUpButton_Click"/>
-                                                                        <Button x:Name="PlaylistMoveDownButton" Content="Move Down" Height="36" Margin="4,0,0,0" IsEnabled="False" Click="PlaylistMoveDownButton_Click"/>
+                                                                <TextBlock Text="Queue Controls" FontSize="20" FontWeight="Bold" Margin="0,0,0,8"/>
+                                                                <Button x:Name="PlaylistRemoveButton" Content="Remove Selected" Height="32" Margin="0,0,0,6" IsEnabled="False" Click="PlaylistRemoveButton_Click"/>
+                                                                <UniformGrid Columns="2" Margin="0,0,0,6">
+                                                                        <Button x:Name="PlaylistMoveUpButton" Content="Move Up" Height="32" Margin="0,0,3,0" IsEnabled="False" Click="PlaylistMoveUpButton_Click"/>
+                                                                        <Button x:Name="PlaylistMoveDownButton" Content="Move Down" Height="32" Margin="3,0,0,0" IsEnabled="False" Click="PlaylistMoveDownButton_Click"/>
                                                                 </UniformGrid>
-                                                                <Button x:Name="PlaylistClearButton" Content="Clear List" Height="36" Click="PlaylistClearButton_Click"/>
-                                                                <Separator Margin="0,14,0,12"/>
-                                                                <Button x:Name="PlaylistOpenButton" Content="Open Saved Playlist" Height="36" Margin="0,0,0,8" Click="PlaylistOpenButton_Click"/>
-                                                                <Button x:Name="PlaylistSaveButton" Content="Save Playlist" Height="36" Margin="0,0,0,8" IsEnabled="False" Click="PlaylistSaveButton_Click"/>
-                                                                <Button x:Name="PlaylistImportVlcButton" Content="Import VLC Playlist" Height="36" Click="PlaylistImportVlcButton_Click"/>
-                                                                <TextBlock Text="The playlist stops if a link cannot be extracted or streamed. It advances only after FFmpeg finishes the current video." TextWrapping="Wrap" Opacity="0.78" Margin="0,16,0,0"/>
+                                                                <Button x:Name="PlaylistClearButton" Content="Clear List" Height="32" Margin="0,0,0,6" Click="PlaylistClearButton_Click"/>
+                                                                <UniformGrid Columns="2" Margin="0,0,0,6">
+                                                                        <Button x:Name="PlaylistSaveButton" Content="Save Playlist" Height="32" Margin="0,0,3,0" IsEnabled="False" Click="PlaylistSaveButton_Click"/>
+                                                                        <Button x:Name="PlaylistOpenButton" Content="Open Saved Playlist" Height="32" Margin="3,0,0,0" Click="PlaylistOpenButton_Click"/>
+                                                                </UniformGrid>
+                                                                <Button x:Name="PlaylistImportVlcButton" Content="Import VLC Playlist" Height="32" Click="PlaylistImportVlcButton_Click"/>
                                                         </StackPanel>
                                                 </Border>
                                         </Grid>
@@ -177,11 +177,14 @@
                                                                 <ColumnDefinition Width="Auto"/>
                                                                 <ColumnDefinition Width="10"/>
                                                                 <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="10"/>
+                                                                <ColumnDefinition Width="Auto"/>
                                                                 <ColumnDefinition Width="*"/>
                                                         </Grid.ColumnDefinitions>
                                                         <Button x:Name="StartPlaylistButton" Content="Start Playlist" Width="130" Height="40" Click="StartPlaylistButton_Click"/>
-                                                        <Button x:Name="StopPlaylistButton" Grid.Column="2" Content="Stop Playlist" Width="130" Height="40" IsEnabled="False" Click="StopPlaylistButton_Click"/>
-                                                        <StackPanel Grid.Column="3" Margin="18,0,0,0" VerticalAlignment="Center">
+                                                        <Button x:Name="SkipPlaylistButton" Grid.Column="2" Content="Skip Video" Width="110" Height="40" IsEnabled="False" Click="SkipPlaylistButton_Click"/>
+                                                        <Button x:Name="StopPlaylistButton" Grid.Column="4" Content="Stop Playlist" Width="130" Height="40" IsEnabled="False" Click="StopPlaylistButton_Click"/>
+                                                        <StackPanel Grid.Column="5" Margin="18,0,0,0" VerticalAlignment="Center">
                                                                 <TextBlock x:Name="PlaylistNowPlayingText" Text="Nothing playing" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                                                                 <TextBlock x:Name="PlaylistStatusText" Text="Add one or more public HTTP/HTTPS video links." TextWrapping="Wrap" Opacity="0.78"/>
                                                         </StackPanel>

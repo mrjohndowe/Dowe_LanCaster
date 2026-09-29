@@ -8,9 +8,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>DoweLanCaster</AssemblyName>
     <RootNamespace>DoweLanCaster</RootNamespace>
-    <Version>0.9.5.76</Version>
-    <AssemblyVersion>0.9.5.76</AssemblyVersion>
-    <FileVersion>0.9.5.76</FileVersion>
+    <Version>0.9.5.77</Version>
+    <AssemblyVersion>0.9.5.77</AssemblyVersion>
+    <FileVersion>0.9.5.77</FileVersion>
     <StartupObject>DoweLanCaster.App</StartupObject>
     <AssemblyTitle>DoweLanCaster</AssemblyTitle>
     <ApplicationIcon>DoweLanCaster.ico</ApplicationIcon>
@@ -25,7 +25,7 @@
     <RepositoryUrl>https://github.com/mrjohndowe/Dowe_LanCaster.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>roku; streaming; casting; media; hls; ffmpeg; remote-control; windows; wpf;</PackageTags>
-    <PackageReleaseNotes>Dowe LanCaster v0.9.5.76 publishes the Link Playlist Android companion APK alongside the Windows and Roku release assets.</PackageReleaseNotes>
+    <PackageReleaseNotes>Dowe LanCaster v0.9.5.77 adds companion and PC controls to skip the current Link Playlist video.</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
