@@ -169,6 +169,7 @@ public partial class MainWindow : Window
 
         Loaded += async (_, _) =>
         {
+            await StartAirPlayHandoffServerAsync();
             LoadSavedSettings();
             RefreshCaptureSources();
             await InitializeFFmpegAsync();
@@ -177,7 +178,6 @@ public partial class MainWindow : Window
             RefreshPlaybackEndpoints();
             await InitializeTeraBoxBrowserAsync();
             LoadChangelog();
-            await StartAirPlayHandoffServerAsync();
             await StartCompanionServiceAsync();
 
             if (!string.IsNullOrWhiteSpace(_settings.LastFolderPath) &&
@@ -516,7 +516,7 @@ public partial class MainWindow : Window
 
             if (UseAirPlayHandoff)
             {
-                airPlayPageUrl = SetAirPlayPage(streamUrl, _extractedMedia.Title);
+                airPlayPageUrl = await SetAirPlayPageAsync(streamUrl, _extractedMedia.Title);
                 _linkReceiverLaunched = false;
                 _folderReceiverLaunched = false;
             }
@@ -1043,7 +1043,7 @@ public partial class MainWindow : Window
         var airPlayPageUrl = $"http://{ip}:{_urlServer.Port}/airplay";
         if (UseAirPlayHandoff)
         {
-            airPlayPageUrl = SetAirPlayPage(streamUrl, media.Title);
+            airPlayPageUrl = await SetAirPlayPageAsync(streamUrl, media.Title);
             _linkReceiverLaunched = false;
         }
         else
@@ -1435,12 +1435,13 @@ public partial class MainWindow : Window
         }
     }
 
-    private string SetAirPlayPage(
+    private async Task<string> SetAirPlayPageAsync(
         string streamUrl,
         string title,
         long revision = 0,
         string mediaType = "application/vnd.apple.mpegurl")
     {
+        await _airPlayServer.StartAsync();
         _airPlayServer.SetSource(streamUrl, title, mediaType, revision);
         var pageUrl = $"http://{new Uri(streamUrl).Host}:{AirPlayHandoffServer.SharedPort}/airplay";
         AirPlayPageUrlTextBox.Text = pageUrl;
@@ -1898,7 +1899,7 @@ public partial class MainWindow : Window
 
             if (UseAirPlayHandoff)
             {
-                airPlayPageUrl = SetAirPlayPage(streamUrl, _teraBoxDetectedTitle);
+                airPlayPageUrl = await SetAirPlayPageAsync(streamUrl, _teraBoxDetectedTitle);
                 _linkReceiverLaunched = false;
                 _folderReceiverLaunched = false;
             }
@@ -2219,7 +2220,7 @@ public partial class MainWindow : Window
 
             if (UseAirPlayHandoff)
             {
-                airPlayPageUrl = SetAirPlayPage(url, source.Name);
+                airPlayPageUrl = await SetAirPlayPageAsync(url, source.Name);
             }
             else
             {
@@ -2859,7 +2860,7 @@ public partial class MainWindow : Window
 
             if (UseAirPlayHandoff)
             {
-                airPlayPageUrl = SetAirPlayPage(streamUrl, item.FileName, _folderControlRevision);
+                airPlayPageUrl = await SetAirPlayPageAsync(streamUrl, item.FileName, _folderControlRevision);
                 _folderReceiverLaunched = false;
                 _linkReceiverLaunched = false;
             }
@@ -3120,7 +3121,7 @@ public partial class MainWindow : Window
 
             if (UseAirPlayHandoff)
             {
-                airPlayPageUrl = SetAirPlayPage(
+                airPlayPageUrl = await SetAirPlayPageAsync(
                     streamUrl,
                     Path.GetFileName(_selectedFile),
                     mediaType: "video/mp4");

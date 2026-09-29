@@ -24,6 +24,7 @@ public sealed class AirPlayHandoffServer : IAsyncDisposable
     private long _revision;
 
     public const int SharedPort = 8765;
+    public bool IsRunning => _app is not null;
 
     public async Task StartAsync(CancellationToken token = default)
     {
@@ -109,7 +110,7 @@ public sealed class AirPlayHandoffServer : IAsyncDisposable
         {
             var playlist = await response.Content.ReadAsStringAsync(context.RequestAborted);
             context.Response.ContentLength = null;
-            await context.Response.WriteAsync(RewritePlaylist(playlist), context.RequestAborted);
+            await context.Response.WriteAsync(RewritePlaylist(playlist, source), context.RequestAborted);
             return;
         }
 
@@ -144,15 +145,16 @@ public sealed class AirPlayHandoffServer : IAsyncDisposable
         }, context.RequestAborted);
     }
 
-    private static string RewritePlaylist(string playlist)
+    private static string RewritePlaylist(string playlist, Uri source)
     {
+        var sourceDirectory = source.AbsolutePath[..(source.AbsolutePath.LastIndexOf('/') + 1)];
         var lines = playlist.Replace("\r\n", "\n").Split('\n');
         var rewritten = lines.Select(line =>
         {
             var value = line.Trim();
             return value.Length == 0 || value.StartsWith('#') || Uri.IsWellFormedUriString(value, UriKind.Absolute)
                 ? line
-                : "/stream/" + value.TrimStart('/');
+                : "/stream" + sourceDirectory + value.TrimStart('/');
         });
         return string.Join('\n', rewritten);
     }

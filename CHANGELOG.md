@@ -5,6 +5,16 @@ All notable changes to Dowe LanCaster are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5.79] - 2026-09-29
+
+### Fixed
+
+- Repaired the shared AirPlay service so port **8765** starts before other PC
+  startup work and is retried whenever a cast prepares an AirPlay page.
+- Corrected HLS segment routing through the shared AirPlay address. Folder,
+  Link, and Live HLS streams now keep their `/live/` path when Safari loads
+  the playlist and its video segments through port 8765.
+
 ## [0.9.5.78] - 2026-09-29
 
 ### Added
