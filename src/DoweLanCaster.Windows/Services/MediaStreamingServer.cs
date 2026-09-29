@@ -10,10 +10,12 @@ public sealed class MediaStreamingServer : IAsyncDisposable
     private WebApplication? _app;
     private string? _filePath;
 
-    public int Port { get; private set; } = 8765;
+    // Port 8765 is the one stable public AirPlay address. File Cast keeps its
+    // internal byte-range server separate so both can run at the same time.
+    public int Port { get; private set; } = 8769;
     public bool IsRunning => _app is not null;
 
-    public async Task StartAsync(string filePath, int port = 8765, CancellationToken token = default)
+    public async Task StartAsync(string filePath, int port = 8769, CancellationToken token = default)
     {
         if (!File.Exists(filePath))
             throw new FileNotFoundException("Selected media file does not exist.", filePath);

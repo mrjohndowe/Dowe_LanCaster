@@ -5,6 +5,22 @@ All notable changes to Dowe LanCaster are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5.78] - 2026-09-29
+
+### Added
+
+- Link Playlist accepts new links while it is already streaming. New items are
+  picked up in their added order after the current item completes.
+- Added a shared AirPlay handoff service on port **8765**. Link Cast, Link
+  Playlist, TeraBox, Live Cast, Folder Cast, and File Cast now provide the
+  same AirPlay address while the service forwards the active tab's media.
+
+### Fixed
+
+- Kept a completed Link Playlist HLS stream available while Roku finishes its
+  final segments, preventing the tail end of a video from disappearing during
+  the transition to the next item.
+
 ## [0.9.5.77] - 2026-09-28
 
 ### Added

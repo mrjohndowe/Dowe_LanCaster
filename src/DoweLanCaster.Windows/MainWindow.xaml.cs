@@ -21,6 +21,7 @@ public partial class MainWindow : Window
 {
     private readonly RokuDiscoveryService _discoveryService = new();
     private readonly MediaStreamingServer _mediaServer = new();
+    private readonly AirPlayHandoffServer _airPlayServer = new();
     private readonly LiveStreamingServer _liveServer = new();
     private readonly LiveCaptureService _liveCapture = new();
     private readonly CaptureSourceService _captureSources = new();
@@ -176,6 +177,7 @@ public partial class MainWindow : Window
             RefreshPlaybackEndpoints();
             await InitializeTeraBoxBrowserAsync();
             LoadChangelog();
+            await StartAirPlayHandoffServerAsync();
             await StartCompanionServiceAsync();
 
             if (!string.IsNullOrWhiteSpace(_settings.LastFolderPath) &&
@@ -514,7 +516,7 @@ public partial class MainWindow : Window
 
             if (UseAirPlayHandoff)
             {
-                SetAirPlayPage(airPlayPageUrl);
+                airPlayPageUrl = SetAirPlayPage(streamUrl, _extractedMedia.Title);
                 _linkReceiverLaunched = false;
                 _folderReceiverLaunched = false;
             }
@@ -677,7 +679,9 @@ public partial class MainWindow : Window
         PlaylistOpenButton.IsEnabled = !_linkPlaylistRunning;
         PlaylistSaveButton.IsEnabled = _linkPlaylistItems.Count > 0;
         PlaylistImportVlcButton.IsEnabled = !_linkPlaylistRunning;
-        AddPlaylistLinkButton.IsEnabled = !_linkPlaylistRunning;
+        // New links are intentionally allowed while a playlist is running.
+        // The playback loop reads the live queue length before every next item.
+        AddPlaylistLinkButton.IsEnabled = true;
         StartPlaylistButton.IsEnabled = !_linkPlaylistRunning;
         SkipPlaylistButton.IsEnabled = _linkPlaylistRunning && _linkPlaylistItemCancellation is not null;
         StopPlaylistButton.IsEnabled = _linkPlaylistRunning;
@@ -891,6 +895,10 @@ public partial class MainWindow : Window
                     if (!completed)
                         throw new InvalidOperationException("The current video stream ended with an FFmpeg error.");
 
+                    // FFmpeg has finished producing the VOD playlist, but Roku can still
+                    // be reading its final HLS segments. Keep the HLS directory available
+                    // until Roku reaches the end (or the receiver has had time to drain it).
+                    await WaitForRokuPlaylistItemToFinishAsync(itemCancellation.Token);
                     await _urlCapture.StopAsync();
                     LinkStreamUrlTextBox.Clear();
                     if (index + 1 < _linkPlaylistItems.Count)
@@ -955,6 +963,42 @@ public partial class MainWindow : Window
         PlaylistStatusText.Text = "Skipping current video...";
     }
 
+    private async Task WaitForRokuPlaylistItemToFinishAsync(CancellationToken token)
+    {
+        if (_rokuClient is null)
+            return;
+
+        var deadline = DateTimeOffset.UtcNow.AddSeconds(20);
+        var sawPlayerState = false;
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            token.ThrowIfCancellationRequested();
+            try
+            {
+                var state = await _rokuClient.GetMediaPlayerStateAsync(token);
+                sawPlayerState = true;
+                if (state.DurationSeconds is > 0 && state.PositionSeconds is >= 0 &&
+                    state.PositionSeconds >= state.DurationSeconds - 0.5)
+                    return;
+                if (state.State.Equals("close", StringComparison.OrdinalIgnoreCase) ||
+                    state.State.Equals("finished", StringComparison.OrdinalIgnoreCase))
+                    return;
+            }
+            catch
+            {
+                // The custom Roku receiver does not always expose media-player
+                // state. In that case retain the final HLS segments for the
+                // conservative drain interval below.
+                if (!sawPlayerState)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(8), token);
+                    return;
+                }
+            }
+            await Task.Delay(TimeSpan.FromSeconds(1), token);
+        }
+    }
+
     private async Task<ExtractedMedia> ExtractLinkMediaAsync(string url)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
@@ -999,7 +1043,7 @@ public partial class MainWindow : Window
         var airPlayPageUrl = $"http://{ip}:{_urlServer.Port}/airplay";
         if (UseAirPlayHandoff)
         {
-            SetAirPlayPage(airPlayPageUrl);
+            airPlayPageUrl = SetAirPlayPage(streamUrl, media.Title);
             _linkReceiverLaunched = false;
         }
         else
@@ -1376,15 +1420,38 @@ public partial class MainWindow : Window
     private bool UseAirPlayHandoff =>
         AirPlayModeCheckBox.IsChecked == true;
 
-    private void SetAirPlayPage(string pageUrl)
+    private async Task StartAirPlayHandoffServerAsync()
     {
+        try
+        {
+            await _airPlayServer.StartAsync();
+            UpdateDiagnostics(message: "AirPlay handoff is listening on shared port 8765.");
+        }
+        catch (Exception ex)
+        {
+            AirPlayStatusText.Text =
+                $"AirPlay handoff could not start on port 8765: {ex.Message}";
+            UpdateDiagnostics(message: AirPlayStatusText.Text);
+        }
+    }
+
+    private string SetAirPlayPage(
+        string streamUrl,
+        string title,
+        long revision = 0,
+        string mediaType = "application/vnd.apple.mpegurl")
+    {
+        _airPlayServer.SetSource(streamUrl, title, mediaType, revision);
+        var pageUrl = $"http://{new Uri(streamUrl).Host}:{AirPlayHandoffServer.SharedPort}/airplay";
         AirPlayPageUrlTextBox.Text = pageUrl;
         AirPlayStatusText.Text =
-            "AirPlay stream prepared. Open this address on an iPhone, iPad, or Mac, tap Play, then select the Roku from the AirPlay menu.";
+            "AirPlay stream prepared on port 8765. Open this address on an iPhone, iPad, or Mac, tap Play, then select the Roku from the AirPlay menu.";
+        return pageUrl;
     }
 
     private void ClearAirPlayPage()
     {
+        _airPlayServer.SetSource(null, "Dowe LanCaster", "application/vnd.apple.mpegurl");
         AirPlayPageUrlTextBox.Clear();
         AirPlayStatusText.Text =
             "Enable Apple-device AirPlay handoff, then start a cast from its normal tab.";
@@ -1831,7 +1898,7 @@ public partial class MainWindow : Window
 
             if (UseAirPlayHandoff)
             {
-                SetAirPlayPage(airPlayPageUrl);
+                airPlayPageUrl = SetAirPlayPage(streamUrl, _teraBoxDetectedTitle);
                 _linkReceiverLaunched = false;
                 _folderReceiverLaunched = false;
             }
@@ -2152,7 +2219,7 @@ public partial class MainWindow : Window
 
             if (UseAirPlayHandoff)
             {
-                SetAirPlayPage(airPlayPageUrl);
+                airPlayPageUrl = SetAirPlayPage(url, source.Name);
             }
             else
             {
@@ -2792,7 +2859,7 @@ public partial class MainWindow : Window
 
             if (UseAirPlayHandoff)
             {
-                SetAirPlayPage(airPlayPageUrl);
+                airPlayPageUrl = SetAirPlayPage(streamUrl, item.FileName, _folderControlRevision);
                 _folderReceiverLaunched = false;
                 _linkReceiverLaunched = false;
             }
@@ -3053,7 +3120,10 @@ public partial class MainWindow : Window
 
             if (UseAirPlayHandoff)
             {
-                SetAirPlayPage(airPlayPageUrl);
+                airPlayPageUrl = SetAirPlayPage(
+                    streamUrl,
+                    Path.GetFileName(_selectedFile),
+                    mediaType: "video/mp4");
             }
             else
                 await _rokuClient.LaunchDoweLanCasterAsync(streamUrl);
@@ -3676,6 +3746,7 @@ public partial class MainWindow : Window
         await _liveServer.DisposeAsync();
         await _liveCapture.DisposeAsync();
         await _mediaServer.DisposeAsync();
+        await _airPlayServer.DisposeAsync();
 
         _rokuClient?.Dispose();
 
