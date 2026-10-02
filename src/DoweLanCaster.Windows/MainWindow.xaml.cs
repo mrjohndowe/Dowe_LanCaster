@@ -1039,11 +1039,16 @@ public partial class MainWindow : Window
         var streamUrl = $"http://{ip}:{_urlServer.Port}/live/index.m3u8";
         LinkStreamUrlTextBox.Text = streamUrl;
         SetPcAudioMonitorSource(streamUrl);
-        _urlServer.SetControlState(streamUrl);
+        // The shared AirPlay page uses this revision to keep the existing
+        // Apple AirPlay session alive when Link Playlist advances to a new URL.
+        var airPlayRevision = _urlServer.SetControlState(streamUrl);
         var airPlayPageUrl = $"http://{ip}:{_urlServer.Port}/airplay";
         if (UseAirPlayHandoff)
         {
-            airPlayPageUrl = await SetAirPlayPageAsync(streamUrl, media.Title);
+            airPlayPageUrl = await SetAirPlayPageAsync(
+                streamUrl,
+                media.Title,
+                airPlayRevision);
             _linkReceiverLaunched = false;
         }
         else

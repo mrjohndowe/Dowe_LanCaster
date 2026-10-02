@@ -5,6 +5,15 @@ All notable changes to Dowe LanCaster are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5.81] - 2026-10-02
+
+### Fixed
+
+- Kept the existing Apple AirPlay session connected when Link Playlist moves
+  from one video to the next. The shared port 8765 handoff now receives the
+  playlist control revision and replaces only the video source instead of
+  leaving AirPlay attached to the completed item.
+
 ## [0.9.5.80] - 2026-10-02
 
 ### Fixed
