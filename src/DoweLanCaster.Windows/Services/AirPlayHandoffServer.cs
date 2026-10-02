@@ -16,7 +16,13 @@ namespace DoweLanCaster.Services;
 /// </summary>
 public sealed class AirPlayHandoffServer : IAsyncDisposable
 {
-    private static readonly HttpClient Client = new();
+    // AirPlay can keep a media request open for the full length of a movie.
+    // HttpClient's default 100-second timeout would cut that request off while
+    // the encoder and the original cast continue normally.
+    private static readonly HttpClient Client = new()
+    {
+        Timeout = Timeout.InfiniteTimeSpan
+    };
     private WebApplication? _app;
     private Uri? _source;
     private string _title = "Dowe LanCaster";

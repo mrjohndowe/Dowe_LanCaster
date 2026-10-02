@@ -5,6 +5,14 @@ All notable changes to Dowe LanCaster are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5.80] - 2026-10-02
+
+### Fixed
+
+- Removed the default approximately 100-second HTTP timeout from the shared
+  AirPlay relay. Long-running AirPlay playback now remains connected for the
+  full video instead of stopping while the PC stream continues.
+
 ## [0.9.5.79] - 2026-09-29
 
 ### Fixed
