@@ -2,17 +2,34 @@
 > **Commands to add a new tag to the repo and push it**
 
 ```powershell
-$currentVersion = 'v0.9.5.5'
-git checkout main 
+$currentVersion = 'v2.3.9'
+git checkout main
 git pull
-git tag -a $currentVersion -m "Dowe Lancaster v"$currentVersion
+git tag -a $currentVersion -m "Release v"$currentVersion
 git push origin $currentVersion
 git tag --list
 git show $currentVersion
+
 ```
 <div style="background-color: #010a1381; border: 1px solid #ffffff; border-top: none; padding: 8px 12px; font-size: 12px; color: #ffffff; font-family: sans-serif; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; margin-top: -16px;">
   ⚠️ Use code with caution.
 </div>
+---
+```powershell
+$version = "v2.4.4"
+$comment = "Release Version $version"
+git add .
+git commit -m $comment
+git tag -a v0.0.4 -m "Release $version"
+git pull --rebase origin main
+git push origin main
+git push origin v$version
+
+```
+<div style="background-color: #010a1381; border: 1px solid #ffffff; border-top: none; padding: 8px 12px; font-size: 12px; color: #ffffff; font-family: sans-serif; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; margin-top: -16px;">
+  ⚠️ Use code with caution.
+</div>
+---
 
 ### Push Commands with Message
 ```powershell
@@ -28,8 +45,8 @@ git status
   ⚠️ Use code with caution.
 </div>
 
-> No Git Checkout, Not git diff or show
 ---
+### No Git Checkout, Not git diff or show
 ```powershell
 $currentVersion = 'v0.9.5.5'
 git pull
@@ -42,12 +59,14 @@ git status
   ⚠️ Use code with caution.
 </div>
 
->Show a regular commit message
-- - -
+---
+
+### Show a regular commit message
+
 
 ```powershell
 $commitMessage = "Retry release lookup when updating changelog"
-git add . 
+git add .
 git commit -m $commitMessage
 $branch = git branch --show-current
 git pull --rebase origin $branch
