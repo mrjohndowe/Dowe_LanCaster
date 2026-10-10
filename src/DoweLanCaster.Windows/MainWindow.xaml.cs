@@ -882,7 +882,7 @@ public partial class MainWindow : Window
 
     private void ImportIptvButton_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog
+        var dialog = new Microsoft.Win32.OpenFileDialog
         {
             Title = "Import IPTV Playlist",
             Filter = "M3U playlists|*.m3u;*.m3u8|All files|*.*"
@@ -945,7 +945,7 @@ public partial class MainWindow : Window
 
     private void BrowseVlcButton_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog
+        var dialog = new Microsoft.Win32.OpenFileDialog
         {
             Title = "Select VLC executable",
             Filter = "Executable files|*.exe|All files|*.*"
@@ -1023,29 +1023,60 @@ public partial class MainWindow : Window
             IptvPreviousButton.IsEnabled = _iptvIndex > 0;
             IptvNextButton.IsEnabled = _iptvIndex < _filteredIptvChannels.Count - 1;
 
-            await _mediaServer.StartUrlStreamAsync(channel.Url, _iptvRokuCancellation.Token);
-            var streamUrl = _mediaServer.GetStreamUrl();
+            var media = new ExtractedMedia
+            {
+                Url = channel.Url,
+                Title = channel.Title,
+                Protocol = "IPTV",
+                SourceType = "M3U Playlist"
+            };
 
-            await _rokuClient.LaunchDmrAsync(streamUrl);
-            IptvStatusText.Text = $"Playing {channel.Title} on Roku";
+            var friendlyEncoder = SettingsEncoderComboBox.SelectedItem?.ToString() ?? "CPU (libx264)";
+            var encoder = EncoderDetectionService.ToFFmpegEncoder(friendlyEncoder);
+            var bitrateText = ((ComboBoxItem)SettingsBitrateComboBox.SelectedItem).Content.ToString()!;
+            var bitrate = int.Parse(bitrateText.Split(' ')[0]);
+
+            await _urlCapture.StartAsync(_ffmpegPath!, media, encoder, bitrate, _iptvRokuCancellation.Token);
+            await _urlServer.StartAsync(_urlCapture.OutputDirectory, port: 8767);
+
+            var ip = NetworkHelper.GetBestLocalIPv4ForRemote(_rokuClient.Device.IpAddress)
+                ?? throw new InvalidOperationException("Could not determine the PC LAN IP.");
+            var streamUrl = $"http://{ip}:{_urlServer.Port}/live/index.m3u8";
+
+            _urlServer.SetControlState(streamUrl);
+
+            if (UseAirPlayHandoff)
+            {
+                var airPlayPageUrl = await SetAirPlayPageAsync(streamUrl, channel.Title);
+                IptvStatusText.Text = $"AirPlay handoff page prepared for {channel.Title}: {airPlayPageUrl}";
+            }
+            else
+            {
+                await _rokuClient.LaunchDoweLanCasterLiveAsync(streamUrl, $"http://{ip}:{_urlServer.Port}/control");
+                IptvStatusText.Text = $"Playing {channel.Title} on Roku";
+            }
         }
         catch (Exception ex)
         {
             _iptvRokuStreaming = false;
+            await _urlCapture.StopAsync();
             IptvStatusText.Text = $"Failed to cast: {ex.Message}";
             UpdateDiagnostics(message: $"IPTV Roku cast error: {ex.Message}");
         }
     }
 
-    private void IptvStopButton_Click(object sender, RoutedEventArgs e)
+    private async void IptvStopButton_Click(object sender, RoutedEventArgs e)
     {
         _iptvPlaybackService.Stop();
         _iptvRokuCancellation?.Cancel();
         _iptvRokuStreaming = false;
 
+        await _urlCapture.StopAsync();
+        _urlServer.SetControlState(null);
+
         if (_rokuClient != null)
         {
-            _ = _rokuClient.SendKeypressAsync("Back");
+            _ = _rokuClient.SendKeyAsync("Back");
         }
 
         IptvStatusText.Text = "Playback stopped";
@@ -1083,11 +1114,11 @@ public partial class MainWindow : Window
 
         if (_iptvRokuStreaming)
         {
-            IptvCastRokuButton_Click(this, RoutedEventArgs.Empty);
+            IptvCastRokuButton_Click(this, new RoutedEventArgs());
         }
         else
         {
-            IptvPlayVlcButton_Click(this, RoutedEventArgs.Empty);
+            IptvPlayVlcButton_Click(this, new RoutedEventArgs());
         }
     }
 
@@ -2475,7 +2506,7 @@ public partial class MainWindow : Window
 
     private void SettingsBrowseVlcButton_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog
+        var dialog = new Microsoft.Win32.OpenFileDialog
         {
             Title = "Select VLC executable",
             Filter = "Executable files|*.exe|All files|*.*"

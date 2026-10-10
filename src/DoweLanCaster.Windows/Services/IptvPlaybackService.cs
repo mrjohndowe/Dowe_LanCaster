@@ -102,7 +102,7 @@ public sealed class IptvPlaybackService
         {
             _vlcStartedCompletion?.TrySetResult(false);
 
-            if (_vlcProcess?.ExitCode != 0)
+            if (_vlcProcess is not null && _vlcProcess.ExitCode != 0)
             {
                 PlaybackError?.Invoke(this, $"VLC exited with code {_vlcProcess.ExitCode}");
             }

@@ -25,7 +25,7 @@
     <RepositoryUrl>https://github.com/mrjohndowe/Dowe_LanCaster.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>roku; streaming; casting; media; hls; ffmpeg; remote-control; windows; wpf;</PackageTags>
-    <PackageReleaseNotes>Dowe LanCaster v0.9.5.82 keeps the same AirPlay session active while Link Playlist advances to its next video.</PackageReleaseNotes>
+    <PackageReleaseNotes>Dowe LanCaster v0.9.5.82 adds VLC IPTV mode with M3U/M3U8 playlist support, channel browsing, VLC playback with configurable retries, and Roku casting.</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
