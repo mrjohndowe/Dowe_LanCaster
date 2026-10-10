@@ -661,6 +661,102 @@
                                 </ScrollViewer>
                         </TabItem>
 
+                        <TabItem Header="IPTV">
+                                <Grid Margin="16">
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="12"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="12"/>
+                                                <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18">
+                                                <StackPanel>
+                                                        <TextBlock Text="IPTV Playlist" FontSize="24" FontWeight="Bold" Margin="0,0,0,8"/>
+                                                        <TextBlock Text="Import an M3U/M3U8 IPTV playlist to browse and play channels in VLC or cast to Roku." TextWrapping="Wrap" Opacity="0.78" Margin="0,0,0,14"/>
+                                                        <DockPanel>
+                                                                <Button x:Name="ImportIptvButton" Content="Import M3U/M3U8" Width="140" Height="36" DockPanel.Dock="Right" Click="ImportIptvButton_Click"/>
+                                                                <TextBox x:Name="IptvPlaylistPathTextBox" Height="36" Margin="0,0,10,0" IsReadOnly="True" VerticalContentAlignment="Center" ToolTip="Path to the imported playlist"/>
+                                                        </DockPanel>
+                                                </StackPanel>
+                                        </Border>
+
+                                        <Grid Grid.Row="2">
+                                                <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="14"/>
+                                                        <ColumnDefinition Width="260"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                                        <Grid>
+                                                                <Grid.RowDefinitions>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                        <RowDefinition Height="8"/>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                        <RowDefinition Height="8"/>
+                                                                        <RowDefinition Height="*"/>
+                                                                </Grid.RowDefinitions>
+                                                                <DockPanel>
+                                                                        <TextBlock Text="Channels" FontSize="22" FontWeight="Bold" DockPanel.Dock="Left"/>
+                                                                        <TextBlock x:Name="IptvChannelCountText" Text="0 channels" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                                                </DockPanel>
+                                                                <DockPanel Grid.Row="2">
+                                                                        <TextBlock Text="Filter:" VerticalAlignment="Center" DockPanel.Dock="Left" Margin="0,0,8,0"/>
+                                                                        <TextBox x:Name="IptvFilterTextBox" Height="32" VerticalContentAlignment="Center" TextChanged="IptvFilterTextBox_TextChanged"/>
+                                                                </DockPanel>
+                                                                <DockPanel Grid.Row="4">
+                                                                        <TextBlock Text="Group:" VerticalAlignment="Center" DockPanel.Dock="Left" Margin="0,0,8,0"/>
+                                                                        <ComboBox x:Name="IptvGroupComboBox" Height="32" SelectionChanged="IptvGroupComboBox_SelectionChanged"/>
+                                                                </DockPanel>
+                                                                <ListBox x:Name="IptvChannelListBox" Grid.Row="4" DisplayMemberPath="DisplayText" SelectionChanged="IptvChannelListBox_SelectionChanged" Margin="0,44,0,0"/>
+                                                        </Grid>
+                                                </Border>
+                                                <Border Grid.Column="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                                        <StackPanel>
+                                                                <TextBlock Text="Playback" FontSize="20" FontWeight="Bold" Margin="0,0,0,8"/>
+                                                                <Button x:Name="IptvPlayVlcButton" Content="Play in VLC" Height="32" Margin="0,0,0,6" IsEnabled="False" Click="IptvPlayVlcButton_Click"/>
+                                                                <Button x:Name="IptvCastRokuButton" Content="Cast to Roku" Height="32" Margin="0,0,0,6" IsEnabled="False" Click="IptvCastRokuButton_Click"/>
+                                                                <Button x:Name="IptvStopButton" Content="Stop Playback" Height="32" Margin="0,0,0,6" IsEnabled="False" Click="IptvStopButton_Click"/>
+                                                                <CheckBox x:Name="IptvAutoAdvanceCheckBox" Content="Auto-advance" IsChecked="True" Margin="0,12,0,0" Checked="IptvSettingChanged" Unchecked="IptvSettingChanged"/>
+                                                                <TextBlock Text="VLC path (optional)" FontWeight="SemiBold" Margin="0,12,0,4"/>
+                                                                <DockPanel>
+                                                                        <Button x:Name="BrowseVlcButton" Content="Browse" Width="70" Height="32" DockPanel.Dock="Right" Click="BrowseVlcButton_Click"/>
+                                                                        <TextBox x:Name="VlcPathTextBox" Height="32" Margin="0,0,8,0" VerticalContentAlignment="Center"/>
+                                                                </DockPanel>
+                                                                <TextBlock Text="Retry count" FontWeight="SemiBold" Margin="0,12,0,4"/>
+                                                                <ComboBox x:Name="IptvRetryComboBox" Height="32" SelectedIndex="2" SelectionChanged="IptvSettingChanged">
+                                                                        <ComboBoxItem Content="0"/>
+                                                                        <ComboBoxItem Content="1"/>
+                                                                        <ComboBoxItem Content="3"/>
+                                                                        <ComboBoxItem Content="5"/>
+                                                                        <ComboBoxItem Content="10"/>
+                                                                </ComboBox>
+                                                        </StackPanel>
+                                                </Border>
+                                        </Grid>
+
+                                        <Border Grid.Row="4" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14">
+                                                <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="10"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="10"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Button x:Name="IptvPreviousButton" Content="Previous Channel" Width="130" Height="40" IsEnabled="False" Click="IptvPreviousButton_Click"/>
+                                                        <Button x:Name="IptvNextButton" Grid.Column="2" Content="Next Channel" Width="130" Height="40" IsEnabled="False" Click="IptvNextButton_Click"/>
+                                                        <StackPanel Grid.Column="4" Margin="18,0,0,0" VerticalAlignment="Center">
+                                                                <TextBlock x:Name="IptvNowPlayingText" Text="Nothing playing" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                                <TextBlock x:Name="IptvStatusText" Text="Import an M3U/M3U8 playlist to begin." TextWrapping="Wrap" Opacity="0.78"/>
+                                                        </StackPanel>
+                                                </Grid>
+                                        </Border>
+                                </Grid>
+                        </TabItem>
+
                         <TabItem Header="Settings">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                                         <StackPanel Margin="16">
@@ -743,6 +839,26 @@
                                                                                 </StackPanel>
                                                                         </Border>
                                                                 </Grid>
+                                                        </StackPanel>
+                                                </Border>
+
+                                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,14">
+                                                        <StackPanel>
+                                                                <TextBlock Text="IPTV Settings" FontSize="22" FontWeight="Bold" Margin="0,0,0,8"/>
+                                                                <CheckBox x:Name="SettingsIptvAutoAdvanceCheckBox" Content="Auto-advance to next channel when playback ends" Margin="0,0,0,12" Checked="IptvSettingChanged" Unchecked="IptvSettingChanged"/>
+                                                                <TextBlock Text="Default VLC path" FontWeight="SemiBold"/>
+                                                                <DockPanel Margin="0,6,0,12">
+                                                                        <Button Content="Browse" Width="70" Height="32" DockPanel.Dock="Right" Click="SettingsBrowseVlcButton_Click"/>
+                                                                        <TextBox x:Name="SettingsVlcPathTextBox" Height="32" Margin="0,0,8,0" VerticalContentAlignment="Center"/>
+                                                                </DockPanel>
+                                                                <TextBlock Text="Default retry count for failed streams" FontWeight="SemiBold"/>
+                                                                <ComboBox x:Name="SettingsIptvRetryComboBox" Height="34" Margin="0,6,0,0" SelectionChanged="IptvSettingChanged">
+                                                                        <ComboBoxItem Content="0"/>
+                                                                        <ComboBoxItem Content="1"/>
+                                                                        <ComboBoxItem Content="3"/>
+                                                                        <ComboBoxItem Content="5"/>
+                                                                        <ComboBoxItem Content="10"/>
+                                                                </ComboBox>
                                                         </StackPanel>
                                                 </Border>
 

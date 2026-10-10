@@ -16,4 +16,8 @@ public sealed class AppSettings
     public bool FolderAutoPlayNext { get; set; } = true;
     public bool UseDarkMode { get; set; }
     public bool UseAirPlayHandoff { get; set; }
+    public string? VlcPath { get; set; }
+    public int IptvMaxRetries { get; set; } = 3;
+    public bool IptvAutoAdvance { get; set; } = true;
+    public string? LastIptvPlaylistPath { get; set; }
 }

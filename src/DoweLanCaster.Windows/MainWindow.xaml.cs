@@ -45,6 +45,8 @@ public partial class MainWindow : Window
         Interval = TimeSpan.FromSeconds(2)
     };
     private readonly List<LinkPlaylistItem> _linkPlaylistItems = new();
+    private readonly IptvPlaylistService _iptvPlaylistService = new();
+    private readonly IptvPlaybackService _iptvPlaybackService = new();
 
     private RokuClient? _rokuClient;
     private string? _selectedFile;
@@ -70,6 +72,11 @@ public partial class MainWindow : Window
     private int _teraBoxDetectedMediaScore;
     private CoreWebView2Environment? _teraBoxWebViewEnvironment;
     private RokuAudioDeviceState? _rokuAudioState;
+    private List<IptvChannel> _iptvChannels = new();
+    private List<IptvChannel> _filteredIptvChannels = new();
+    private int _iptvIndex = -1;
+    private CancellationTokenSource? _iptvRokuCancellation;
+    private bool _iptvRokuStreaming;
 
     private static readonly IReadOnlyDictionary<string, string> VoiceCommandMap =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -234,6 +241,51 @@ public partial class MainWindow : Window
             {
                 _diagnostics.LastHttpRequest = line;
                 UpdateDiagnostics();
+            });
+        };
+
+        _iptvPlaybackService.PlaybackStarted += (_, _) =>
+        {
+            Dispatcher.BeginInvoke(() =>
+            {
+                IptvStatusText.Text = "Playing in VLC";
+                IptvStopButton.IsEnabled = true;
+                IptvPreviousButton.IsEnabled = _iptvIndex > 0;
+                IptvNextButton.IsEnabled = _iptvIndex < _filteredIptvChannels.Count - 1;
+            });
+        };
+
+        _iptvPlaybackService.PlaybackStopped += (_, _) =>
+        {
+            Dispatcher.BeginInvoke(() =>
+            {
+                IptvStatusText.Text = "Playback stopped";
+                IptvStopButton.IsEnabled = false;
+                IptvPreviousButton.IsEnabled = false;
+                IptvNextButton.IsEnabled = false;
+
+                if (IptvAutoAdvanceCheckBox.IsChecked == true && _iptvIndex < _filteredIptvChannels.Count - 1)
+                {
+                    _iptvIndex++;
+                    PlaySelectedIptvChannel();
+                }
+            });
+        };
+
+        _iptvPlaybackService.PlaybackError += (_, error) =>
+        {
+            Dispatcher.BeginInvoke(() =>
+            {
+                IptvStatusText.Text = error;
+                UpdateDiagnostics(message: $"IPTV Error: {error}");
+            });
+        };
+
+        _iptvPlaybackService.ChannelChanged += (_, channel) =>
+        {
+            Dispatcher.BeginInvoke(() =>
+            {
+                IptvNowPlayingText.Text = channel.Title;
             });
         };
     }
@@ -828,6 +880,217 @@ public partial class MainWindow : Window
         return result;
     }
 
+    private void ImportIptvButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Import IPTV Playlist",
+            Filter = "M3U playlists|*.m3u;*.m3u8|All files|*.*"
+        };
+        if (dialog.ShowDialog(this) != true)
+            return;
+
+        try
+        {
+            var playlist = _iptvPlaylistService.LoadM3UPlaylist(dialog.FileName);
+            _iptvChannels = playlist.Channels;
+            _filteredIptvChannels = _iptvChannels;
+            _iptvIndex = -1;
+
+            IptvPlaylistPathTextBox.Text = dialog.FileName;
+            IptvChannelCountText.Text = $"{_iptvChannels.Count} channels";
+            IptvChannelListBox.ItemsSource = _filteredIptvChannels;
+
+            var groups = _iptvPlaylistService.GetGroups(_iptvChannels);
+            IptvGroupComboBox.ItemsSource = groups;
+            IptvGroupComboBox.Items.Insert(0, "All Groups");
+            IptvGroupComboBox.SelectedIndex = 0;
+
+            IptvStatusText.Text = $"Loaded {_iptvChannels.Count} channels from {playlist.Name}";
+
+            _settings.LastIptvPlaylistPath = dialog.FileName;
+            _settingsService.Save(_settings);
+        }
+        catch (Exception exception)
+        {
+            IptvStatusText.Text = $"Could not import IPTV playlist: {exception.Message}";
+            UpdateDiagnostics(message: $"IPTV import error: {exception.Message}");
+        }
+    }
+
+    private void IptvFilterTextBox_TextChanged(object sender, RoutedEventArgs e)
+    {
+        var searchText = IptvFilterTextBox.Text;
+        var selectedGroup = IptvGroupComboBox.SelectedItem as string;
+        _filteredIptvChannels = _iptvPlaylistService.FilterChannels(_iptvChannels, searchText, selectedGroup == "All Groups" ? null : selectedGroup);
+        IptvChannelListBox.ItemsSource = _filteredIptvChannels;
+        IptvChannelCountText.Text = $"{_filteredIptvChannels.Count} channels";
+    }
+
+    private void IptvGroupComboBox_SelectionChanged(object sender, RoutedEventArgs e)
+    {
+        var searchText = IptvFilterTextBox.Text;
+        var selectedGroup = IptvGroupComboBox.SelectedItem as string;
+        _filteredIptvChannels = _iptvPlaylistService.FilterChannels(_iptvChannels, searchText, selectedGroup == "All Groups" ? null : selectedGroup);
+        IptvChannelListBox.ItemsSource = _filteredIptvChannels;
+        IptvChannelCountText.Text = $"{_filteredIptvChannels.Count} channels";
+    }
+
+    private void IptvChannelListBox_SelectionChanged(object sender, RoutedEventArgs e)
+    {
+        var canPlay = IptvChannelListBox.SelectedItem is IptvChannel;
+        IptvPlayVlcButton.IsEnabled = canPlay;
+        IptvCastRokuButton.IsEnabled = canPlay && _rokuClient != null;
+    }
+
+    private void BrowseVlcButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Select VLC executable",
+            Filter = "Executable files|*.exe|All files|*.*"
+        };
+        if (dialog.ShowDialog(this) == true)
+        {
+            VlcPathTextBox.Text = dialog.FileName;
+            _settings.VlcPath = dialog.FileName;
+            _settingsService.Save(_settings);
+        }
+    }
+
+    private async void IptvPlayVlcButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (IptvChannelListBox.SelectedItem is not IptvChannel channel)
+            return;
+
+        var vlcPath = VlcPathTextBox.Text;
+        if (string.IsNullOrWhiteSpace(vlcPath))
+        {
+            var commonPaths = new[]
+            {
+                @"C:\Program Files\VideoLAN\VLC\vlc.exe",
+                @"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe"
+            };
+            vlcPath = commonPaths.FirstOrDefault(File.Exists);
+            if (vlcPath != null)
+            {
+                VlcPathTextBox.Text = vlcPath;
+                _settings.VlcPath = vlcPath;
+                _settingsService.Save(_settings);
+            }
+            else
+            {
+                IptvStatusText.Text = "VLC not found. Please browse to VLC executable.";
+                return;
+            }
+        }
+
+        _iptvIndex = _filteredIptvChannels.IndexOf(channel);
+        var maxRetries = int.Parse(((ComboBoxItem)IptvRetryComboBox.SelectedItem).Content.ToString()!);
+
+        try
+        {
+            await _iptvPlaybackService.PlayChannelAsync(channel, vlcPath, maxRetries);
+        }
+        catch (Exception ex)
+        {
+            IptvStatusText.Text = $"Failed to play: {ex.Message}";
+            UpdateDiagnostics(message: $"IPTV playback error: {ex.Message}");
+        }
+    }
+
+    private async void IptvCastRokuButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (IptvChannelListBox.SelectedItem is not IptvChannel channel)
+            return;
+
+        if (_rokuClient == null)
+        {
+            IptvStatusText.Text = "No Roku device selected.";
+            return;
+        }
+
+        _iptvIndex = _filteredIptvChannels.IndexOf(channel);
+        _iptvRokuCancellation?.Cancel();
+        _iptvRokuCancellation = new CancellationTokenSource();
+
+        try
+        {
+            _iptvRokuStreaming = true;
+            IptvStatusText.Text = $"Casting {channel.Title} to Roku...";
+            IptvNowPlayingText.Text = channel.Title;
+            IptvStopButton.IsEnabled = true;
+            IptvPreviousButton.IsEnabled = _iptvIndex > 0;
+            IptvNextButton.IsEnabled = _iptvIndex < _filteredIptvChannels.Count - 1;
+
+            await _mediaServer.StartUrlStreamAsync(channel.Url, _iptvRokuCancellation.Token);
+            var streamUrl = _mediaServer.GetStreamUrl();
+
+            await _rokuClient.LaunchDmrAsync(streamUrl);
+            IptvStatusText.Text = $"Playing {channel.Title} on Roku";
+        }
+        catch (Exception ex)
+        {
+            _iptvRokuStreaming = false;
+            IptvStatusText.Text = $"Failed to cast: {ex.Message}";
+            UpdateDiagnostics(message: $"IPTV Roku cast error: {ex.Message}");
+        }
+    }
+
+    private void IptvStopButton_Click(object sender, RoutedEventArgs e)
+    {
+        _iptvPlaybackService.Stop();
+        _iptvRokuCancellation?.Cancel();
+        _iptvRokuStreaming = false;
+
+        if (_rokuClient != null)
+        {
+            _ = _rokuClient.SendKeypressAsync("Back");
+        }
+
+        IptvStatusText.Text = "Playback stopped";
+        IptvNowPlayingText.Text = "Nothing playing";
+        IptvStopButton.IsEnabled = false;
+        IptvPreviousButton.IsEnabled = false;
+        IptvNextButton.IsEnabled = false;
+    }
+
+    private void IptvPreviousButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_iptvIndex > 0)
+        {
+            _iptvIndex--;
+            PlaySelectedIptvChannel();
+        }
+    }
+
+    private void IptvNextButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_iptvIndex < _filteredIptvChannels.Count - 1)
+        {
+            _iptvIndex++;
+            PlaySelectedIptvChannel();
+        }
+    }
+
+    private void PlaySelectedIptvChannel()
+    {
+        if (_iptvIndex < 0 || _iptvIndex >= _filteredIptvChannels.Count)
+            return;
+
+        var channel = _filteredIptvChannels[_iptvIndex];
+        IptvChannelListBox.SelectedItem = channel;
+
+        if (_iptvRokuStreaming)
+        {
+            IptvCastRokuButton_Click(this, RoutedEventArgs.Empty);
+        }
+        else
+        {
+            IptvPlayVlcButton_Click(this, RoutedEventArgs.Empty);
+        }
+    }
+
     private static bool TryCreateLinkPlaylistItem(string? url, string? title, out LinkPlaylistItem item)
     {
         item = null!;
@@ -1098,6 +1361,58 @@ public partial class MainWindow : Window
         AirPlayModeCheckBox.IsChecked =
             _settings.UseAirPlayHandoff;
 
+        VlcPathTextBox.Text =
+            _settings.VlcPath ?? "";
+
+        SettingsVlcPathTextBox.Text =
+            _settings.VlcPath ?? "";
+
+        if (!string.IsNullOrWhiteSpace(SettingsVlcPathTextBox.Text))
+        {
+            var currentVlcPath = VlcPathTextBox.Text;
+            if (string.IsNullOrWhiteSpace(currentVlcPath))
+            {
+                VlcPathTextBox.Text = SettingsVlcPathTextBox.Text;
+            }
+        }
+
+        IptvAutoAdvanceCheckBox.IsChecked =
+            _settings.IptvAutoAdvance;
+
+        SettingsIptvAutoAdvanceCheckBox.IsChecked =
+            _settings.IptvAutoAdvance;
+
+        SelectComboItemByContent(
+            IptvRetryComboBox,
+            _settings.IptvMaxRetries.ToString());
+
+        SelectComboItemByContent(
+            SettingsIptvRetryComboBox,
+            _settings.IptvMaxRetries.ToString());
+
+        if (!string.IsNullOrWhiteSpace(_settings.LastIptvPlaylistPath) &&
+            File.Exists(_settings.LastIptvPlaylistPath))
+        {
+            try
+            {
+                var playlist = _iptvPlaylistService.LoadM3UPlaylist(_settings.LastIptvPlaylistPath);
+                _iptvChannels = playlist.Channels;
+                _filteredIptvChannels = _iptvChannels;
+                _iptvIndex = -1;
+
+                IptvPlaylistPathTextBox.Text = _settings.LastIptvPlaylistPath;
+                IptvChannelCountText.Text = $"{_iptvChannels.Count} channels";
+                IptvChannelListBox.ItemsSource = _filteredIptvChannels;
+
+                var groups = _iptvPlaylistService.GetGroups(_iptvChannels);
+                IptvGroupComboBox.ItemsSource = groups;
+                IptvGroupComboBox.Items.Insert(0, "All Groups");
+                IptvGroupComboBox.SelectedIndex = 0;
+            }
+            catch
+            {
+            }
+        }
     }
 
     private async Task StartCompanionServiceAsync()
@@ -1418,6 +1733,26 @@ public partial class MainWindow : Window
 
         _settings.UseAirPlayHandoff =
             AirPlayModeCheckBox.IsChecked == true;
+
+        _settings.VlcPath =
+            string.IsNullOrWhiteSpace(VlcPathTextBox.Text)
+                ? null
+                : VlcPathTextBox.Text.Trim();
+
+        _settings.IptvAutoAdvance =
+            IptvAutoAdvanceCheckBox.IsChecked == true;
+
+        if (IptvRetryComboBox.SelectedItem is ComboBoxItem retryItem &&
+            int.TryParse(retryItem.Content?.ToString(), out var retries))
+        {
+            _settings.IptvMaxRetries = retries;
+        }
+
+        if (SettingsIptvRetryComboBox.SelectedItem is ComboBoxItem settingsRetryItem &&
+            int.TryParse(settingsRetryItem.Content?.ToString(), out var settingsRetries))
+        {
+            _settings.IptvMaxRetries = settingsRetries;
+        }
 
         _settingsService.Save(_settings);
     }
@@ -2136,6 +2471,49 @@ public partial class MainWindow : Window
     private async void RefreshAudioDevicesButton_Click(object sender, RoutedEventArgs e)
     {
         await RefreshAudioSourcesAsync();
+    }
+
+    private void SettingsBrowseVlcButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Select VLC executable",
+            Filter = "Executable files|*.exe|All files|*.*"
+        };
+        if (dialog.ShowDialog(this) == true)
+        {
+            SettingsVlcPathTextBox.Text = dialog.FileName;
+            VlcPathTextBox.Text = dialog.FileName;
+            _settings.VlcPath = dialog.FileName;
+            _settingsService.Save(_settings);
+        }
+    }
+
+    private void IptvSettingChanged(object sender, RoutedEventArgs e)
+    {
+        if (!IsLoaded)
+            return;
+
+        if (sender == IptvAutoAdvanceCheckBox)
+        {
+            SettingsIptvAutoAdvanceCheckBox.IsChecked = IptvAutoAdvanceCheckBox.IsChecked;
+        }
+        else if (sender == SettingsIptvAutoAdvanceCheckBox)
+        {
+            IptvAutoAdvanceCheckBox.IsChecked = SettingsIptvAutoAdvanceCheckBox.IsChecked;
+        }
+        else if (sender == IptvRetryComboBox)
+        {
+            var selectedItem = IptvRetryComboBox.SelectedItem;
+            SettingsIptvRetryComboBox.SelectedItem = selectedItem;
+        }
+        else if (sender == SettingsIptvRetryComboBox)
+        {
+            var selectedItem = SettingsIptvRetryComboBox.SelectedItem;
+            IptvRetryComboBox.SelectedItem = selectedItem;
+        }
+
+        SaveCurrentSettings();
     }
 
     private async void StartLiveButton_Click(object sender, RoutedEventArgs e)

@@ -11,10 +11,13 @@ git tag --list
 git show $currentVersion
 
 ```
+
 <div style="background-color: #010a1381; border: 1px solid #ffffff; border-top: none; padding: 8px 12px; font-size: 12px; color: #ffffff; font-family: sans-serif; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; margin-top: -16px;">
   ⚠️ Use code with caution.
 </div>
+
 ---
+
 ```powershell
 $version = "v2.4.4"
 $comment = "Release Version $version"
