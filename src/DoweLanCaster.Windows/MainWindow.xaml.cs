@@ -1025,10 +1025,11 @@ public partial class MainWindow : Window
 
             var media = new ExtractedMedia
             {
-                Url = channel.Url,
+                PageUrl = channel.Url,
+                MediaUrl = channel.Url,
                 Title = channel.Title,
                 Protocol = "IPTV",
-                SourceType = "M3U Playlist"
+                Extension = ".m3u8"
             };
 
             var friendlyEncoder = SettingsEncoderComboBox.SelectedItem?.ToString() ?? "CPU (libx264)";

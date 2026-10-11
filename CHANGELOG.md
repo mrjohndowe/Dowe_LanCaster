@@ -5,6 +5,17 @@ All notable changes to Dowe LanCaster are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5.83] - 2026-10-11
+
+### Added
+
+- Added VLC IPTV mode with M3U/M3U8 import, channel browsing, filtering, VLC
+  playback, and Roku casting.
+
+### Fixed
+
+- Corrected IPTV cast media metadata so the Windows release build compiles.
+
 ## [0.9.5.81] - 2026-10-02
 
 ### Fixed
