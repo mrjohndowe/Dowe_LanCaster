@@ -74,7 +74,23 @@ public final class MainActivity extends Activity {
         splash.addView(loading, margins(MATCH, WRAP, 0, 0, 0, 0));
 
         setContentView(splash);
-        mainHandler.postDelayed(this::showPairingScreen, 1400);
+        mainHandler.postDelayed(this::showSavedConnectionOrPair, 1400);
+    }
+
+    private void showSavedConnectionOrPair() {
+        SharedPreferences preferences = getSharedPreferences("companion", MODE_PRIVATE);
+        String savedEndpoint = preferences.getString("paired_endpoint", null);
+        if (savedEndpoint == null || savedEndpoint.trim().isEmpty()) {
+            showPairingScreen();
+            return;
+        }
+
+        discoveredEndpoint = savedEndpoint;
+        LinearLayout page = new LinearLayout(this);
+        page.setOrientation(LinearLayout.VERTICAL);
+        page.setBackgroundColor(color(R.color.background));
+        setContentView(page);
+        showConnectedScreen(page);
     }
 
     private void showPairingScreen() {
@@ -211,6 +227,10 @@ public final class MainActivity extends Activity {
                         ? "Paired with Dowe LanCaster on the PC."
                         : "The PC rejected the pairing code (HTTP " + responseCode + ").";
                 connection.disconnect();
+                if (paired) {
+                    preferences.edit().putString("paired_endpoint", targetEndpoint).apply();
+                    discoveredEndpoint = targetEndpoint;
+                }
             } catch (Exception exception) {
                 result = "Could not reach the PC. Check the IP:PORT and that the companion service is running.";
             }
@@ -268,6 +288,16 @@ public final class MainActivity extends Activity {
         TextView connected = text("Secure pairing accepted for this phone.", 14, R.color.text_secondary);
         connected.setGravity(Gravity.CENTER_HORIZONTAL);
         page.addView(connected, margins(MATCH, WRAP, 0, 16, 0, 0));
+
+        Button changeConnection = remoteButton("Change PC / Pair Again", "back", R.color.surface);
+        changeConnection.setOnClickListener(view -> {
+            getSharedPreferences("companion", MODE_PRIVATE).edit()
+                    .remove("paired_endpoint")
+                    .apply();
+            discoveredEndpoint = null;
+            showPairingScreen();
+        });
+        page.addView(changeConnection, margins(MATCH, dp(44), 0, 16, 0, 0));
     }
 
     private void sendTabCommand(String tab) {

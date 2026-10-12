@@ -5,6 +5,14 @@ All notable changes to Dowe LanCaster are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5.84] - 2026-10-12
+
+### Changed
+
+- The Android Companion remembers the paired PC, so the one-time connection
+  code is only needed for the initial pairing. Added an option to change PCs
+  and pair again.
+
 ## [0.9.5.83] - 2026-10-11
 
 ### Added
