@@ -271,26 +271,28 @@ else {
     # Write-Host "=========================================" -ForegroundColor Cyan
     # Write-Host " Dowe LanCaster Android Companion" -ForegroundColor Cyan
     # Write-Host "=========================================" -ForegroundColor Cyan
-    Write-Color "1. Build APK only" White Black 1
-    Write-Color "2. Clean build files only" White Black 1
-    Write-Color "3. Build APK and install" White Black 1
-    Write-Color "4. Clean, rebuild, and install" White Black 1
-    Write-Color "5. Connect to phone" White Black 1
-    Write-Color "6. Create PC service tunnel" White Black 1
+    Write-Color "1. Create PC service tunnel" White Black 1
+    Write-Color "2. Connect to phone" White Black 1
+    Write-Color "3. Build APK only" White Black 1
+    Write-Color "4. Clean build files only" White Black 1
+    Write-Color "5. Build APK and install" White Black 1
+    Write-Color "6. Clean, rebuild, and install" White Black 1
     Write-Color "7. Uninstall, Clean, Rebuild, and Re-Install" White Black 1
-    Write-Color "8. Exit" Red Black 1
+    Write-Color "8. Restart Menu" Red Black 1
+    Write-Color "9. Fully Exit Menu" Red Black 1
     Write-Host ""
 
-    $menuChoice = Read-MenuChoice -Prompt "Select an option [1-8]" -ValidChoices @("1", "2", "3", "4", "5", "6", "7", "8")
+    $menuChoice = Read-MenuChoice -Prompt "Select an option [1-8]" -ValidChoices @("1", "2", "3", "4", "5", "6", "7", "8", "9")
     $effectiveAction = switch ($menuChoice) {
-        "1" { "Build" }
-        "2" { "Clean" }
-        "3" { "BuildAndInstall" }
-        "4" { "RebuildAndInstall" }
-        "5" { "Connect" }
-        "6" { "Tunnel" }
+        "1" { "Tunnel" }
+        "2" { "Connect" }
+        "3" { "Build" }
+        "4" { "Clean" }
+        "5" { "BuildAndInstall" }
+        "6" { "RebuildAndInstall" }
         "7" { "UninstallFirst" }
         "8" { Write-Host "No changes were made."; Return-ToMainMenu; exit 0 }
+        "9" { Write-Host "No changes were made."; exit 0 }
     }
 }
 
@@ -713,7 +715,7 @@ if ($selectedDevice.State -ne "device") {
 
 if ($effectiveAction -eq "UninstallFirst") {
     Push-Location $ProjectPath
-    $packageId = "com.dowelancaster.companion"
+    $packageId = "com.mrjohndowe.dowelancaster.companion"
     Write-Host "Uninstalling the old app..."
 
     & $adb -s $selectedDevice.Serial uninstall $packageId
@@ -757,7 +759,7 @@ if ($effectiveAction -eq "UninstallFirst") {
         "install",
         "-r",
         $apk.FullName
-    ) -FailureMessage "APK installation failed"
+    ) -FailureMessage "APK installation failed. If ADB reported INSTALL_FAILED_UPDATE_INCOMPATIBLE, the installed app was signed with a different key. Install an APK signed with the original key to preserve app data; uninstalling the app will erase its local data."
 
     Write-Host "Finished: uninstalled, cleaned, rebuilt, and reinstalled." -ForegroundColor Green
     Return-ToMainMenu
@@ -796,7 +798,7 @@ Write-Host "Installing APK on $($selectedDevice.Serial)..."
 Invoke-CheckedCommand -Command $adb -Arguments @(
     "-s", $selectedDevice.Serial,
     "install", "-r", $apk.FullName
-) -FailureMessage "APK installation failed."
+) -FailureMessage "APK installation failed. If ADB reported INSTALL_FAILED_UPDATE_INCOMPATIBLE, the installed app was signed with a different key. Install an APK signed with the original key to preserve app data; uninstalling the app will erase its local data."
 
 Write-Host ""
 Write-Host "Android companion installed successfully."

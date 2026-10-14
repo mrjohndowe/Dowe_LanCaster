@@ -2,6 +2,8 @@ package com.mrjohndowe.dowelancaster.companion;
 
 import android.app.Activity;
 import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -38,6 +40,9 @@ public final class MainActivity extends Activity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private volatile String discoveredEndpoint;
     private int screenRevision;
+    private boolean liveScreenActive;
+    private ImageView liveScreenImage;
+    private TextView liveScreenStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -250,6 +255,7 @@ public final class MainActivity extends Activity {
     }
 
     private void showConnectedScreen(LinearLayout page) {
+        liveScreenActive = false;
         screenRevision++;
         page.removeAllViews();
 
@@ -284,6 +290,13 @@ public final class MainActivity extends Activity {
             });
             page.addView(sectionButton, margins(MATCH, dp(52), 0, 0, 0, 8));
         }
+
+        Button liveScreen = new Button(this);
+        liveScreen.setText("Live PC Screen");
+        liveScreen.setAllCaps(false);
+        liveScreen.setTextSize(16);
+        liveScreen.setOnClickListener(view -> showLiveScreen(page));
+        page.addView(liveScreen, margins(MATCH, dp(52), 0, 0, 0, 8));
 
         TextView connected = text("Secure pairing accepted for this phone.", 14, R.color.text_secondary);
         connected.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -322,7 +335,91 @@ public final class MainActivity extends Activity {
         });
     }
 
+    private void showLiveScreen(LinearLayout page) {
+        liveScreenActive = true;
+        final int viewRevision = ++screenRevision;
+        page.removeAllViews();
+        page.setPadding(dp(12), dp(12), dp(12), dp(12));
+
+        TextView title = text("Live Dowe LanCaster Screen", 20, R.color.text_primary);
+        title.setGravity(Gravity.CENTER_HORIZONTAL);
+        page.addView(title, margins(MATCH, WRAP, 0, 0, 0, 6));
+
+        TextView status = text("Connecting to the PC screen…", 14, R.color.text_secondary);
+        liveScreenStatus = status;
+        status.setGravity(Gravity.CENTER_HORIZONTAL);
+        page.addView(status, margins(MATCH, WRAP, 0, 0, 0, 8));
+
+        ImageView screen = new ImageView(this);
+        liveScreenImage = screen;
+        screen.setBackgroundColor(Color.BLACK);
+        screen.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(MATCH, 0, 1f);
+        imageParams.setMargins(0, 0, 0, dp(10));
+        page.addView(screen, imageParams);
+
+        Button back = new Button(this);
+        back.setText("Back to Companion Sections");
+        back.setAllCaps(false);
+        back.setOnClickListener(view -> showConnectedScreen(page));
+        page.addView(back, margins(MATCH, dp(48), 0, 0, 0, 0));
+
+        loadLiveScreen(screen, status, viewRevision);
+    }
+
+    private void loadLiveScreen(ImageView screen, TextView status, int expectedRevision) {
+        if (discoveredEndpoint == null || expectedRevision != screenRevision) return;
+        networkExecutor.execute(() -> {
+            Bitmap frame = null;
+            String message = "Live view updates every second. Keep Dowe LanCaster open, visible, and unobstructed on the PC.";
+            HttpURLConnection connection = null;
+            try {
+                String deviceId = getSharedPreferences("companion", MODE_PRIVATE)
+                        .getString("device_id", null);
+                if (deviceId == null || deviceId.isEmpty())
+                    throw new IllegalStateException("Pair this phone with the PC to view its screen.");
+
+                connection = (HttpURLConnection) URI.create(
+                        "http://" + discoveredEndpoint + "/api/v1/screen").toURL().openConnection();
+                connection.setConnectTimeout(4000);
+                connection.setReadTimeout(4000);
+                connection.setRequestProperty("X-Companion-Device", deviceId);
+                connection.setRequestProperty("Cache-Control", "no-cache");
+                int responseCode = connection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    try (java.io.InputStream input = connection.getInputStream()) {
+                        frame = BitmapFactory.decodeStream(input);
+                    }
+                    if (frame == null) message = "The PC returned an unreadable screen image.";
+                } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                    message = "This phone is not paired with the current PC service. Pair it again from the PC Companion settings.";
+                } else if (responseCode == HttpURLConnection.HTTP_CONFLICT) {
+                    message = "Keep Dowe LanCaster open, visible, and unobstructed on the PC to share its screen.";
+                } else {
+                    message = "The PC screen is unavailable (HTTP " + responseCode + ").";
+                }
+            } catch (Exception exception) {
+                if (exception.getMessage() != null && exception.getMessage().startsWith("Pair this phone"))
+                    message = exception.getMessage();
+                else
+                    message = "Could not load the PC screen. Check the connection and try again.";
+            } finally {
+                if (connection != null) connection.disconnect();
+            }
+
+            Bitmap finalFrame = frame;
+            String finalMessage = message;
+            mainHandler.post(() -> {
+                if (expectedRevision != screenRevision) return;
+                if (finalFrame != null) screen.setImageBitmap(finalFrame);
+                status.setText(finalMessage);
+                mainHandler.postDelayed(() -> loadLiveScreen(screen, status, expectedRevision), 1000);
+            });
+        });
+    }
+
     private void showRemoteScreen(LinearLayout page) {
+        liveScreenActive = false;
         screenRevision++;
         page.removeAllViews();
         page.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -518,6 +615,7 @@ public final class MainActivity extends Activity {
     }
 
     private void showSectionScreen(LinearLayout page, String section) {
+        liveScreenActive = false;
         final int sectionRevision = ++screenRevision;
         page.removeAllViews();
         TextView title = text(section, 24, R.color.text_primary);
@@ -702,6 +800,20 @@ public final class MainActivity extends Activity {
                 connection.disconnect();
             } catch (Exception ignored) { }
         });
+    }
+
+    @Override
+    protected void onPause() {
+        if (liveScreenActive)
+            screenRevision++;
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (liveScreenActive && liveScreenImage != null && liveScreenStatus != null)
+            loadLiveScreen(liveScreenImage, liveScreenStatus, screenRevision);
     }
 
     @Override
