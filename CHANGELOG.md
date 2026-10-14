@@ -5,6 +5,14 @@ All notable changes to Dowe LanCaster are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5.85] - 2026-10-14
+
+### Added
+
+- Added an on-demand live view of the Dowe LanCaster window to the Android
+  Companion. The view refreshes while open and pauses when the phone app is
+  backgrounded.
+
 ## [0.9.5.84] - 2026-10-12
 
 ### Changed

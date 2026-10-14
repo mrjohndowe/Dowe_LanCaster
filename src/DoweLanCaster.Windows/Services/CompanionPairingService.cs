@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.IO;
 using DoweLanCaster.Companion.Contracts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -13,6 +14,11 @@ namespace DoweLanCaster.Services;
 public sealed class CompanionPairingService : IAsyncDisposable
 {
     private readonly object _gate = new();
+    private readonly HashSet<string> _pairedDeviceIds = new(StringComparer.Ordinal);
+    private readonly string _pairedDevicesPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "DoweLanCaster",
+        "companion-devices.json");
     private WebApplication? _app;
     private CancellationTokenSource? _lifetime;
     private UdpClient? _discoverySocket;
@@ -33,6 +39,27 @@ public sealed class CompanionPairingService : IAsyncDisposable
     public event Action<string>? LogLine;
     public event Action<string, string>? CommandReceived;
     public event Action<string>? RemoteActionReceived;
+    public Func<byte[]?>? ScreenCaptureProvider { get; set; }
+
+    public CompanionPairingService()
+    {
+        try
+        {
+            var savedDeviceIds = JsonSerializer.Deserialize<string[]>(File.ReadAllText(_pairedDevicesPath));
+            if (savedDeviceIds is not null)
+                _pairedDeviceIds.UnionWith(savedDeviceIds.Where(id => !string.IsNullOrWhiteSpace(id)));
+        }
+        catch (FileNotFoundException)
+        {
+        }
+        catch (DirectoryNotFoundException)
+        {
+        }
+        catch (Exception exception)
+        {
+            LogLine?.Invoke($"Could not load paired companion devices: {exception.Message}");
+        }
+    }
 
     public void SetLinkPlaylistPlayback(string? title, string? url, bool isPlaying)
     {
@@ -103,6 +130,8 @@ public sealed class CompanionPairingService : IAsyncDisposable
             servicePort = Port
         }));
 
+        app.MapGet("/api/v1/screen", CaptureScreenAsync);
+
         app.MapGet("/api/v1/pairing/info", () => Results.Ok(new
         {
             protocolVersion = CompanionProtocol.Version,
@@ -136,6 +165,7 @@ public sealed class CompanionPairingService : IAsyncDisposable
             var deviceId = string.IsNullOrWhiteSpace(payload.DeviceId)
                 ? Guid.NewGuid().ToString("N")
                 : payload.DeviceId.Trim();
+            RegisterPairedDevice(deviceId);
             RotatePairingCode();
             LogLine?.Invoke($"Android companion paired: {deviceId}.");
             return Results.Ok(new
@@ -304,6 +334,50 @@ public sealed class CompanionPairingService : IAsyncDisposable
         var number = BitConverter.ToUInt32(random) % 1_000_000;
         _pairingCode = number.ToString("D6");
         _pairingExpiresAt = DateTimeOffset.UtcNow.Add(CompanionProtocol.PairingLifetime);
+    }
+
+    private bool IsPairedDevice(string deviceId)
+    {
+        if (string.IsNullOrWhiteSpace(deviceId))
+            return false;
+        lock (_gate)
+            return _pairedDeviceIds.Contains(deviceId);
+    }
+
+    private void RegisterPairedDevice(string deviceId)
+    {
+        lock (_gate)
+        {
+            if (!_pairedDeviceIds.Add(deviceId))
+                return;
+
+            try
+            {
+                var directory = Path.GetDirectoryName(_pairedDevicesPath)!;
+                Directory.CreateDirectory(directory);
+                File.WriteAllText(_pairedDevicesPath, JsonSerializer.Serialize(_pairedDeviceIds));
+            }
+            catch (Exception exception)
+            {
+                LogLine?.Invoke($"Could not save paired companion device: {exception.Message}");
+            }
+        }
+    }
+
+    private async Task<IResult> CaptureScreenAsync(HttpRequest request, HttpResponse response)
+    {
+        var deviceId = request.Headers["X-Companion-Device"].ToString();
+        if (!IsPairedDevice(deviceId))
+            return Results.Unauthorized();
+
+        var capture = ScreenCaptureProvider?.Invoke();
+        if (capture is null || capture.Length == 0)
+            return Results.Conflict(new { error = "screen_unavailable", message = "Keep Dowe LanCaster open, visible, and unobstructed on the PC." });
+
+        response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate";
+        response.ContentType = "image/jpeg";
+        await response.Body.WriteAsync(capture);
+        return Results.StatusCode(StatusCodes.Status200OK);
     }
 
     public async ValueTask DisposeAsync() => await StopAsync();

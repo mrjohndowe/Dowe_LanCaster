@@ -106,6 +106,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        _companionPairingService.ScreenCaptureProvider = CaptureCompanionScreen;
 
         CurrentVersionText.Text =
             $"v{_updateService.CurrentVersion}";
@@ -1459,6 +1460,53 @@ public partial class MainWindow : Window
             CompanionStatusText.Text = $"Companion service could not start: {ex.Message}";
             CompanionEndpointText.Text = "Choose Start Companion Service after closing any other program using port 8770.";
             UpdateDiagnostics(message: $"Companion service failed: {ex.Message}");
+        }
+    }
+
+    private byte[]? CaptureCompanionScreen()
+    {
+        if (!Dispatcher.CheckAccess())
+            return Dispatcher.Invoke(CaptureCompanionScreen);
+        if (!IsVisible || WindowState == WindowState.Minimized || ActualWidth <= 0 || ActualHeight <= 0)
+            return null;
+
+        try
+        {
+            var origin = PointToScreen(new System.Windows.Point(0, 0));
+            var transform = System.Windows.PresentationSource.FromVisual(this)?.CompositionTarget?.TransformToDevice
+                ?? System.Windows.Media.Matrix.Identity;
+            var width = Math.Max(1, (int)Math.Ceiling(ActualWidth * transform.M11));
+            var height = Math.Max(1, (int)Math.Ceiling(ActualHeight * transform.M22));
+            using var captured = new System.Drawing.Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            using (var graphics = System.Drawing.Graphics.FromImage(captured))
+            {
+                graphics.CopyFromScreen((int)Math.Round(origin.X), (int)Math.Round(origin.Y), 0, 0,
+                    new System.Drawing.Size(width, height), System.Drawing.CopyPixelOperation.SourceCopy);
+            }
+
+            var scale = Math.Min(1.0, Math.Min(1280.0 / width, 800.0 / height));
+            var outputWidth = Math.Max(1, (int)Math.Round(width * scale));
+            var outputHeight = Math.Max(1, (int)Math.Round(height * scale));
+            using var resized = new System.Drawing.Bitmap(outputWidth, outputHeight, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            using (var graphics = System.Drawing.Graphics.FromImage(resized))
+            {
+                graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                graphics.DrawImage(captured, 0, 0, outputWidth, outputHeight);
+            }
+
+            using var output = new MemoryStream();
+            var jpegEncoder = System.Drawing.Imaging.ImageCodecInfo.GetImageEncoders()
+                .First(encoder => encoder.MimeType == "image/jpeg");
+            using var encoderParameters = new System.Drawing.Imaging.EncoderParameters(1);
+            encoderParameters.Param[0] = new System.Drawing.Imaging.EncoderParameter(
+                System.Drawing.Imaging.Encoder.Quality, 65L);
+            resized.Save(output, jpegEncoder, encoderParameters);
+            return output.ToArray();
+        }
+        catch (Exception exception)
+        {
+            UpdateDiagnostics(message: $"Companion screen capture failed: {exception.Message}");
+            return null;
         }
     }
 

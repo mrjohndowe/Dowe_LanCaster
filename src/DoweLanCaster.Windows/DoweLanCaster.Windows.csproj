@@ -8,9 +8,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>DoweLanCaster</AssemblyName>
     <RootNamespace>DoweLanCaster</RootNamespace>
-    <Version>0.9.5.84</Version>
-    <AssemblyVersion>0.9.5.84</AssemblyVersion>
-    <FileVersion>0.9.5.84</FileVersion>
+    <Version>0.9.5.85</Version>
+    <AssemblyVersion>0.9.5.85</AssemblyVersion>
+    <FileVersion>0.9.5.85</FileVersion>
     <StartupObject>DoweLanCaster.App</StartupObject>
     <AssemblyTitle>DoweLanCaster</AssemblyTitle>
     <ApplicationIcon>DoweLanCaster.ico</ApplicationIcon>
@@ -25,7 +25,7 @@
     <RepositoryUrl>https://github.com/mrjohndowe/Dowe_LanCaster.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>roku; streaming; casting; media; hls; ffmpeg; remote-control; windows; wpf;</PackageTags>
-    <PackageReleaseNotes>Dowe LanCaster v0.9.5.84 remembers the paired PC in the Android Companion so the one-time connection code is needed only during initial pairing.</PackageReleaseNotes>
+    <PackageReleaseNotes>Dowe LanCaster v0.9.5.85 adds an on-demand live view of the PC app window to the Android Companion.</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
