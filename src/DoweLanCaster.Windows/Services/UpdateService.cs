@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -56,6 +57,46 @@ public sealed class UpdateService
             release.HtmlUrl,
             installer?.Name,
             installer?.DownloadUrl);
+    }
+
+    public async Task DownloadAndSideloadRokuAsync(
+        Version version,
+        string rokuIp,
+        string developerPassword,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await HttpClient.GetAsync(
+            LatestReleaseUrl,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+        response.EnsureSuccessStatusCode();
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var release = await JsonSerializer.DeserializeAsync<GitHubRelease>(
+            stream, cancellationToken: cancellationToken)
+            ?? throw new InvalidOperationException("GitHub returned an empty release response.");
+        if (ParseVersion(release.TagName) != version)
+            throw new InvalidOperationException("The latest release changed during the Roku update.");
+        var asset = release.Assets.FirstOrDefault(x =>
+            x.Name.Equals("DoweLanCaster-Roku.zip", StringComparison.OrdinalIgnoreCase))
+            ?? throw new InvalidOperationException("The latest release has no Roku receiver ZIP.");
+
+        var bytes = await HttpClient.GetByteArrayAsync(asset.DownloadUrl, cancellationToken);
+        using var handler = new HttpClientHandler
+        {
+            Credentials = new NetworkCredential("rokudev", developerPassword),
+            PreAuthenticate = false
+        };
+        using var rokuHttp = new HttpClient(handler) { Timeout = TimeSpan.FromMinutes(2) };
+        using var form = new MultipartFormDataContent();
+        form.Add(new StringContent("Install"), "mysubmit");
+        form.Add(new ByteArrayContent(bytes), "archive", "DoweLanCaster-Roku.zip");
+        using var installResponse = await rokuHttp.PostAsync(
+            $"http://{rokuIp}:80/plugin_install", form, cancellationToken);
+        installResponse.EnsureSuccessStatusCode();
+        var result = await installResponse.Content.ReadAsStringAsync(cancellationToken);
+        if (result.Contains("error", StringComparison.OrdinalIgnoreCase) ||
+            result.Contains("invalid", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("The Roku rejected the receiver package or password.");
     }
 
     public async Task<string> DownloadInstallerAsync(

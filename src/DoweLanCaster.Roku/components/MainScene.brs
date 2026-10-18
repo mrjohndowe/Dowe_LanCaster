@@ -11,6 +11,8 @@ sub init()
     m.waitingInstructions = m.top.findNode("waitingInstructions")
     m.waitingHint = m.top.findNode("waitingHint")
     m.folderControlTimer = m.top.findNode("folderControlTimer")
+    m.streamRetryTimer = m.top.findNode("streamRetryTimer")
+    m.streamRetryAttempts = 0
     m.controlUrl = ""
     m.currentStreamUrl = ""
     m.pendingStreamUrl = ""
@@ -25,6 +27,7 @@ sub init()
     m.launchVideo.observeField("state", "onLaunchVideoStateChanged")
     m.top.observeField("controlUrl", "onControlUrlChanged")
     m.folderControlTimer.observeField("fire", "onFolderControlTimer")
+    m.streamRetryTimer.observeField("fire", "onStreamRetryTimer")
     onControlUrlChanged()
     startSplashAnimation()
 end sub
@@ -96,6 +99,8 @@ sub onFolderControlTimer()
         m.top.mediaType = control.mediaType
         m.pendingStreamUrl = control.streamUrl
         m.currentStreamUrl = control.streamUrl
+        m.streamRetryAttempts = 0
+        m.streamRetryTimer.control = "stop"
         if control.revision <> invalid
             m.controlRevision = control.revision
         end if
@@ -261,12 +266,16 @@ sub onStreamUrlChanged()
     print "TYPE: "; m.top.mediaType
 
     if url = invalid or url = ""
+        m.streamRetryTimer.control = "stop"
+        m.streamRetryAttempts = 0
+        m.pendingStreamUrl = ""
         if not m.showingSplash
             showWaitingScreen()
         end if
         return
     end if
 
+    m.streamRetryAttempts = 0
     m.pendingStreamUrl = url
     m.currentStreamUrl = url
 
@@ -286,6 +295,8 @@ sub startPendingStream()
     end if
 
     hideWaitingScreen()
+    m.streamRetryTimer.control = "stop"
+    m.videoPlayer.control = "stop"
 
     content = CreateObject("roSGNode", "ContentNode")
     content.url = url
@@ -318,6 +329,12 @@ sub startPendingStream()
     m.videoPlayer.control = "play"
 end sub
 
+sub onStreamRetryTimer()
+    if m.pendingStreamUrl <> invalid and m.pendingStreamUrl <> ""
+        startPendingStream()
+    end if
+end sub
+
 sub onPlayerStateChanged()
     state = m.videoPlayer.state
 
@@ -329,6 +346,8 @@ sub onPlayerStateChanged()
         m.statusLabel.text = "Buffering..."
 
     else if state = "playing"
+        m.streamRetryTimer.control = "stop"
+        m.streamRetryAttempts = 0
         m.statusLabel.visible = false
         m.videoPlayer.visible = true
 
@@ -337,13 +356,26 @@ sub onPlayerStateChanged()
         m.videoPlayer.visible = true
 
     else if state = "error"
-        if m.folderMode
-            showFolderTransition("Skipping unavailable video...")
+        if m.pendingStreamUrl <> invalid and m.pendingStreamUrl <> "" and m.streamRetryAttempts < 4
+            delays = [2, 4, 8, 15]
+            m.streamRetryTimer.duration = delays[m.streamRetryAttempts]
+            m.streamRetryAttempts = m.streamRetryAttempts + 1
+            m.statusLabel.visible = true
+            m.statusLabel.text = "Stream interrupted. Reconnecting (" + m.streamRetryAttempts.ToStr() + "/4)..."
+            m.streamRetryTimer.control = "start"
         else
-            showWaitingScreen()
+            m.streamRetryTimer.control = "stop"
+            if m.folderMode
+                reportStreamFinished()
+                m.pendingStreamUrl = ""
+                showFolderTransition("Skipping unavailable video...")
+            else
+                showWaitingScreen()
+            end if
         end if
 
     else if state = "finished"
+        m.streamRetryTimer.control = "stop"
         m.pendingStreamUrl = ""
 
         ' Folder Cast keeps this receiver open and supplies the next item
