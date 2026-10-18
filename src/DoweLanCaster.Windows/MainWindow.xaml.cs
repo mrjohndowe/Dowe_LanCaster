@@ -60,6 +60,7 @@ public partial class MainWindow : Window
     private bool _folderReceiverLaunched;
     private long _folderControlRevision;
     private bool _linkReceiverLaunched;
+    private long _linkPlaylistControlRevision;
     private CancellationTokenSource? _linkPlaylistCancellation;
     private CancellationTokenSource? _linkPlaylistItemCancellation;
     private bool _linkPlaylistRunning;
@@ -1309,6 +1310,16 @@ public partial class MainWindow : Window
                         ? "Video skipped. Starting the next link..."
                         : "Final video skipped.";
                 }
+                catch (Exception ex) when (!_linkPlaylistCancellation.IsCancellationRequested)
+                {
+                    await _urlCapture.StopAsync();
+                    LinkStreamUrlTextBox.Clear();
+                    PlaylistStatusText.Text =
+                        $"Skipped link {index + 1} of {_linkPlaylistItems.Count}: {ex.Message} Continuing playlist...";
+                    UpdateDiagnostics(
+                        hls: "Link Playlist item failed",
+                        message: ex.Message);
+                }
                 finally
                 {
                     if (ReferenceEquals(_linkPlaylistItemCancellation, itemCancellation))
@@ -1362,37 +1373,10 @@ public partial class MainWindow : Window
 
     private async Task WaitForRokuPlaylistItemToFinishAsync(CancellationToken token)
     {
-        if (_rokuClient is null)
-            return;
-
-        var deadline = DateTimeOffset.UtcNow.AddSeconds(20);
-        var sawPlayerState = false;
-        while (DateTimeOffset.UtcNow < deadline)
+        while (!_urlServer.IsRevisionComplete(_linkPlaylistControlRevision))
         {
             token.ThrowIfCancellationRequested();
-            try
-            {
-                var state = await _rokuClient.GetMediaPlayerStateAsync(token);
-                sawPlayerState = true;
-                if (state.DurationSeconds is > 0 && state.PositionSeconds is >= 0 &&
-                    state.PositionSeconds >= state.DurationSeconds - 0.5)
-                    return;
-                if (state.State.Equals("close", StringComparison.OrdinalIgnoreCase) ||
-                    state.State.Equals("finished", StringComparison.OrdinalIgnoreCase))
-                    return;
-            }
-            catch
-            {
-                // The custom Roku receiver does not always expose media-player
-                // state. In that case retain the final HLS segments for the
-                // conservative drain interval below.
-                if (!sawPlayerState)
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(8), token);
-                    return;
-                }
-            }
-            await Task.Delay(TimeSpan.FromSeconds(1), token);
+            await Task.Delay(TimeSpan.FromMilliseconds(500), token);
         }
     }
 
@@ -1439,6 +1423,7 @@ public partial class MainWindow : Window
         // The shared AirPlay page uses this revision to keep the existing
         // Apple AirPlay session alive when Link Playlist advances to a new URL.
         var airPlayRevision = _urlServer.SetControlState(streamUrl);
+        _linkPlaylistControlRevision = airPlayRevision;
         var airPlayPageUrl = $"http://{ip}:{_urlServer.Port}/airplay";
         if (UseAirPlayHandoff)
         {

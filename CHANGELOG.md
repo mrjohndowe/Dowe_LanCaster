@@ -27,6 +27,14 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Qualify WPF controls in the Roku password prompt so the Windows release
   compiles with both WPF and Windows Forms enabled.
 
+## [0.9.5.89] - 2026-10-18
+
+### Fixed
+
+- Keep Link Playlist HLS files available until Roku or AirPlay reports that the
+  current item finished, instead of deleting them after a short timeout.
+- Skip an item that fails to extract or encode and continue with later links.
+
 ## [0.9.5.85] - 2026-10-14
 
 ### Added
