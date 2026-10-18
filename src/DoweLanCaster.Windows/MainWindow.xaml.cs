@@ -364,9 +364,26 @@ public partial class MainWindow : Window
             MaxWidth = 360
         });
         content.Children.Add(passwordBox);
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-        var installButton = new Button { Content = "Continue", IsDefault = true, MinWidth = 85, Margin = new Thickness(0, 0, 8, 0), Padding = new Thickness(10, 5, 10, 5) };
-        var cancelButton = new Button { Content = "Skip", IsCancel = true, MinWidth = 70, Padding = new Thickness(10, 5, 10, 5) };
+        var buttons = new StackPanel
+        {
+            Orientation = System.Windows.Controls.Orientation.Horizontal,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right
+        };
+        var installButton = new System.Windows.Controls.Button
+        {
+            Content = "Continue",
+            IsDefault = true,
+            MinWidth = 85,
+            Margin = new Thickness(0, 0, 8, 0),
+            Padding = new Thickness(10, 5, 10, 5)
+        };
+        var cancelButton = new System.Windows.Controls.Button
+        {
+            Content = "Skip",
+            IsCancel = true,
+            MinWidth = 70,
+            Padding = new Thickness(10, 5, 10, 5)
+        };
         installButton.Click += (_, _) => prompt.DialogResult = true;
         buttons.Children.Add(installButton);
         buttons.Children.Add(cancelButton);

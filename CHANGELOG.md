@@ -20,6 +20,13 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Retry interrupted Roku playback with increasing delays before giving up. If a
   Folder Cast item still fails, report the failure so the playlist can advance.
 
+## [0.9.5.88] - 2026-10-18
+
+### Fixed
+
+- Qualify WPF controls in the Roku password prompt so the Windows release
+  compiles with both WPF and Windows Forms enabled.
+
 ## [0.9.5.85] - 2026-10-14
 
 ### Added
