@@ -113,5 +113,6 @@
             text="" />
 
         <Timer id="folderControlTimer" duration="1" repeat="true" />
+        <Timer id="streamRetryTimer" duration="2" repeat="false" />
     </children>
 </component>

@@ -13,6 +13,13 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   latest package to the saved Roku. Save the Developer Installer password
   encrypted for the current Windows account, using a random salt.
 
+## [0.9.5.87] - 2026-10-18
+
+### Fixed
+
+- Retry interrupted Roku playback with increasing delays before giving up. If a
+  Folder Cast item still fails, report the failure so the playlist can advance.
+
 ## [0.9.5.85] - 2026-10-14
 
 ### Added
