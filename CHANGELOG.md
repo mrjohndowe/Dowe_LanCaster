@@ -35,6 +35,13 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   current item finished, instead of deleting them after a short timeout.
 - Skip an item that fails to extract or encode and continue with later links.
 
+## [0.9.5.90] - 2026-10-18
+
+### Changed
+
+- Show a compact live view of the selected PC screen inside each companion tab,
+  replacing the separate live preview screen.
+
 ## [0.9.5.85] - 2026-10-14
 
 ### Added

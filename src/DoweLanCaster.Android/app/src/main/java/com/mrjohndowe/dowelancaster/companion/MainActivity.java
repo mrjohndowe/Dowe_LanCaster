@@ -291,13 +291,6 @@ public final class MainActivity extends Activity {
             page.addView(sectionButton, margins(MATCH, dp(52), 0, 0, 0, 8));
         }
 
-        Button liveScreen = new Button(this);
-        liveScreen.setText("Live PC Screen");
-        liveScreen.setAllCaps(false);
-        liveScreen.setTextSize(16);
-        liveScreen.setOnClickListener(view -> showLiveScreen(page));
-        page.addView(liveScreen, margins(MATCH, dp(52), 0, 0, 0, 8));
-
         TextView connected = text("Secure pairing accepted for this phone.", 14, R.color.text_secondary);
         connected.setGravity(Gravity.CENTER_HORIZONTAL);
         page.addView(connected, margins(MATCH, WRAP, 0, 16, 0, 0));
@@ -335,34 +328,41 @@ public final class MainActivity extends Activity {
         });
     }
 
-    private void showLiveScreen(LinearLayout page) {
-        liveScreenActive = true;
-        final int viewRevision = ++screenRevision;
+    private LinearLayout beginTabContent(LinearLayout page) {
         page.removeAllViews();
-        page.setPadding(dp(12), dp(12), dp(12), dp(12));
+        page.setGravity(Gravity.TOP);
+        page.setPadding(0, 0, 0, 0);
 
-        TextView title = text("Live Dowe LanCaster Screen", 20, R.color.text_primary);
-        title.setGravity(Gravity.CENTER_HORIZONTAL);
-        page.addView(title, margins(MATCH, WRAP, 0, 0, 0, 6));
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.setFillViewport(true);
+        page.addView(scroll, new LinearLayout.LayoutParams(MATCH, MATCH));
 
-        TextView status = text("Connecting to the PC screen…", 14, R.color.text_secondary);
-        liveScreenStatus = status;
-        status.setGravity(Gravity.CENTER_HORIZONTAL);
-        page.addView(status, margins(MATCH, WRAP, 0, 0, 0, 8));
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setGravity(Gravity.CENTER_HORIZONTAL);
+        content.setPadding(dp(12), dp(12), dp(12), dp(16));
+        scroll.addView(content, new android.widget.ScrollView.LayoutParams(MATCH, WRAP));
+        return content;
+    }
+
+    private void addLiveScreenPreview(LinearLayout content, String tab, int viewRevision) {
+        liveScreenActive = true;
+
+        TextView label = text("PC SCREEN · " + tab.toUpperCase(java.util.Locale.US), 12, R.color.accent);
+        label.setTypeface(label.getTypeface(), android.graphics.Typeface.BOLD);
+        content.addView(label, margins(MATCH, WRAP, 0, 0, 0, 4));
 
         ImageView screen = new ImageView(this);
         liveScreenImage = screen;
+        screen.setContentDescription("Live view of the " + tab + " tab in Dowe LanCaster on the PC");
         screen.setBackgroundColor(Color.BLACK);
         screen.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(MATCH, 0, 1f);
-        imageParams.setMargins(0, 0, 0, dp(10));
-        page.addView(screen, imageParams);
+        content.addView(screen, margins(MATCH, dp(150), 0, 0, 0, 4));
 
-        Button back = new Button(this);
-        back.setText("Back to Companion Sections");
-        back.setAllCaps(false);
-        back.setOnClickListener(view -> showConnectedScreen(page));
-        page.addView(back, margins(MATCH, dp(48), 0, 0, 0, 0));
+        TextView status = text("Loading PC screen…", 12, R.color.text_secondary);
+        liveScreenStatus = status;
+        status.setGravity(Gravity.CENTER_HORIZONTAL);
+        content.addView(status, margins(MATCH, WRAP, 0, 0, 0, 12));
 
         loadLiveScreen(screen, status, viewRevision);
     }
@@ -419,11 +419,9 @@ public final class MainActivity extends Activity {
     }
 
     private void showRemoteScreen(LinearLayout page) {
-        liveScreenActive = false;
-        screenRevision++;
-        page.removeAllViews();
-        page.setGravity(Gravity.CENTER_HORIZONTAL);
-        page.setPadding(0, dp(12), 0, dp(12));
+        final int tabRevision = ++screenRevision;
+        LinearLayout content = beginTabContent(page);
+        addLiveScreenPreview(content, "Remote", tabRevision);
 
         // 1. Sculpted Obsidian Remote Chassis
         LinearLayout remote = new LinearLayout(this);
@@ -592,7 +590,7 @@ public final class MainActivity extends Activity {
         back.setOnClickListener(view -> showConnectedScreen(page));
         remote.addView(back, margins(MATCH, dp(40), 0, 2, 0, 0));
 
-        page.addView(remote, new LinearLayout.LayoutParams(dp(390), MATCH));
+        content.addView(remote, new LinearLayout.LayoutParams(dp(390), WRAP));
     }
 
     private Button remoteButton(String label, String key, int tintResource) {
@@ -615,34 +613,34 @@ public final class MainActivity extends Activity {
     }
 
     private void showSectionScreen(LinearLayout page, String section) {
-        liveScreenActive = false;
         final int sectionRevision = ++screenRevision;
-        page.removeAllViews();
+        LinearLayout content = beginTabContent(page);
         TextView title = text(section, 24, R.color.text_primary);
         title.setGravity(Gravity.CENTER_HORIZONTAL);
-        page.addView(title, margins(MATCH, WRAP, 0, 18, 0, 12));
+        content.addView(title, margins(MATCH, WRAP, 0, 0, 0, 8));
+        addLiveScreenPreview(content, section, sectionRevision);
 
         if (section.equals("Link Cast")) {
             EditText url = input("Paste a media link");
-            page.addView(url, margins(MATCH, dp(48), 0, 0, 0, 8));
+            content.addView(url, margins(MATCH, dp(48), 0, 0, 0, 8));
             Button setUrl = remoteButton("Use Link", "set-url", R.color.surface);
             setUrl.setOnClickListener(view -> sendTabAction(section, "set-url", url.getText().toString()));
-            page.addView(setUrl, margins(MATCH, dp(42), 0, 0, 0, 8));
-            page.addView(actionButton(section, "Analyze Link", "analyze", R.color.accent), margins(MATCH, dp(42), 0, 0, 0, 8));
-            page.addView(actionButton(section, "Stream to Roku", "stream", R.color.accent), margins(MATCH, dp(42), 0, 0, 0, 8));
-            page.addView(actionButton(section, "Stop Link Stream", "stop", R.color.surface), margins(MATCH, dp(42), 0, 0, 0, 8));
+            content.addView(setUrl, margins(MATCH, dp(42), 0, 0, 0, 8));
+            content.addView(actionButton(section, "Analyze Link", "analyze", R.color.accent), margins(MATCH, dp(42), 0, 0, 0, 8));
+            content.addView(actionButton(section, "Stream to Roku", "stream", R.color.accent), margins(MATCH, dp(42), 0, 0, 0, 8));
+            content.addView(actionButton(section, "Stop Link Stream", "stop", R.color.surface), margins(MATCH, dp(42), 0, 0, 0, 8));
         } else if (section.equals("Link Playlist")) {
             TextView description = text("Add public video links to the queue on your PC. The PC streams each completed video to Roku automatically.", 15, R.color.text_secondary);
             description.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
-            page.addView(description, margins(MATCH, WRAP, 0, 0, 0, 14));
+            content.addView(description, margins(MATCH, WRAP, 0, 0, 0, 14));
 
             TextView nowPlaying = text("Now playing: nothing", 15, R.color.text_primary);
             nowPlaying.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
-            page.addView(nowPlaying, margins(MATCH, WRAP, 0, 0, 0, 12));
+            content.addView(nowPlaying, margins(MATCH, WRAP, 0, 0, 0, 12));
             loadPlaylistPlaybackState(nowPlaying, sectionRevision);
 
             EditText playlistUrl = input("Paste a media link for the playlist");
-            page.addView(playlistUrl, margins(MATCH, dp(48), 0, 0, 0, 8));
+            content.addView(playlistUrl, margins(MATCH, dp(48), 0, 0, 0, 8));
 
             Button addToPlaylist = remoteButton("Add Link to Playlist", "add-url", R.color.surface);
             addToPlaylist.setOnClickListener(view -> {
@@ -654,30 +652,30 @@ public final class MainActivity extends Activity {
                 sendTabAction(section, "add-url", value);
                 playlistUrl.setText("");
             });
-            page.addView(addToPlaylist, margins(MATCH, dp(44), 0, 0, 0, 8));
-            page.addView(actionButton(section, "Start Playlist", "start", R.color.accent), margins(MATCH, dp(44), 0, 0, 0, 8));
-            page.addView(actionButton(section, "Skip Current Video", "skip", R.color.surface), margins(MATCH, dp(44), 0, 0, 0, 8));
-            page.addView(actionButton(section, "Stop Playlist", "stop", R.color.surface), margins(MATCH, dp(44), 0, 0, 0, 8));
+            content.addView(addToPlaylist, margins(MATCH, dp(44), 0, 0, 0, 8));
+            content.addView(actionButton(section, "Start Playlist", "start", R.color.accent), margins(MATCH, dp(44), 0, 0, 0, 8));
+            content.addView(actionButton(section, "Skip Current Video", "skip", R.color.surface), margins(MATCH, dp(44), 0, 0, 0, 8));
+            content.addView(actionButton(section, "Stop Playlist", "stop", R.color.surface), margins(MATCH, dp(44), 0, 0, 0, 8));
         } else if (section.equals("Live Cast")) {
-            page.addView(actionButton(section, "Start Live Cast", "start", R.color.accent), margins(MATCH, dp(46), 0, 0, 0, 8));
-            page.addView(actionButton(section, "Stop Live Cast", "stop", R.color.surface), margins(MATCH, dp(46), 0, 0, 0, 8));
+            content.addView(actionButton(section, "Start Live Cast", "start", R.color.accent), margins(MATCH, dp(46), 0, 0, 0, 8));
+            content.addView(actionButton(section, "Stop Live Cast", "stop", R.color.surface), margins(MATCH, dp(46), 0, 0, 0, 8));
         } else if (section.equals("Folder Cast")) {
-            page.addView(actionButton(section, "Previous", "previous", R.color.surface), margins(MATCH, dp(42), 0, 0, 0, 8));
-            page.addView(actionButton(section, "Play", "play", R.color.accent), margins(MATCH, dp(42), 0, 0, 0, 8));
-            page.addView(actionButton(section, "Next", "next", R.color.surface), margins(MATCH, dp(42), 0, 0, 0, 8));
-            page.addView(actionButton(section, "Stop", "stop", R.color.surface), margins(MATCH, dp(42), 0, 0, 0, 8));
+            content.addView(actionButton(section, "Previous", "previous", R.color.surface), margins(MATCH, dp(42), 0, 0, 0, 8));
+            content.addView(actionButton(section, "Play", "play", R.color.accent), margins(MATCH, dp(42), 0, 0, 0, 8));
+            content.addView(actionButton(section, "Next", "next", R.color.surface), margins(MATCH, dp(42), 0, 0, 0, 8));
+            content.addView(actionButton(section, "Stop", "stop", R.color.surface), margins(MATCH, dp(42), 0, 0, 0, 8));
         } else {
             TextView status = text("This tab is selected on the PC. Its controls are being synchronized through the companion connection.", 15, R.color.text_secondary);
             status.setGravity(Gravity.CENTER_HORIZONTAL);
             status.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
-            page.addView(status, margins(MATCH, WRAP, 0, 0, 0, 24));
+            content.addView(status, margins(MATCH, WRAP, 0, 0, 0, 24));
         }
 
         Button back = new Button(this);
         back.setText("Back to Companion Sections");
         back.setAllCaps(false);
         back.setOnClickListener(view -> showConnectedScreen(page));
-        page.addView(back, margins(MATCH, dp(52), 0, 0, 0, 0));
+        content.addView(back, margins(MATCH, dp(52), 0, 0, 0, 0));
     }
 
     private Button actionButton(String tab, String label, String action, int tint) {
