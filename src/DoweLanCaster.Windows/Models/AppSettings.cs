@@ -3,6 +3,10 @@ namespace DoweLanCaster.Models;
 public sealed class AppSettings
 {
     public string? LastRokuIp { get; set; }
+    public string? LastRokuReleaseVersion { get; set; }
+    public string? RokuDeveloperPasswordProtected { get; set; }
+    public string? RokuDeveloperPasswordSalt { get; set; }
+    public string? RokuDeveloperPasswordIp { get; set; }
     public string? PreferredEncoder { get; set; }
     public int PreferredBitrateKbps { get; set; } = 8000;
     public int PreferredFps { get; set; } = 30;

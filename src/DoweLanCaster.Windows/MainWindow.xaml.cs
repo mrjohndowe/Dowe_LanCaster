@@ -187,6 +187,7 @@ public partial class MainWindow : Window
             await InitializeTeraBoxBrowserAsync();
             LoadChangelog();
             await StartCompanionServiceAsync();
+            await CheckForRokuReceiverUpdateAsync();
 
             if (!string.IsNullOrWhiteSpace(_settings.LastFolderPath) &&
                 Directory.Exists(_settings.LastFolderPath))
@@ -289,6 +290,89 @@ public partial class MainWindow : Window
                 IptvNowPlayingText.Text = channel.Title;
             });
         };
+    }
+
+    private async Task CheckForRokuReceiverUpdateAsync()
+    {
+        var rokuIp = _settings.LastRokuIp;
+        if (string.IsNullOrWhiteSpace(rokuIp))
+            return;
+
+        try
+        {
+            var update = await _updateService.CheckForUpdateAsync();
+            if (Version.TryParse(_settings.LastRokuReleaseVersion, out var installedVersion) &&
+                installedVersion >= update.LatestVersion)
+                return;
+
+            var salt = RokuCredentialStore.GetOrCreateSalt(
+                _settings.RokuDeveloperPasswordSalt);
+            _settings.RokuDeveloperPasswordSalt = Convert.ToBase64String(salt);
+            var password = RokuCredentialStore.TryUnprotect(
+                string.Equals(_settings.RokuDeveloperPasswordIp, rokuIp, StringComparison.OrdinalIgnoreCase)
+                    ? _settings.RokuDeveloperPasswordProtected
+                    : null,
+                salt);
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                password = PromptForRokuDeveloperPassword(rokuIp);
+                if (string.IsNullOrWhiteSpace(password))
+                    return;
+            }
+
+            StatusText.Text = $"Updating Roku receiver to v{update.LatestVersion}...";
+            await _updateService.DownloadAndSideloadRokuAsync(
+                update.LatestVersion,
+                rokuIp,
+                password);
+            _settings.RokuDeveloperPasswordProtected =
+                RokuCredentialStore.Protect(password, salt);
+            _settings.RokuDeveloperPasswordIp = rokuIp;
+            _settings.LastRokuReleaseVersion = update.LatestVersion.ToString();
+            _settingsService.Save(_settings);
+            StatusText.Text = $"Roku receiver updated to v{update.LatestVersion}.";
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message.Contains("rejected", StringComparison.OrdinalIgnoreCase))
+            {
+                _settings.RokuDeveloperPasswordProtected = null;
+                _settings.RokuDeveloperPasswordIp = null;
+                _settingsService.Save(_settings);
+            }
+            StatusText.Text = $"Roku receiver update failed: {ex.Message}";
+        }
+    }
+
+    private string? PromptForRokuDeveloperPassword(string rokuIp)
+    {
+        var prompt = new Window
+        {
+            Title = "Roku Developer Password",
+            Owner = this,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            ResizeMode = ResizeMode.NoResize,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            ShowInTaskbar = false
+        };
+        var passwordBox = new PasswordBox { Width = 300, Margin = new Thickness(0, 8, 0, 12) };
+        var content = new StackPanel { Margin = new Thickness(18) };
+        content.Children.Add(new TextBlock
+        {
+            Text = $"Enter the Developer Installer password for Roku {rokuIp}. It will be encrypted for this Windows account and reused for later updates.",
+            TextWrapping = TextWrapping.Wrap,
+            MaxWidth = 360
+        });
+        content.Children.Add(passwordBox);
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+        var installButton = new Button { Content = "Continue", IsDefault = true, MinWidth = 85, Margin = new Thickness(0, 0, 8, 0), Padding = new Thickness(10, 5, 10, 5) };
+        var cancelButton = new Button { Content = "Skip", IsCancel = true, MinWidth = 70, Padding = new Thickness(10, 5, 10, 5) };
+        installButton.Click += (_, _) => prompt.DialogResult = true;
+        buttons.Children.Add(installButton);
+        buttons.Children.Add(cancelButton);
+        content.Children.Add(buttons);
+        prompt.Content = content;
+        return prompt.ShowDialog() == true ? passwordBox.Password : null;
     }
 
     private async Task InitializeFFmpegAsync()

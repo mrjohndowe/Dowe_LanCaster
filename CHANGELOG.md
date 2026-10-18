@@ -5,6 +5,14 @@ All notable changes to Dowe LanCaster are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5.86] - 2026-10-18
+
+### Added
+
+- Automatically check for Roku receiver releases at startup and sideload the
+  latest package to the saved Roku. Save the Developer Installer password
+  encrypted for the current Windows account, using a random salt.
+
 ## [0.9.5.85] - 2026-10-14
 
 ### Added
